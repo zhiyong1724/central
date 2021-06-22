@@ -1,0 +1,83 @@
+#ifndef __OSDTSCHEDULER_H__
+#define __OSDTSCHEDULER_H__
+#include "osdefine.h"
+#include "ostree.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+typedef struct OsDtTaskControlBlock
+{
+    OsTreeNode node;
+    os_size_t priority;
+    os_size_t vRunTime;
+} OsDtTaskControlBlock;
+
+typedef struct OsDtScheduler
+{
+    os_size_t interval;
+    OsTreeNode *taskTree;
+    os_size_t taskCount;
+    os_size_t minVRunTime;
+    OsDtTaskControlBlock *runningTask;
+    os_size_t skipTick;
+    os_size_t clockPeriod;
+    os_size_t switchInterval;
+} OsDtScheduler;
+/*********************************************************************************************************************
+* OsDtScheduler初始化
+* dtScheduler：OsDtScheduler对象
+* clockPeriod：时钟周期NS
+* return：0：初始化成功
+*********************************************************************************************************************/
+int osDtSchedulerInit(OsDtScheduler *dtScheduler, os_size_t clockPeriod);
+/*********************************************************************************************************************
+* OsDtTaskControlBlock初始化
+* dtTaskControlBlock：OsDtTaskControlBlock对象
+* priority：优先级
+* return：0：初始化成功
+*********************************************************************************************************************/
+int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, os_size_t priority);
+/*********************************************************************************************************************
+* 时钟滴答
+* dtScheduler：OsDtScheduler对象
+* return：调用成功返回下一个任务控制块，否则返回NULL
+*********************************************************************************************************************/
+OsDtTaskControlBlock *osDtSchedulerTick(OsDtScheduler *dtScheduler);
+/*********************************************************************************************************************
+* 增加任务
+* dtScheduler：OsDtScheduler对象
+* dtTaskControlBlock：任务控制块
+* return：0:调用成功
+*********************************************************************************************************************/
+int osDtSchedulerAddTask(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock);
+/*********************************************************************************************************************
+* 移除任务
+* dtScheduler：OsDtScheduler对象
+* dtTaskControlBlock：任务控制块
+* return：返回下一个任务控制块
+*********************************************************************************************************************/
+OsDtTaskControlBlock *osDtSchedulerRemoveTask(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock);
+/*********************************************************************************************************************
+* 修改优先级
+* dtScheduler：OsDtScheduler对象
+* dtTaskControlBlock：任务控制块
+* priority：优先级
+* return：0:调用成功
+*********************************************************************************************************************/
+int osDtSchedulerModifyPriority(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, os_size_t priority);
+/*********************************************************************************************************************
+* 获取当前运行的任务
+* dtScheduler：OsDtScheduler对象
+*********************************************************************************************************************/
+OsDtTaskControlBlock *osDtSchedulerGetRunningTask(OsDtScheduler *dtScheduler);
+/*********************************************************************************************************************
+* 主动放弃运行
+* dtScheduler：OsDtScheduler对象
+* return：调用成功返回下一个任务控制块，否则返回NULL
+*********************************************************************************************************************/
+OsDtTaskControlBlock *osDtSchedulerYield(OsDtScheduler *dtScheduler);
+#ifdef __cplusplus
+}
+#endif
+#endif

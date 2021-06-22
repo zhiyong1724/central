@@ -1,0 +1,184 @@
+#include "osqueue.h"
+#include "osqueuemanager.h"
+#include "osmem.h"
+#include "osstring.h"
+#include "osmutex.h"
+#define ENABLE_QUEUE_LOG 0
+#if ENABLE_QUEUE_LOG
+#define queueLog(format, ...) osPrintf(format, ##__VA_ARGS__)
+#else
+#define queueLog(format, ...) (void)0
+#endif
+int portYield(void **stackTop);
+os_size_t portDisableInterrupts();
+int portRecoveryInterrupts(os_size_t state);
+OsTask *osTaskGetRunningTask();
+static OsQueueManager *sQueueManager;
+int osQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    sQueueManager = queueManager;
+    return osQueueManagerInit(sQueueManager, taskManager);
+}
+
+int osQueueCreate(os_queue_t *queue, os_size_t queueLength, os_size_t messageSize)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    *queue = (os_queue_t)osMalloc(sizeof(OsQueue));
+    osAssert(*queue != NULL);
+    if (*queue != NULL)
+    {
+        ret = osQueueCreateStatic(*queue, queueLength, messageSize);
+    }
+    return ret;
+}
+
+int osQueueCreateStatic(os_queue_t queue, os_size_t queueLength, os_size_t messageSize)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    if (0 == queueLength)
+    {
+        queueLength = MAX_QUEUE_LENGTH;
+    }
+    ret = osQueueManagerQueueInit(sQueueManager, queue, queueLength, messageSize);
+    if (0 == ret)
+    {
+        ret = osMutexCreateStatic(&queue->mutex);
+    }
+    return ret;
+}
+
+int osQueueDestory(os_queue_t queue)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    osMutexLock(&queue->mutex);
+    osAssert(NULL == queue->waitTaskList && NULL == queue->waitTaskList);
+    if (NULL == queue->waitTaskList && NULL == queue->waitTaskList)
+    {
+        for (OsMessage *message = osQueueManagerQueuePop(sQueueManager, queue); message != NULL; message = osQueueManagerQueuePop(sQueueManager, queue))
+        {
+            osFree(message);
+        }
+        osFree(queue);
+    }
+    osMutexUnlock(&queue->mutex);
+    return ret;
+}
+
+int osQueueReset(os_queue_t queue)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    osMutexLock(&queue->mutex);
+    for (OsMessage *message = osQueueManagerQueuePop(sQueueManager, queue); message != NULL; message = osQueueManagerQueuePop(sQueueManager, queue))
+    {
+        osFree(message);
+    }
+    osMutexUnlock(&queue->mutex);
+    return 0;
+}
+
+int osQueueSend(os_queue_t queue, void *message)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    osMutexLock(&queue->mutex);
+    OsMessage *osMessage = osMalloc(sizeof(OsMessage) + queue->messageSize);
+    if (osMessage != NULL)
+    {
+        osMemCpy(osMessage + 1, message, queue->messageSize);
+        ret = osQueueManagerSend(sQueueManager, queue, osMessage);
+        if (0 == ret)
+        {
+        }
+        else
+        {
+            osFree(osMessage);
+        }
+    }
+    osMutexUnlock(&queue->mutex);
+    return ret;
+}
+
+int osQueueSendToFront(os_queue_t queue, void *message)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    osMutexLock(&queue->mutex);
+    OsMessage *osMessage = osMalloc(sizeof(OsMessage) + queue->messageSize);
+    if (osMessage != NULL)
+    {
+        osMemCpy(osMessage + 1, message, queue->messageSize);
+        ret = osQueueManagerSendToFront(sQueueManager, queue, osMessage);
+        if (0 == ret)
+        {
+        }
+        else
+        {
+            osFree(osMessage);
+        }
+    }
+    osMutexUnlock(&queue->mutex);
+    return ret;
+}
+
+int osQueueReceive(void *message, os_queue_t queue, os_size_t wait)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    OsMessage *osMessage = NULL;
+    OsTask *task = NULL;
+    os_size_t state = portDisableInterrupts();
+    ret = osQueueManagerReceive(sQueueManager, &osMessage, &task, queue, wait);
+    if (0 == ret)
+    {
+        if (task != NULL)
+        {
+            portYield(&task->stackTop);
+            portRecoveryInterrupts(state);
+            state = portDisableInterrupts();
+            task = osTaskGetRunningTask();
+            osMessage = (OsMessage *)task->arg;
+            task->arg = NULL;
+            if (osMessage != NULL)
+            {
+                portRecoveryInterrupts(state);
+                osMutexLock(&queue->mutex);
+                osMemCpy(message, osMessage + 1, queue->messageSize);
+                osFree(osMessage);
+                osMutexUnlock(&queue->mutex);
+                state = portDisableInterrupts();
+            }
+            else
+            {
+                osQueueManagerRemoveTask(sQueueManager, queue, task);
+                ret = -1;
+            }
+        }
+        else
+        {
+            portRecoveryInterrupts(state);
+            osMutexLock(&queue->mutex);
+            osMemCpy(message, osMessage + 1, queue->messageSize);
+            osFree(osMessage);
+            osMutexUnlock(&queue->mutex);
+            state = portDisableInterrupts();
+        }
+    }
+    portRecoveryInterrupts(state);
+    return ret;
+}
+
+os_size_t osQueueGetMessageCount(os_queue_t queue)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osQueueManagerGetMessageCount(sQueueManager, queue);
+}
+
+os_size_t osQueueGetQueueLength(os_queue_t queue)
+{
+    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osQueueManagerGetQueueLength(sQueueManager, queue);
+}
