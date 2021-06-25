@@ -13,6 +13,7 @@
 #include "osqueue.h"
 #include "ossemaphore.h"
 #include "osmutex.h"
+#include "osmemoryfilesystem.h"
 struct Test
 {
     OsTreeNode node;
@@ -992,6 +993,15 @@ void *taskG(void *arg)
     return NULL;
 }
 
+void testMFS()
+{
+    osInit();
+    OsMemoryFileSystem memoryFileSystem;
+    osMemoryFileSystemInit(&memoryFileSystem);
+    OsFile fileA;
+    osMemoryFileSystemOpen(&memoryFileSystem, &fileA, "/file a", OS_FILE_MODE_OPEN_ALWAYS);
+}
+
 int main()
 {   
     // testTree();
@@ -1005,11 +1015,12 @@ int main()
     //testSemaphore();
     //testMutex();
     //testQueue();
+    testMFS();
     osInit();
     os_tid_t tid;
     osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
     osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);
-    //osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
+    osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
     osTaskStart();
     return 0;
 }

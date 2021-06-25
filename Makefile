@@ -8,13 +8,15 @@ vpath %.c ./core
 vpath %.c ./core/base
 vpath %.c ./core/mem
 vpath %.c ./core/task
+vpath %.c ./core/vfs
 vpath %.o $(OBJ_DIR)
 
 INCLUDES := -I$(FLATFORM_DIR) \
 	-I./core \
 	-I./core/base \
 	-I./core/mem \
-	-I./core/task
+	-I./core/task \
+	-I./core/vfs
 
 CFLAGS := -Wall -Werror $(COMPILE_FLAGS)
 
@@ -40,6 +42,7 @@ SRCS := $(SRCS) \
 	osmutex.c \
 	osqueuemanager.c \
 	osqueue.c \
+	osmemoryfilesystem.c \
 	oscentral.c \
 	osport.c \
 	main.c

@@ -1,6 +1,7 @@
 #ifndef __OSPORT_H__
 #define __OSPORT_H__
 #include "ostask.h"
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -13,6 +14,7 @@ os_size_t portDisableInterrupts();
 int portEnableInterrupts();
 int portEnableTaskInterrupts();
 int portRecoveryInterrupts(os_size_t state);
+uint64_t portGetPosixTime();
 #ifdef __cplusplus
 }
 #endif
