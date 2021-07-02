@@ -7,15 +7,15 @@
 extern "C"
 {
 #endif
-#define OS_FILE_ATTR_OWNER_READ                0X00000100
-#define OS_FILE_ATTR_OWNER_WRITE               0X00000080
-#define OS_FILE_ATTR_OWNER_EXE                 0X00000040
-#define OS_FILE_ATTR_GROUP_READ                0X00000020
-#define OS_FILE_ATTR_GROUP_WRITE               0X00000010
-#define OS_FILE_ATTR_GROUP_EXE                 0X00000008
-#define OS_FILE_ATTR_OTHER_READ                0X00000004
-#define OS_FILE_ATTR_OTHER_WRITE               0X00000002
-#define OS_FILE_ATTR_OTHER_EXE                 0X00000001
+#define OS_FILE_ATTR_OWNER_READ                0x00000100
+#define OS_FILE_ATTR_OWNER_WRITE               0x00000080
+#define OS_FILE_ATTR_OWNER_EXE                 0x00000040
+#define OS_FILE_ATTR_GROUP_READ                0x00000020
+#define OS_FILE_ATTR_GROUP_WRITE               0x00000010
+#define OS_FILE_ATTR_GROUP_EXE                 0x00000008
+#define OS_FILE_ATTR_OTHER_READ                0x00000004
+#define OS_FILE_ATTR_OTHER_WRITE               0x00000002
+#define OS_FILE_ATTR_OTHER_EXE                 0x00000001
 
 #define	OS_FILE_MODE_READ				0x01
 #define	OS_FILE_MODE_WRITE			    0x02
@@ -30,30 +30,52 @@ typedef enum OsFileType
     OS_FILE_TYPE_NORMAL,
     OS_FILE_TYPE_DIRECTORY,
     OS_FILE_TYPE_LINK,
-    OS_FILE_TYPE_BLOCK,
 } OsFileType;
+
+typedef enum OsSeekType
+{
+    OS_SEEK_TYPE_SET,
+    OS_SEEK_TYPE_CUR,
+    OS_SEEK_TYPE_END,
+} OsSeekType;
 
 typedef struct OsFileNode
 {
     OsTreeNode node;
+    uint32_t openCount;
     uint32_t type;
     uint32_t attribute;
     uint64_t createTime;
     uint64_t changeTime;
     uint64_t accessTime;
-    uint32_t ownerNameSize;
-    uint32_t groupNameSize;
-    uint32_t fileNameSize;
-    uint32_t fileSize;
+    char name[MAX_FILE_NAME_LENGTH];
+    uint64_t fileSize;
     void *data;
 } OsFileNode;
+
+typedef struct OsFileInfo
+{
+    uint32_t type;
+    uint32_t attribute;
+    uint64_t createTime;
+    uint64_t changeTime;
+    uint64_t accessTime;
+    char name[MAX_FILE_NAME_LENGTH];
+    uint64_t fileSize;
+} OsFileInfo;
 
 typedef struct OsFile
 {
     uint32_t mode;
+    uint64_t offset;
     OsFileNode *fileNode;
-    uint8_t *buffer;
 } OsFile;
+
+typedef struct OsDir
+{
+    OsFileNode *dirNode;
+    OsFileNode *curNode;
+} OsDir;
 
 typedef struct OsMemoryFileSystem
 {
@@ -74,14 +96,81 @@ int osMemoryFileSystemInit(OsMemoryFileSystem *memoryFileSystem);
 * return：0：调用成功
 *********************************************************************************************************************/
 int osMemoryFileSystemOpen(OsMemoryFileSystem *memoryFileSystem, OsFile *file, const char *path, uint32_t mode);
-// FRESULT f_close (FIL* fp);											/* Close an open file object */
-// FRESULT f_read (FIL* fp, void* buff, UINT btr, UINT* br);			/* Read data from the file */
-// FRESULT f_write (FIL* fp, const void* buff, UINT btw, UINT* bw);	/* Write data to the file */
-// FRESULT f_lseek (FIL* fp, FSIZE_t ofs);								/* Move file pointer of the file object */
-// FRESULT f_truncate (FIL* fp);										/* Truncate the file */
-// FRESULT f_sync (FIL* fp);											/* Flush cached data of the writing file */
-// FRESULT f_opendir (DIR* dp, const TCHAR* path);						/* Open a directory */
-// FRESULT f_closedir (DIR* dp);										/* Close an open directory */
+/*********************************************************************************************************************
+* 关闭一个文件
+* memoryFileSystem：文件系统对象
+* file：文件对象
+* return：0：调用成功
+*********************************************************************************************************************/
+int osMemoryFileSystemClose(OsMemoryFileSystem *memoryFileSystem, OsFile *file);
+/*********************************************************************************************************************
+* 读一个文件
+* memoryFileSystem：文件系统对象
+* file：文件对象
+* buff：读取数据缓冲区
+* size：缓冲区大小
+* length：读取到的数据长度
+* return：0：调用成功
+*********************************************************************************************************************/
+int osMemoryFileSystemRead(OsMemoryFileSystem *memoryFileSystem, OsFile *file, void *buff, uint64_t size, uint64_t *length);
+/*********************************************************************************************************************
+* 写一个文件
+* memoryFileSystem：文件系统对象
+* file：文件对象
+* buff：写入的数据
+* size：写入的数据大小
+* length：实际写入的数据
+* return：0：调用成功
+*********************************************************************************************************************/
+int osMemoryFileSystemWrite(OsMemoryFileSystem *memoryFileSystem, OsFile *file, const void *buff, uint64_t size, uint64_t *length);
+/*********************************************************************************************************************
+* 移动文件的读写位置
+* memoryFileSystem：文件系统对象
+* file：文件对象
+* offset：偏移量
+* whence：从哪里开始偏移
+* return：0：调用成功
+*********************************************************************************************************************/
+int osMemoryFileSystemSeek(OsMemoryFileSystem *memoryFileSystem, OsFile *file, int64_t offset, OsSeekType whence);
+/*********************************************************************************************************************
+* 截断文件
+* memoryFileSystem：文件系统对象
+* file：文件对象
+* size：截断后文件的大小
+* return：0：调用成功
+*********************************************************************************************************************/
+int osMemoryFileSystemTruncate(OsMemoryFileSystem *memoryFileSystem, OsFile *file, uint64_t size);
+/*********************************************************************************************************************
+* 同步缓存到存储器
+* memoryFileSystem：文件系统对象
+* file：文件对象
+* return：0：调用成功
+*********************************************************************************************************************/
+int osMemoryFileSystemSync(OsMemoryFileSystem *memoryFileSystem, OsFile *file);
+/*********************************************************************************************************************
+* 打开一个目录
+* memoryFileSystem：文件系统对象
+* dir：目录对象
+* path：目录路径
+* return：0：调用成功
+**********************************************************************************************************************/
+int osMemoryFileSystemOpenDir(OsMemoryFileSystem *memoryFileSystem, OsDir *dir, const char *path);
+/*********************************************************************************************************************
+* 关闭一个目录
+* memoryFileSystem：文件系统对象
+* dir：目录对象
+* path：目录路径
+* return：0：调用成功
+**********************************************************************************************************************/
+int osMemoryFileSystemCloseDir(OsMemoryFileSystem *memoryFileSystem, OsDir *dir);
+/*********************************************************************************************************************
+* 读取一个目录
+* memoryFileSystem：文件系统对象
+* dir：目录对象
+* fileInfo：文件信息
+* return：0：调用成功
+**********************************************************************************************************************/
+int osMemoryFileSystemReadDir(OsMemoryFileSystem *memoryFileSystem, OsDir *dir, OsFileInfo *fileInfo);
 // FRESULT f_readdir (DIR* dp, FILINFO* fno);							/* Read a directory item */
 // FRESULT f_findfirst (DIR* dp, FILINFO* fno, const TCHAR* path, const TCHAR* pattern);	/* Find first file */
 // FRESULT f_findnext (DIR* dp, FILINFO* fno);							/* Find next file */

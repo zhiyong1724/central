@@ -63,4 +63,8 @@
 #ifndef MAX_QUEUE_LENGTH
 #define MAX_QUEUE_LENGTH                         1024              //最大队列长度
 #endif
+//文件系统相关
+#ifndef MAX_FILE_NAME_LENGTH
+#define MAX_FILE_NAME_LENGTH                     256               //最大文件名长度
+#endif
 #endif

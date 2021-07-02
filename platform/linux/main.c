@@ -999,7 +999,12 @@ void testMFS()
     OsMemoryFileSystem memoryFileSystem;
     osMemoryFileSystemInit(&memoryFileSystem);
     OsFile fileA;
-    osMemoryFileSystemOpen(&memoryFileSystem, &fileA, "/file a", OS_FILE_MODE_OPEN_ALWAYS);
+    uint64_t length = 0;
+    char buff[32];
+    osMemoryFileSystemOpen(&memoryFileSystem, &fileA, "/file a", OS_FILE_MODE_OPEN_ALWAYS | OS_FILE_MODE_READ | OS_FILE_MODE_WRITE);
+    osMemoryFileSystemWrite(&memoryFileSystem, &fileA, "Hello world!", sizeof("Hello world!"), &length);
+    osMemoryFileSystemRead(&memoryFileSystem, &fileA, buff, sizeof(buff), &length);
+    osMemoryFileSystemClose(&memoryFileSystem, &fileA);
 }
 
 int main()

@@ -32,7 +32,7 @@ void *osMemSet(void *s, os_byte_t ch, os_size_t n)
 	return s;
 }
 
-void *osMemCpy(void *dest, void *src, os_size_t n)
+void *osMemCpy(void *dest, const void *src, os_size_t n)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	os_size_t divisor = n / sizeof(int);

@@ -383,7 +383,7 @@ OsTreeNode *osGetLeftmostNode(OsTreeNode *handle)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	OsTreeNode *curNode = NULL;
-	if (handle != NULL)
+	if (handle != NULL && handle != &gLeafNode)
 	{
 		curNode = handle;
 		while (curNode->leftTree != &gLeafNode)
@@ -444,7 +444,7 @@ int osInsertNode(OsTreeNode **handle, OsTreeNode *node, OsOnCompare callback, vo
 OsTreeNode *osFindNode(OsTreeNode *handle, void *key, OsOnCompare callback, void *arg)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (handle != NULL)
+	if (handle != NULL && handle != &gLeafNode)
 	{
 		for (;;)
 		{
