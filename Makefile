@@ -9,6 +9,8 @@ vpath %.c ./core/base
 vpath %.c ./core/mem
 vpath %.c ./core/task
 vpath %.c ./core/vfs
+vpath %.c ./third/fatfs
+vpath %.c ./third/fatfs/source
 vpath %.o $(OBJ_DIR)
 
 INCLUDES := -I$(FLATFORM_DIR) \
@@ -16,7 +18,9 @@ INCLUDES := -I$(FLATFORM_DIR) \
 	-I./core/base \
 	-I./core/mem \
 	-I./core/task \
-	-I./core/vfs
+	-I./core/vfs \
+	-I./third/fatfs \
+	-I./third/fatfs/source
 
 CFLAGS := -Wall -Werror $(COMPILE_FLAGS)
 
@@ -42,9 +46,16 @@ SRCS := $(SRCS) \
 	osmutex.c \
 	osqueuemanager.c \
 	osqueue.c \
-	osmemoryfilesystem.c \
 	oscentral.c \
 	osport.c \
+	osvfs.c \
+	osf.c \
+	ff.c \
+	ffsystem.c \
+	ffunicode.c \
+	diskio.c \
+	ramio.c \
+	fatfsadapter.c \
 	main.c
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))

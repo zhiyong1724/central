@@ -3,6 +3,7 @@
 #include "ostaskmanager.h"
 #include "ossemaphoremanager.h"
 #include "osqueuemanager.h"
+#include "osvfs.h"
 #define ENABLE_CENTRAL_LOG 0
 #if ENABLE_CENTRAL_LOG
 #define centralLog(format, ...) osPrintf(format, ##__VA_ARGS__)
@@ -13,10 +14,12 @@
 static OsTaskManager sTaskManager;
 static OsSemaphoreManager sSemaphoreManager;
 static OsQueueManager sQueueManager;
+static OsVFS sVFS;
 os_size_t osMemInit(void *startAddress, os_size_t size);
 int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod);
 int osSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *taskManager);
 int osQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager);
+int osFInit(OsVFS *vfs);
 int osInit()
 {
     centralLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
@@ -35,6 +38,10 @@ int osInit()
     if (osQueueInit(&sQueueManager, &sTaskManager) != 0)
     {
         return -4;
+    }
+    if (osFInit(&sVFS) != 0)
+    {
+        return -5;
     }
     return 0;
 }

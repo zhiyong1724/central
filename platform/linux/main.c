@@ -13,7 +13,6 @@
 #include "osqueue.h"
 #include "ossemaphore.h"
 #include "osmutex.h"
-#include "osmemoryfilesystem.h"
 struct Test
 {
     OsTreeNode node;
@@ -993,22 +992,41 @@ void *taskG(void *arg)
     return NULL;
 }
 
-void testMFS()
+void testFS()
 {
     osInit();
-    OsMemoryFileSystem memoryFileSystem;
-    osMemoryFileSystemInit(&memoryFileSystem);
-    OsFile fileA;
-    uint64_t length = 0;
-    char buff[32];
-    osMemoryFileSystemOpen(&memoryFileSystem, &fileA, "/file a", OS_FILE_MODE_OPEN_ALWAYS | OS_FILE_MODE_READ | OS_FILE_MODE_WRITE);
-    osMemoryFileSystemWrite(&memoryFileSystem, &fileA, "Hello world!", sizeof("Hello world!"), &length);
-    osMemoryFileSystemRead(&memoryFileSystem, &fileA, buff, sizeof(buff), &length);
-    osMemoryFileSystemClose(&memoryFileSystem, &fileA);
 }
 
 int main()
 {   
+    // double ia;
+    // double ib;
+    // double ic;
+    // double input = 25000000;
+    // double output = 49152000;
+    // double offset = 49152000;
+    // for (double i = 5; i <= 63; i++)
+    // {
+    //     for (double j = 4; j <= 512; j++)
+    //     {
+    //         for (double k = 5; k < 128; k++)
+    //         {
+    //             double real = input / i * j / k - output;
+    //             if (real < 0)
+    //             {
+    //                 real = real * -1.0;
+    //             }
+    //             if (real < offset)
+    //             {
+    //                 offset = real;
+    //                 ia = i;
+    //                 ib = j;
+    //                 ic = k;
+    //             }
+    //         }
+    //     }
+    // }
+    // printf("offset = %lf, ia = %lf, ib = %lf, ic = %lf\n", offset, ia, ib, ic);
     // testTree();
     // testBuddy();
     // testMemPool();
@@ -1020,7 +1038,7 @@ int main()
     //testSemaphore();
     //testMutex();
     //testQueue();
-    testMFS();
+    testFS();
     osInit();
     os_tid_t tid;
     osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);

@@ -4,7 +4,6 @@
 #include <signal.h>
 #include <pthread.h>
 #include "osplatformdef.h"
-#include <time.h>
 char _heap[HEAP_SIZE];
 typedef struct thread_t
 {
@@ -164,7 +163,3 @@ int portRecoveryInterrupts(os_size_t state)
     return 0;
 }
 
-uint64_t portGetPosixTime()
-{
-    return time(NULL);
-}

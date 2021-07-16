@@ -67,4 +67,10 @@
 #ifndef MAX_FILE_NAME_LENGTH
 #define MAX_FILE_NAME_LENGTH                     256               //最大文件名长度
 #endif
+#ifndef MAX_FILE_PATH_LENGTH
+#define MAX_FILE_PATH_LENGTH                     1024               //最大文件路径长度
+#endif
+#ifndef MAX_FS_COUNT
+#define MAX_FS_COUNT                             2                  //最大文件系统数量
+#endif
 #endif
