@@ -2,7 +2,6 @@
 #include "osqueuemanager.h"
 #include "osmem.h"
 #include "osstring.h"
-#include "osmutex.h"
 #define ENABLE_QUEUE_LOG 0
 #if ENABLE_QUEUE_LOG
 #define queueLog(format, ...) osPrintf(format, ##__VA_ARGS__)
@@ -43,10 +42,6 @@ int osQueueCreateStatic(os_queue_t queue, os_size_t queueLength, os_size_t messa
         queueLength = MAX_QUEUE_LENGTH;
     }
     ret = osQueueManagerQueueInit(sQueueManager, queue, queueLength, messageSize);
-    if (0 == ret)
-    {
-        ret = osMutexCreateStatic(&queue->mutex);
-    }
     return ret;
 }
 
@@ -54,7 +49,7 @@ int osQueueDestory(os_queue_t queue)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osMutexLock(&queue->mutex);
+    os_size_t state = portDisableInterrupts();
     osAssert(NULL == queue->waitTaskList && NULL == queue->waitTaskList);
     if (NULL == queue->waitTaskList && NULL == queue->waitTaskList)
     {
@@ -64,19 +59,19 @@ int osQueueDestory(os_queue_t queue)
         }
         osFree(queue);
     }
-    osMutexUnlock(&queue->mutex);
+    portRecoveryInterrupts(state);
     return ret;
 }
 
 int osQueueReset(os_queue_t queue)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osMutexLock(&queue->mutex);
+    os_size_t state = portDisableInterrupts();
     for (OsMessage *message = osQueueManagerQueuePop(sQueueManager, queue); message != NULL; message = osQueueManagerQueuePop(sQueueManager, queue))
     {
         osFree(message);
     }
-    osMutexUnlock(&queue->mutex);
+    portRecoveryInterrupts(state);
     return 0;
 }
 
@@ -84,11 +79,13 @@ int osQueueSend(os_queue_t queue, void *message)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osMutexLock(&queue->mutex);
+    os_size_t state = portDisableInterrupts();
     OsMessage *osMessage = osMalloc(sizeof(OsMessage) + queue->messageSize);
     if (osMessage != NULL)
     {
+        portRecoveryInterrupts(state);
         osMemCpy(osMessage + 1, message, queue->messageSize);
+        state = portDisableInterrupts();
         ret = osQueueManagerSend(sQueueManager, queue, osMessage);
         if (0 == ret)
         {
@@ -98,7 +95,7 @@ int osQueueSend(os_queue_t queue, void *message)
             osFree(osMessage);
         }
     }
-    osMutexUnlock(&queue->mutex);
+    portRecoveryInterrupts(state);
     return ret;
 }
 
@@ -106,11 +103,13 @@ int osQueueSendToFront(os_queue_t queue, void *message)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osMutexLock(&queue->mutex);
+    os_size_t state = portDisableInterrupts();
     OsMessage *osMessage = osMalloc(sizeof(OsMessage) + queue->messageSize);
     if (osMessage != NULL)
     {
+        portRecoveryInterrupts(state);
         osMemCpy(osMessage + 1, message, queue->messageSize);
+        state = portDisableInterrupts();
         ret = osQueueManagerSendToFront(sQueueManager, queue, osMessage);
         if (0 == ret)
         {
@@ -120,7 +119,7 @@ int osQueueSendToFront(os_queue_t queue, void *message)
             osFree(osMessage);
         }
     }
-    osMutexUnlock(&queue->mutex);
+    portRecoveryInterrupts(state);
     return ret;
 }
 
@@ -145,11 +144,9 @@ int osQueueReceive(void *message, os_queue_t queue, os_size_t wait)
             if (osMessage != NULL)
             {
                 portRecoveryInterrupts(state);
-                osMutexLock(&queue->mutex);
                 osMemCpy(message, osMessage + 1, queue->messageSize);
-                osFree(osMessage);
-                osMutexUnlock(&queue->mutex);
                 state = portDisableInterrupts();
+                osFree(osMessage);
             }
             else
             {
@@ -160,11 +157,9 @@ int osQueueReceive(void *message, os_queue_t queue, os_size_t wait)
         else
         {
             portRecoveryInterrupts(state);
-            osMutexLock(&queue->mutex);
             osMemCpy(message, osMessage + 1, queue->messageSize);
-            osFree(osMessage);
-            osMutexUnlock(&queue->mutex);
             state = portDisableInterrupts();
+            osFree(osMessage);
         }
     }
     portRecoveryInterrupts(state);

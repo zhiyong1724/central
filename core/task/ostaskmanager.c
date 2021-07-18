@@ -201,7 +201,7 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
 #if (TASK_STACK_GROWTH > 0)
                 task->taskStackMagic = (os_size_t *)task->stackStart;
                 *task->taskStackMagic = TASK_STACK_MAGIC;
-                task->stackTop = (os_byte_t *)task->stackStart + stackSize - 1;
+                task->stackTop = (os_byte_t *)task->stackStart + stackSize;
 #else
                 task->taskStackMagic = (os_size_t *)((os_byte_t *)task->stackStart + stackSize - sizeof(os_size_t));
                 *task->taskStackMagic = TASK_STACK_MAGIC;

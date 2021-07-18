@@ -9,8 +9,6 @@
 #define mutexLog(format, ...) (void)0
 #endif
 os_size_t portDisableInterrupts();
-int portEnableInterrupts();
-int portEnableTaskInterrupts();
 int portRecoveryInterrupts(os_size_t state);
 OsTask *osTaskGetRunningTask();
 int osMutexCreate(os_mutex_h *mutex)
@@ -41,18 +39,14 @@ int osMutexDestory(os_mutex_h mutex)
 int osMutexLock(os_mutex_h mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    portDisableInterrupts();
     int ret = osSemaphoreWait(&mutex->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
-    portEnableTaskInterrupts();
     return ret;
 }
 
 int osMutexUnlock(os_mutex_h mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    portDisableInterrupts();
     int ret = osSemaphorePost(&mutex->semaphore);
-    portEnableInterrupts();
     return ret;
 }
 
@@ -87,7 +81,7 @@ int osRecursiveMutexLock(os_recursive_mutex_h mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    portDisableInterrupts();
+    os_size_t state = portDisableInterrupts();
     if (0 == mutex->recursiveCount)
     {
         mutex->owner = osTaskGetRunningTask();
@@ -106,7 +100,7 @@ int osRecursiveMutexLock(os_recursive_mutex_h mutex)
             ret = osSemaphoreWait(&mutex->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
         }
     }
-    portEnableTaskInterrupts();
+    portRecoveryInterrupts(state);
     return ret;
 }
 
@@ -114,7 +108,7 @@ int osRecursiveMutexUnlock(os_recursive_mutex_h mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    portDisableInterrupts();
+    os_size_t state = portDisableInterrupts();
     if (mutex->recursiveCount > 0)
     {
         if (osTaskGetRunningTask() == mutex->owner)
@@ -126,11 +120,7 @@ int osRecursiveMutexUnlock(os_recursive_mutex_h mutex)
     if (0 == mutex->recursiveCount)
     {
         ret = osSemaphorePost(&mutex->semaphore);
-        portEnableInterrupts();
     }
-    else
-    {
-        portEnableTaskInterrupts();
-    }
+    portRecoveryInterrupts(state);
     return ret;
 }

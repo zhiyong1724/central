@@ -57,7 +57,6 @@ typedef struct OsQueue
     OsTreeNode *highPriorityTask;
     OsTreeNode *waitRtTaskList;
     OsListNode *waitTaskList;
-    OsMutex mutex;
 } OsQueue;
 #ifdef __cplusplus
 }

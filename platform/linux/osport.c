@@ -43,14 +43,14 @@ static void *taskEnter(void *arg)
 {
     thread_t *thread = (thread_t *)arg;
     eventWait(thread);
-    portEnableInterrupts();
+    pthread_sigmask(SIG_UNBLOCK, &sSignals, NULL);
     void *ret = thread->taskFunction(thread->arg);
     thread->exit = 0;
     osTaskExit(ret);
     return ret;
 }
 
-static void handleSignalInit()
+void handleSignalInit()
 {
     sigfillset(&sSignals);
     sigdelset(&sSignals, SIGINT);
@@ -60,9 +60,8 @@ static void handleSignalInit()
 int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskStackMagic, TaskFunction taskFunction, void *arg)
 {
     pthread_once(&sSigSetupThread, handleSignalInit);
-    os_byte_t *stackStart = (os_byte_t *)*stackTop - stackSize + 1;
+    os_byte_t *stackStart = (os_byte_t *)*stackTop - stackSize;
     thread_t *thread = (thread_t *)*stackTop - 1;
-    thread = (thread_t *)((os_byte_t *)thread + 1);
     *stackTop = thread;
     thread->taskFunction = taskFunction;
     thread->arg = arg;
@@ -90,7 +89,6 @@ static void handleTimerTick(int arg)
 
 int portStartScheduler(void **stackTop)
 {
-    portDisableInterrupts();
     signal(SIGALRM, handleTimerTick);
 
     struct itimerval tv;
@@ -137,20 +135,6 @@ os_size_t portDisableInterrupts()
     os_size_t ret = sInterruptFlag;
     sInterruptFlag = 0;
     return ret;
-}
-
-int portEnableInterrupts()
-{
-    sInterruptFlag = 1;
-    pthread_sigmask(SIG_UNBLOCK, &sSignals, NULL);
-    return 0;
-}
-
-int portEnableTaskInterrupts()
-{
-    sInterruptFlag = 1;
-    pthread_sigmask(SIG_UNBLOCK, &sSignals, NULL);
-    return 0;
 }
 
 int portRecoveryInterrupts(os_size_t state)

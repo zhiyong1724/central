@@ -13,6 +13,10 @@
 #include "osqueue.h"
 #include "ossemaphore.h"
 #include "osmutex.h"
+#include "shellio.h"
+#include "osf.h"
+#include "ff.h"
+#include "fatfsadapter.h"
 struct Test
 {
     OsTreeNode node;
@@ -994,7 +998,6 @@ void *taskG(void *arg)
 
 void testFS()
 {
-    osInit();
 }
 
 int main()
@@ -1038,12 +1041,14 @@ int main()
     //testSemaphore();
     //testMutex();
     //testQueue();
-    testFS();
     osInit();
-    os_tid_t tid;
-    osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
-    osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);
-    osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
+    // os_tid_t tid;
+    // osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
+    // osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);
+    // osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
+    registerFatfs();  
+    f_mkfs("0:", NULL, NULL, 0);
+    shellIOInit();
     osTaskStart();
     return 0;
 }

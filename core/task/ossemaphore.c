@@ -63,7 +63,10 @@ int osSemaphoreDestory(os_semaphore_h semaphore)
 int osSemaphoreReset(os_semaphore_h semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    return osSemaphoreManagerReset(sSemaphoreManager, semaphore);
+    os_size_t state = portDisableInterrupts();
+    int ret = osSemaphoreManagerReset(sSemaphoreManager, semaphore);
+    portRecoveryInterrupts(state);
+    return ret;
 }
 
 int osSemaphorePost(os_semaphore_h semaphore)

@@ -15,7 +15,10 @@ int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sTaskManager = taskManager;
-    return osTaskManagerInit(sTaskManager, clockPeriod);
+    os_size_t state = portDisableInterrupts();
+    int ret = osTaskManagerInit(sTaskManager, clockPeriod);
+    portRecoveryInterrupts(state);
+    return ret;
 }
 
 int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, os_size_t priority, os_size_t stackSize)
@@ -119,12 +122,14 @@ int osTaskStart()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
+    os_size_t state = portDisableInterrupts();
     OsTask *task = osTaskManagerGetRunningTask(sTaskManager);
     osAssert(task != NULL);
     if (task != NULL)
     {
         ret = portStartScheduler(&task->stackTop);
     }
+    portRecoveryInterrupts(state);
     return ret;
 }
 

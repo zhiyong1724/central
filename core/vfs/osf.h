@@ -40,6 +40,8 @@ typedef enum OsFileError
     OS_FILE_ERROR_INVALID_NAME,
     OS_FILE_ERROR_EXIST,
     OS_FILE_ERROR_INVALID_OBJECT,
+    OS_FILE_ERROR_DENIED,
+    OS_FILE_ERROR_INVALID_PARAMETER,
     OS_FILE_ERROR_OTHER,
 } OsFileError;
 
@@ -57,13 +59,23 @@ typedef enum OsSeekType
     OS_SEEK_TYPE_END,
 } OsSeekType;
 
+typedef struct OsFileTime
+{
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+} OsFileTime;
+
 typedef struct OsFileInfo
 {
-    uint32_t type;
+    OsFileType type;
     uint32_t attribute;
-    uint64_t createTime;
-    uint64_t changeTime;
-    uint64_t accessTime;
+    OsFileTime createTime;
+    OsFileTime changeTime;
+    OsFileTime accessTime;
     char name[MAX_FILE_NAME_LENGTH];
     uint64_t fileSize;
 } OsFileInfo;
@@ -80,175 +92,178 @@ typedef struct OsDir
 
 typedef struct OsFS
 {
-    void *obj;
+    char type[MAX_FILE_NAME_LENGTH];
+    char path[MAX_FILE_PATH_LENGTH];
+    uint64_t pageSize;
+    uint64_t freePages;
+    uint64_t totalPages;
 } OsFS;
 
 typedef struct OsFSInterfaces
 {
-    int (*open)(OsFile *file, const char *path, uint32_t mode);
-    int (*close)(OsFile *file);
-    int (*read)(OsFile *file, void *buff, uint64_t size, uint64_t *length);
-    int (*write)(OsFile *file, const void *buff, uint64_t size, uint64_t *length);
-    int (*seek)(OsFile *file, int64_t offset, OsSeekType whence);
-    int (*truncate)(OsFile *file, uint64_t size);
-    int (*sync)(OsFile *file);
-    int (*openDir)(OsDir *dir, const char *path);
-    int (*closeDir)(OsDir *dir);
-    int (*readDir)(OsDir *dir, OsFileInfo *fileInfo);
-    int (*findFirst)(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern);
-    int (*findNext)(OsDir *dir, OsFileInfo *fileInfo);
-    int (*mkdir)(const char *path);
-    int (*unlink)(const char *path);
-    int (*rename)(const char *oldPath, const char *newPath);
-    int (*stat)(const char *path, OsFileInfo *fileInfo);
-    int (*chmod)(const char *path, uint32_t attr, uint32_t mask);
-    int (*chdrive)(const char *path);
-    int (*getFree)(const char *path, uint64_t *clusters, OsFS *fs);
+    OsFileError (*open)(OsFile *file, const char *path, uint32_t mode);
+    OsFileError (*close)(OsFile *file);
+    OsFileError (*read)(OsFile *file, void *buff, uint64_t size, uint64_t *length);
+    OsFileError (*write)(OsFile *file, const void *buff, uint64_t size, uint64_t *length);
+    OsFileError (*seek)(OsFile *file, int64_t offset, OsSeekType whence);
+    OsFileError (*truncate)(OsFile *file, uint64_t size);
+    OsFileError (*sync)(OsFile *file);
+    OsFileError (*openDir)(OsDir *dir, const char *path);
+    OsFileError (*closeDir)(OsDir *dir);
+    OsFileError (*readDir)(OsDir *dir, OsFileInfo *fileInfo);
+    OsFileError (*findFirst)(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern);
+    OsFileError (*findNext)(OsDir *dir, OsFileInfo *fileInfo);
+    OsFileError (*mkdir)(const char *path);
+    OsFileError (*unlink)(const char *path);
+    OsFileError (*rename)(const char *oldPath, const char *newPath);
+    OsFileError (*stat)(const char *path, OsFileInfo *fileInfo);
+    OsFileError (*chmod)(const char *path, uint32_t attr, uint32_t mask);
+    OsFileError (*chdrive)(const char *path);
+    OsFileError (*statfs)(const char *path, OsFS *fs);
 } OsFSInterfaces;
 
 /*********************************************************************************************************************
 * 添加文件系统
 * fs：文件系统接口
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFAddFS(OsFSInterfaces *fs);
+OsFileError osFAddFS(OsFSInterfaces *fs);
 /*********************************************************************************************************************
 * 打开文件
 * file：返回打开的文件对象
 * path：文件路径
 * mode：打开模式
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFOpen(OsFile *file, const char *path, uint32_t mode);
+OsFileError osFOpen(OsFile *file, const char *path, uint32_t mode);
 /*********************************************************************************************************************
 * 关闭文件
 * file：打开的文件对象
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFClose(OsFile *file);
+OsFileError osFClose(OsFile *file);
 /*********************************************************************************************************************
 * 读文件
 * file：打开的文件对象
 * buff：数据buffer
 * size：buffer大小
 * length：实际读取到的长度
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFRead(OsFile *file, void *buff, uint64_t size, uint64_t *length);
+OsFileError osFRead(OsFile *file, void *buff, uint64_t size, uint64_t *length);
 /*********************************************************************************************************************
 * 写文件
 * file：打开的文件对象
 * buff：数据buffer
 * size：buffer大小
 * length：实际写入的长度
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFWrite(OsFile *file, const void *buff, uint64_t size, uint64_t *length);
+OsFileError osFWrite(OsFile *file, const void *buff, uint64_t size, uint64_t *length);
 /*********************************************************************************************************************
 * 移动文件指针
 * file：打开的文件对象
 * offset：偏移大小
 * whence：偏移位置
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFSeek(OsFile *file, int64_t offset, OsSeekType whence);
+OsFileError osFSeek(OsFile *file, int64_t offset, OsSeekType whence);
 /*********************************************************************************************************************
 * 截断文件
 * file：打开的文件对象
 * size：截断大小
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFTruncate(OsFile *file, uint64_t size);
+OsFileError osFTruncate(OsFile *file, uint64_t size);
 /*********************************************************************************************************************
 * 把写入内容同步到存储器
 * file：打开的文件对象
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFSync(OsFile *file);
+OsFileError osFSync(OsFile *file);
 /*********************************************************************************************************************
 * 打开目录
 * dir：返回打开的目录
 * path：目录路径
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFOpenDir(OsDir *dir, const char *path);
+OsFileError osFOpenDir(OsDir *dir, const char *path);
 /*********************************************************************************************************************
 * 关闭目录
 * dir：打开的目录
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFCloseDir(OsDir *dir);
+OsFileError osFCloseDir(OsDir *dir);
 /*********************************************************************************************************************
 * 读取目录中的文件
 * dir：打开的目录
 * fileInfo：读取到的文件信息
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFReadDir(OsDir *dir, OsFileInfo *fileInfo);
+OsFileError osFReadDir(OsDir *dir, OsFileInfo *fileInfo);
 /*********************************************************************************************************************
 * 搜索第一个目录中的文件
 * dir：返回打开的目录
 * fileInfo：读取到的文件信息
 * path：搜索的路径
 * pattern：模式字符串
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFFindFirst(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern);
+OsFileError osFFindFirst(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern);
 /*********************************************************************************************************************
 * 搜索下一个目录中的文件
 * dir：返回打开的目录
 * fileInfo：读取到的文件信息
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFFindNext(OsDir *dir, OsFileInfo *fileInfo);
+OsFileError osFFindNext(OsDir *dir, OsFileInfo *fileInfo);
 /*********************************************************************************************************************
 * 创建新目录
 * path：目录的路径
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFMkdir(const char *path);
+OsFileError osFMkdir(const char *path);
 /*********************************************************************************************************************
 * 删除目录或文件
 * path：删除文件的路径
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFUnlink(const char *path);
+OsFileError osFUnlink(const char *path);
 /*********************************************************************************************************************
 * 更换路径
 * oldPath：旧路径
 * newPath：新路径
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFRename(const char *oldPath, const char *newPath);
+OsFileError osFRename(const char *oldPath, const char *newPath);
 /*********************************************************************************************************************
 * 获取文件信息
 * path：文件路径
 * fileInfo：返回的文件信息
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFStat(const char *path, OsFileInfo *fileInfo);
+OsFileError osFStat(const char *path, OsFileInfo *fileInfo);
 /*********************************************************************************************************************
 * 修改文件权限
 * path：文件路径
 * attr：权限信息
 * mask：要修改的权限信息掩码
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFChmod(const char *path, uint32_t attr, uint32_t mask);
+OsFileError osFChmod(const char *path, uint32_t attr, uint32_t mask);
 /*********************************************************************************************************************
 * 修改驱动路径
 * path：驱动路径
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFChdrive(const char *path);
+OsFileError osFChdrive(const char *path);
 /*********************************************************************************************************************
 * 获取文件系统信息
 * path：驱动路径
-* clusters：空闲的簇数量
 * fs：文件系统信息
-* return：0：调用成功
+* return：OsFileError
 *********************************************************************************************************************/
-int osFGetFree(const char *path, uint64_t *clusters, OsFS *fs);
+OsFileError osFStatfs(const char *path, OsFS *fs);
 #ifdef __cplusplus
 }
 #endif

@@ -27,10 +27,13 @@ echo "AR=$AR"
 export LD=ld
 echo "LD=$LD"
 
+export DUMP=objdump
+echo "DUMP=$DUMP"
+
 export LIBS=-lpthread
 echo "LIBS=$LIBS"
 
-export COMPILE_FLAGS="-g"
+export COMPILE_FLAGS="-g -m32"
 echo "COMPILE_FLAGS=$COMPILE_FLAGS"
 
 make
