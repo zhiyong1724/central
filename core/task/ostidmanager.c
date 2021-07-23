@@ -111,24 +111,24 @@ static os_size_t lookupTable(os_byte_t *table, os_size_t tid, os_size_t offset, 
 			return lookupTable(table, tid, (offset << 3) + 1, level);
 		}
 	}
-	return -1;
+	return (os_size_t)-1;
 }
 
 os_size_t osTidAlloc(OsTidManager *tidManager)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	os_size_t ret = lookupTable(tidManager->tidTable, 0, 0, tidManager->tableLevel);
-	if (-1 == ret)
+	if ((os_size_t)-1 == ret)
 	{
 		ret = expandTable(tidManager);
-		osAssert(ret != -1);
-		if (ret != -1)
+		osAssert(ret != (os_size_t)-1);
+		if (ret != (os_size_t)-1)
 		{
 			ret = lookupTable(tidManager->tidTable, 0, 0, tidManager->tableLevel);
 		}
 	}
-	osAssert(ret != -1);
-	if (ret != -1)
+	osAssert(ret != (os_size_t)-1);
+	if (ret != (os_size_t)-1)
 	{
 		setTable(tidManager->tidTable, ret, 1, 0, tidManager->tableLevel);
 	}

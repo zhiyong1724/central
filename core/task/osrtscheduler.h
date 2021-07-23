@@ -6,7 +6,7 @@
 extern "C"
 {
 #endif
-#define RTSCHED_MAX_PRIORITY                     64                 //实时任务最大优先级
+#define OS_RTSCHED_MAX_PRIORITY                     64                 //实时任务最大优先级
 typedef struct OsRtTaskControlBlock
 {
     OsListNode node;
@@ -15,10 +15,10 @@ typedef struct OsRtTaskControlBlock
 
 typedef struct OsRtScheduler
 {
-    os_byte_t readyTaskTable[RTSCHED_MAX_PRIORITY / 8];
+    os_byte_t readyTaskTable[OS_RTSCHED_MAX_PRIORITY / 8];
     os_byte_t readyGroupTable;
     os_size_t interval;
-    OsListNode *taskListArray[RTSCHED_MAX_PRIORITY];
+    OsListNode *taskListArray[OS_RTSCHED_MAX_PRIORITY];
     os_size_t taskCount;
     OsRtTaskControlBlock *runningTask;
     os_size_t skipTick;

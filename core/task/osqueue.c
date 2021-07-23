@@ -39,7 +39,7 @@ int osQueueCreateStatic(os_queue_t queue, os_size_t queueLength, os_size_t messa
     int ret = -1;
     if (0 == queueLength)
     {
-        queueLength = MAX_QUEUE_LENGTH;
+        queueLength = OS_MAX_QUEUE_LENGTH;
     }
     ret = osQueueManagerQueueInit(sQueueManager, queue, queueLength, messageSize);
     return ret;
@@ -80,7 +80,7 @@ int osQueueSend(os_queue_t queue, void *message)
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
-    OsMessage *osMessage = osMalloc(sizeof(OsMessage) + queue->messageSize);
+    OsMessage *osMessage = (OsMessage *)osMalloc(sizeof(OsMessage) + queue->messageSize);
     if (osMessage != NULL)
     {
         portRecoveryInterrupts(state);
@@ -104,7 +104,7 @@ int osQueueSendToFront(os_queue_t queue, void *message)
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
-    OsMessage *osMessage = osMalloc(sizeof(OsMessage) + queue->messageSize);
+    OsMessage *osMessage = (OsMessage *)osMalloc(sizeof(OsMessage) + queue->messageSize);
     if (osMessage != NULL)
     {
         portRecoveryInterrupts(state);

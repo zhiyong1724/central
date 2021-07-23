@@ -911,8 +911,8 @@ void *taskA(void *arg)
         os_tid_t tid = osTaskGetTid();
         printf("任务tid：%ld\n", tid);
 
-        char name[TASK_MAX_NAME_LEN];
-        int ret = osTaskGetTaskName(name, TASK_MAX_NAME_LEN, tid);
+        char name[OS_TASK_MAX_NAME_LEN];
+        int ret = osTaskGetTaskName(name, OS_TASK_MAX_NAME_LEN, tid);
         printf("任务名：%s\n", name);
 
         OsTaskType type;
@@ -1047,7 +1047,8 @@ int main()
     // osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);
     // osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
     registerFatfs();  
-    f_mkfs("0:", NULL, NULL, 0);
+    f_mkfs("0:", NULL, NULL, 1024);
+    osFMount("/", "0:");
     shellIOInit();
     osTaskStart();
     return 0;

@@ -69,11 +69,37 @@ void osInsertToBack(OsListNode **handle, OsListNode *node)
 	}
 }
 
+void osInsertToMiddle(OsListNode **handle, OsListNode *node, os_size_t n)
+{
+	listLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	if (NULL == *handle)
+	{
+		node->preNode = node;
+		node->nextNode = node;
+		*handle = node;
+	}
+	else
+	{
+		OsListNode *curNode = *handle;
+		for (os_size_t i = 0; i < n; i++)
+		{
+			curNode = curNode->nextNode;
+		}
+		node->preNode = curNode->preNode;
+		node->nextNode = curNode;
+		curNode->preNode = node;
+		node->preNode->nextNode = node;
+		if (0 == n)
+		{
+			*handle = node;
+		}
+	}
+}
+
 void osRemoveFromList(OsListNode **handle, OsListNode *node)
 {
 	listLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (node->preNode == node
-		&& node->nextNode == node)
+	if (node->preNode == node && node->nextNode == node)
 	{
 		*handle = NULL;
 	}

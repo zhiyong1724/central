@@ -161,9 +161,9 @@ int osTaskManagerInit(OsTaskManager *taskManager, os_size_t clockPeriod)
     taskManager->deleteTaskList = NULL;
     taskManager->tickCount = 0;
     os_tid_t tid;
-    ret = osTaskManagerCreateTask(taskManager, &tid, initTask, taskManager, "init", OS_TASK_TYPE_DT, 0, DEFAULT_TASK_STACK_SIZE);
+    ret = osTaskManagerCreateTask(taskManager, &tid, initTask, taskManager, "init", OS_TASK_TYPE_DT, 0, OS_DEFAULT_TASK_STACK_SIZE);
     taskManager->initTask = osTaskManagerGetRunningTask(taskManager);
-    ret = osTaskManagerCreateTask(taskManager, &tid, idleTask, taskManager, "idle", OS_TASK_TYPE_IDLE, 0, DEFAULT_TASK_STACK_SIZE);
+    ret = osTaskManagerCreateTask(taskManager, &tid, idleTask, taskManager, "idle", OS_TASK_TYPE_IDLE, 0, OS_DEFAULT_TASK_STACK_SIZE);
     return ret;
 }
 
@@ -185,7 +185,7 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
             {
                 task->taskFunction = taskFunction;
                 task->arg = NULL;
-                osStrCpy(task->name, name, TASK_MAX_NAME_LEN);
+                osStrCpy(task->name, name, OS_TASK_MAX_NAME_LEN);
                 task->tid = osTidAlloc(&taskManager->tidManager);
                 task->stackSize = stackSize;
                 task->children = NULL;
@@ -198,13 +198,13 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
                     osInsertToBack((OsListNode **)&task->parent->children, &task->node);
                     task->parent->childrenCount++;
                 }
-#if (TASK_STACK_GROWTH > 0)
+#if (OS_TASK_STACK_GROWTH > 0)
                 task->taskStackMagic = (os_size_t *)task->stackStart;
-                *task->taskStackMagic = TASK_STACK_MAGIC;
+                *task->taskStackMagic = OS_TASK_STACK_MAGIC;
                 task->stackTop = (os_byte_t *)task->stackStart + stackSize;
 #else
                 task->taskStackMagic = (os_size_t *)((os_byte_t *)task->stackStart + stackSize - sizeof(os_size_t));
-                *task->taskStackMagic = TASK_STACK_MAGIC;
+                *task->taskStackMagic = OS_TASK_STACK_MAGIC;
                 task->stackTop = task->stackStart;
 #endif
                 portInitializeStack(&task->stackTop, task->stackSize, task->taskStackMagic, task->taskFunction, arg);
@@ -253,8 +253,8 @@ int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask)
     *nextTask = (OsTask *)osVSchedulerTick(&taskManager->vScheduler);
     *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
     (*nextTask)->tickCount++;
-    osAssert(TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
-    if (TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+    osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+    if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
     {
         return 0;
     }
@@ -287,8 +287,8 @@ int osTaskManagerSleep(OsTaskManager *taskManager, OsTask **nextTask, os_size_t 
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     *nextTask = (OsTask *)osVSchedulerSleep(&taskManager->vScheduler, ns);
     *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
-    osAssert(TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
-    if (TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+    osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+    if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
     {
         return 0;
     }
@@ -325,8 +325,8 @@ int osTaskManagerSupend(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t 
         {
             *nextTask = (OsTask *)osVSchedulerSupend(&taskManager->vScheduler, &task->taskControlBlock);
             *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
-            osAssert(TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
-            if (TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+            osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+            if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
             {
                 ret = 0;
             }
@@ -375,7 +375,7 @@ int osTaskManagerExit(OsTaskManager *taskManager, OsTask **nextTask, void *arg)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsTask *task = osTaskManagerGetRunningTask(taskManager);
-    osAssert(TASK_STACK_MAGIC == *task->taskStackMagic);
+    osAssert(OS_TASK_STACK_MAGIC == *task->taskStackMagic);
     moveChildren(taskManager, task);
     if (task->parent == taskManager->initTask)
     {
@@ -404,8 +404,8 @@ int osTaskManagerExit(OsTaskManager *taskManager, OsTask **nextTask, void *arg)
     }
     taskManager->taskCount--;
     *nextTask = (OsTask *)((os_byte_t *)osVSchedulerExit(&taskManager->vScheduler) - sizeof(OsListNode));
-    osAssert(TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
-    if (TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+    osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+    if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
     {
         return 0;
     }
@@ -443,8 +443,8 @@ int osTaskManagerJoin(OsTaskManager *taskManager, OsTask **nextTask, void **retv
                 *nextTask = (OsTask *)osVSchedulerSupend(&taskManager->vScheduler, &runningTask->taskControlBlock);
                 runningTask->taskControlBlock.taskState = OS_TASK_STATE_BLOCKED;
                 *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
-                osAssert(TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
-                if (TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+                osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+                if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
                 {
                     ret = 0;
                 }
@@ -572,7 +572,7 @@ int osTaskManagerGetTaskName(OsTaskManager *taskManager, char *name, os_size_t s
     osAssert(task != NULL);
     if (task != NULL)
     {
-        size = size < TASK_MAX_NAME_LEN ? size : TASK_MAX_NAME_LEN;
+        size = size < OS_TASK_MAX_NAME_LEN ? size : OS_TASK_MAX_NAME_LEN;
         osStrCpy(name, task->name, size);
         ret = 0;
     }

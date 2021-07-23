@@ -249,7 +249,7 @@ static void parseFileInfo(FILINFO* fno, OsFileInfo *fileInfo)
     fileInfo->changeTime = time;
     fileInfo->accessTime = time;
 
-    osStrCpy(fileInfo->name, (const TCHAR *)fno->fname, MAX_FILE_NAME_LENGTH);
+    osStrCpy(fileInfo->name, (const TCHAR *)fno->fname, OS_MAX_FILE_NAME_LENGTH);
     fileInfo->fileSize = (uint64_t)fno->fsize;
 }
 
@@ -374,26 +374,51 @@ static OsFileError fatfsStatfs(const char *path, OsFS *fs)
         switch (fatfs->fs_type)
         {
         case FS_FAT12:
-            osStrCpy(fs->type, "FAT12", MAX_FILE_NAME_LENGTH);
+            osStrCpy(fs->type, "FAT12", OS_MAX_FILE_NAME_LENGTH);
             break;
         case FS_FAT16:
-            osStrCpy(fs->type, "FAT16", MAX_FILE_NAME_LENGTH);
+            osStrCpy(fs->type, "FAT16", OS_MAX_FILE_NAME_LENGTH);
             break;
         case FS_FAT32:
-            osStrCpy(fs->type, "FAT32", MAX_FILE_NAME_LENGTH);
+            osStrCpy(fs->type, "FAT32", OS_MAX_FILE_NAME_LENGTH);
             break;
         case FS_EXFAT:
-            osStrCpy(fs->type, "EXFAT", MAX_FILE_NAME_LENGTH);
+            osStrCpy(fs->type, "EXFAT", OS_MAX_FILE_NAME_LENGTH);
             break;
         default:
-            osStrCpy(fs->type, "", MAX_FILE_NAME_LENGTH);
+            osStrCpy(fs->type, "", OS_MAX_FILE_NAME_LENGTH);
             break;
         }
-        osStrCpy(fs->path, "/", MAX_FILE_NAME_LENGTH);
+        osStrCpy(fs->path, "/", OS_MAX_FILE_NAME_LENGTH);
         fs->pageSize = (uint64_t)fatfs->csize;
         fs->freePages = (uint64_t)nclst;
         fs->totalPages = (uint64_t)fatfs->fsize;
     }
+    return ret;
+}
+
+OsFileError fatfsMount(OsMountInfo *mountInfo)
+{
+    OsFileError ret = OS_FILE_ERROR_MALLOC_ERR;
+    FATFS *fatfs = (FATFS *)osMalloc(sizeof(FATFS));
+    if (fatfs != NULL)
+    {
+        mountInfo->obj = fatfs;
+        FRESULT result = f_mount(fatfs, (const TCHAR *)mountInfo->drive, 1);
+        ret = parseResult(result);
+        if (ret != OS_FILE_ERROR_OK)
+        {
+            osFree(fatfs);
+        }
+    }
+    return ret;
+}
+
+OsFileError fatfsUnmount(OsMountInfo *mountInfo)
+{
+    FRESULT result = f_unmount((const TCHAR *)mountInfo->drive);
+    OsFileError ret = parseResult(result);
+    osFree(mountInfo->obj);
     return ret;
 }
 
@@ -419,5 +444,7 @@ OsFileError registerFatfs()
     fsInterfaces.chmod = fatfsChmod;
     fsInterfaces.chdrive = fatfsChdrive;
     fsInterfaces.statfs = fatfsStatfs;
+    fsInterfaces.mount = fatfsMount;
+    fsInterfaces.unmount = fatfsUnmount;
     return osFAddFS(&fsInterfaces);
 }

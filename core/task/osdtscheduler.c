@@ -6,7 +6,7 @@
 #else
 #define dtSchedulerLog(format, ...) (void)0
 #endif
-#define DTSCHED_MAX_PRIORITY                     40
+#define OS_DTSCHED_MAX_PRIORITY                     40
 static const os_size_t sVRunTimeTable[] = 
 {
     10,    12,    15,    18,    22,    27,    33,     40,                    //0-7
@@ -84,10 +84,10 @@ int osDtSchedulerAddTask(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTas
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osAssert(dtTaskControlBlock->priority < DTSCHED_MAX_PRIORITY);
-    if (dtTaskControlBlock->priority < DTSCHED_MAX_PRIORITY)
+    osAssert(dtTaskControlBlock->priority < OS_DTSCHED_MAX_PRIORITY);
+    if (dtTaskControlBlock->priority < OS_DTSCHED_MAX_PRIORITY)
     {
-        if(dtTaskControlBlock->vRunTime - dtScheduler->minVRunTime > (sVRunTimeTable[DTSCHED_MAX_PRIORITY - 1] << 1))
+        if(dtTaskControlBlock->vRunTime - dtScheduler->minVRunTime > (sVRunTimeTable[OS_DTSCHED_MAX_PRIORITY - 1] << 1))
         {
             dtTaskControlBlock->vRunTime = dtScheduler->minVRunTime;
         }
@@ -97,10 +97,10 @@ int osDtSchedulerAddTask(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTas
         }
         osInsertNode(&dtScheduler->taskTree, &dtTaskControlBlock->node, onCompare, dtScheduler);
         dtScheduler->taskCount++;
-        dtScheduler->switchInterval = DTSCHED_MAX_SCHED_CYCLE_NS / dtScheduler->taskCount;
-        if (dtScheduler->switchInterval < DTSCHED_MIN_SWITCH_INTERVAL_NS)
+        dtScheduler->switchInterval = OS_DTSCHED_MAX_SCHED_CYCLE_NS / dtScheduler->taskCount;
+        if (dtScheduler->switchInterval < OS_DTSCHED_MIN_SWITCH_INTERVAL_NS)
         {
-            dtScheduler->switchInterval = DTSCHED_MIN_SWITCH_INTERVAL_NS;
+            dtScheduler->switchInterval = OS_DTSCHED_MIN_SWITCH_INTERVAL_NS;
         }
         ret = 0;
     }
@@ -117,10 +117,10 @@ OsDtTaskControlBlock *osDtSchedulerRemoveTask(OsDtScheduler *dtScheduler, OsDtTa
         dtScheduler->taskCount--;
         if (dtScheduler->taskCount > 0)
         {
-            dtScheduler->switchInterval = DTSCHED_MAX_SCHED_CYCLE_NS / dtScheduler->taskCount;
-            if (dtScheduler->switchInterval < DTSCHED_MIN_SWITCH_INTERVAL_NS)
+            dtScheduler->switchInterval = OS_DTSCHED_MAX_SCHED_CYCLE_NS / dtScheduler->taskCount;
+            if (dtScheduler->switchInterval < OS_DTSCHED_MIN_SWITCH_INTERVAL_NS)
             {
-                dtScheduler->switchInterval = DTSCHED_MIN_SWITCH_INTERVAL_NS;
+                dtScheduler->switchInterval = OS_DTSCHED_MIN_SWITCH_INTERVAL_NS;
             }
         }
         else
@@ -150,8 +150,8 @@ int osDtSchedulerModifyPriority(OsDtScheduler *dtScheduler, OsDtTaskControlBlock
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osAssert(priority < DTSCHED_MAX_PRIORITY);
-    if (priority < DTSCHED_MAX_PRIORITY)
+    osAssert(priority < OS_DTSCHED_MAX_PRIORITY);
+    if (priority < OS_DTSCHED_MAX_PRIORITY)
     {
         dtTaskControlBlock->priority = priority;
         ret = 0;

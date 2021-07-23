@@ -26,7 +26,7 @@ INCLUDES := -I$(FLATFORM_DIR) \
 	-I./third/fatfs/source \
 	-I./third/letter_shell/src
 
-CFLAGS := -Wall -Werror -Wl,-Map=$(MAP_FILE) -Wl,-Tcentral.lds $(COMPILE_FLAGS)
+CFLAGS := -Wall -Werror -Wl,-Map=$(MAP_FILE) $(COMPILE_FLAGS)
 
 SRCS := $(SRCS) \
 	ostree.c \

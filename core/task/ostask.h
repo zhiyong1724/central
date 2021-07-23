@@ -9,7 +9,7 @@ extern "C"
 * 创建任务
 * taskFunction：任务处理函数
 * arg：传给任务的参数
-* name：任务名称，最大长度为TASK_MAX_NAME_LEN
+* name：任务名称，最大长度为OS_TASK_MAX_NAME_LEN
 * priority：优先级范围为0-39
 * stackSize：任务堆栈大小
 * tid：任务tid
@@ -20,7 +20,7 @@ int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char
 * 创建实时任务
 * taskFunction：任务处理函数
 * arg：传给任务的参数
-* name：任务名称，最大长度为TASK_MAX_NAME_LEN
+* name：任务名称，最大长度为OS_TASK_MAX_NAME_LEN
 * priority：任务优先级范围0-63
 * stackSize：任务堆栈大小
 * tid：任务tid

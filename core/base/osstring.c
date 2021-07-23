@@ -125,3 +125,30 @@ char *osStrCat(char *dest, const char *src, os_size_t n)
 	dest[i] = '\0';
 	return dest;
 }
+
+char *osStrStr(const char *str, const char *pattern)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	const char *ret = NULL;
+	for (size_t i = 0;; i++)
+	{
+		size_t j = 0;
+		for (; str[i + j] != '\0' && pattern[j] != '\0'; j++)
+		{
+			if (str[i + j] != pattern[j])
+			{
+				break;
+			}
+		}
+		if ('\0' == pattern[j])
+		{
+			ret = &str[i];
+			break;
+		}
+		else if ('\0' == str[i + j])
+		{
+			break;
+		}
+	}
+	return (char *)ret;
+}

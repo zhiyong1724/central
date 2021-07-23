@@ -96,7 +96,7 @@ void *osMemPoolAllocPage(OsMemPool *memPool)
     {
         ret = memPool->pageList;
         osRemoveFromSingleList(&memPool->pageList);
-        os_size_t index = (ret - memPool->startAddress) / memPool->pageSize;
+        os_size_t index = ((char *)ret - (char *)memPool->startAddress) / memPool->pageSize;
         os_size_t i = index / 8;
         os_size_t j = index % 8;
         os_byte_t mask = 0x80;
@@ -114,10 +114,10 @@ int osMemPoolFreePage(OsMemPool *memPool, void *page)
     osAssert(page >= memPool->startAddress);
     if (page >= memPool->startAddress)
     {
-        osAssert(0 == (page - memPool->startAddress) % memPool->pageSize);
-        if (0 == (page - memPool->startAddress) % memPool->pageSize)
+        osAssert(0 == ((char *)page - (char *)memPool->startAddress) % memPool->pageSize);
+        if (0 == ((char *)page - (char *)memPool->startAddress) % memPool->pageSize)
         {
-            os_size_t index = (page - memPool->startAddress) / memPool->pageSize;
+            os_size_t index = ((char *)page - (char *)memPool->startAddress) / memPool->pageSize;
             osAssert(index < memPool->totalPageNum);
             if (index < memPool->totalPageNum)
             {
@@ -129,7 +129,7 @@ int osMemPoolFreePage(OsMemPool *memPool, void *page)
                 osAssert(mask > 0);
                 if (mask > 0)
                 {
-                    osInsertToSingleList(&memPool->pageList, page);
+                    osInsertToSingleList(&memPool->pageList, (OsSingleListNode *)page);
                     mask = ~mask;
                     memPool->bitmap[i] &= mask;
                     memPool->freePageNum++;

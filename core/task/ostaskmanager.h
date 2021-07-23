@@ -26,7 +26,7 @@ typedef struct OsTask
         OsListNode listNode;
         OsTreeNode treeNode;
     } exNode;
-    char name[TASK_MAX_NAME_LEN];
+    char name[OS_TASK_MAX_NAME_LEN];
     os_tid_t tid;
     struct OsTask *parent;
     struct OsTask *children;
@@ -67,7 +67,7 @@ int osTaskManagerInit(OsTaskManager *taskManager, os_size_t clockPeriod);
 * tid：任务tid
 * taskFunction：任务处理函数
 * arg：传给任务的参数
-* name：任务名称，最大长度为TASK_MAX_NAME_LEN
+* name：任务名称，最大长度为OS_TASK_MAX_NAME_LEN
 * taskType：OS_TASK_TYPE_RT为实时任务，OS_TASK_TYPE_DT为分时任务
 * priority：实时任务优先级范围0-63，分时任务优先级范围为0-39
 * stackSize：任务堆栈大小

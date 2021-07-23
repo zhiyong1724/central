@@ -14,20 +14,24 @@
 static OsTaskManager sTaskManager;
 static OsSemaphoreManager sSemaphoreManager;
 static OsQueueManager sQueueManager;
+#if OS_USE_VFS
 static OsVFS sVFS;
+#endif
 os_size_t osMemInit(void *startAddress, os_size_t size);
 int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod);
 int osSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *taskManager);
 int osQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager);
+#if OS_USE_VFS
 int osFInit(OsVFS *vfs);
+#endif
 int osInit()
 {
     centralLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    if (osMemInit(HEAP_ADDRESS, HEAP_SIZE) == 0)
+    if (osMemInit(OS_HEAP_ADDRESS, OS_HEAP_SIZE) == 0)
     {
         return -1;
     }
-    if (osTaskInit(&sTaskManager, SYS_CLOCK_PERIOD_NS) != 0)
+    if (osTaskInit(&sTaskManager, OS_SYS_CLOCK_PERIOD_NS) != 0)
     {
         return -2;
     }
@@ -39,10 +43,12 @@ int osInit()
     {
         return -4;
     }
+    #if OS_USE_VFS
     if (osFInit(&sVFS) != 0)
     {
         return -5;
     }
+    #endif
     return 0;
 }
 

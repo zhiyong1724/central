@@ -26,7 +26,7 @@ int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (0 == stackSize)
     {
-        stackSize = DEFAULT_TASK_STACK_SIZE;
+        stackSize = OS_DEFAULT_TASK_STACK_SIZE;
     }
     os_size_t state = portDisableInterrupts();
     int ret = osTaskManagerCreateTask(sTaskManager, tid, taskFunction, arg, name, OS_TASK_TYPE_DT, priority, stackSize);
@@ -39,7 +39,7 @@ int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const ch
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (0 == stackSize)
     {
-        stackSize = DEFAULT_TASK_STACK_SIZE;
+        stackSize = OS_DEFAULT_TASK_STACK_SIZE;
     }
     os_size_t state = portDisableInterrupts();
     int ret = osTaskManagerCreateTask(sTaskManager, tid, taskFunction, arg, name, OS_TASK_TYPE_RT, priority, stackSize);

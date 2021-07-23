@@ -26,7 +26,7 @@ typedef struct OsPageHeader
 os_size_t osMemManagerInit(OsMemManager *memManager, void *startAddress, os_size_t size)
 {
 	memManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	memManager->totalMem = osBuddyInit(&memManager->pageFactory, startAddress, size) * BUDDY_PAGE_SIZE;
+	memManager->totalMem = osBuddyInit(&memManager->pageFactory, startAddress, size) * OS_BUDDY_PAGE_SIZE;
 	memManager->freeMem = memManager->totalMem;
 	memManager->root = NULL;
 	return memManager->freeMem;
@@ -131,7 +131,7 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size)
 					memManager->freeMem -= size;
 					OsPageHeader *pageHeader = (OsPageHeader *)memBlock->header.header;
 					pageHeader->usedMem += size;
-					ret = blockToMem(splitBlock(memManager, memBlock, size));
+					ret = blockToMem((OsMemBlock *)splitBlock(memManager, memBlock, size));
 				}
 				else
 				{
@@ -146,7 +146,7 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size)
 				os_size_t pageCount = 1;
 				for (os_size_t i = 0; i < memManager->pageFactory.groupCount; i++)
 				{
-					if (size + sizeof(OsPageHeader) <= pageCount * BUDDY_PAGE_SIZE)
+					if (size + sizeof(OsPageHeader) <= pageCount * OS_BUDDY_PAGE_SIZE)
 					{
 						break;
 					}
@@ -161,14 +161,14 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size)
 					memManager->freeMem -= sizeof(OsPageHeader);
 					OsMemBlock *memBlock = (OsMemBlock *)buddyPage;
 					memBlock->header.header = pageHeader;
-					memBlock->header.size = pageCount * BUDDY_PAGE_SIZE - sizeof(OsPageHeader);
+					memBlock->header.size = pageCount * OS_BUDDY_PAGE_SIZE - sizeof(OsPageHeader);
 					pageHeader->totalMem = memBlock->header.size;
 					if (memBlock->header.size >= size + sizeof(OsMemBlock))
 					{
 						memManager->freeMem -= size;
 						OsPageHeader *pageHeader = (OsPageHeader *)memBlock->header.header;
 						pageHeader->usedMem += size;
-						ret = blockToMem(splitBlock(memManager, memBlock, size));
+						ret = blockToMem((OsMemBlock *)splitBlock(memManager, memBlock, size));
 					}
 					else
 					{
@@ -211,10 +211,10 @@ int osMemManagerFree(OsMemManager *memManager, void *address)
 	osAssert(address >= memManager->pageFactory.startAddress);
 	if (address >= memManager->pageFactory.startAddress)
 	{
-		osAssert((address - memManager->pageFactory.startAddress) / BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
-		if ((address - memManager->pageFactory.startAddress) / BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
+		osAssert(((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
+		if (((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
 		{
-			os_size_t offset = (address - memManager->pageFactory.startAddress) % BUDDY_PAGE_SIZE;
+			os_size_t offset = ((char *)address - (char *)memManager->pageFactory.startAddress) % (os_size_t)OS_BUDDY_PAGE_SIZE;
 			osAssert(offset > 0);
 			if (offset > 0)
 			{

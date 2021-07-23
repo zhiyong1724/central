@@ -10,10 +10,10 @@
 int osRtSchedulerInit(OsRtScheduler *rtScheduler, os_size_t clockPeriod)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osMemSet(rtScheduler->readyTaskTable, 0xff, RTSCHED_MAX_PRIORITY / 8);
+    osMemSet(rtScheduler->readyTaskTable, 0xff, OS_RTSCHED_MAX_PRIORITY / 8);
     rtScheduler->readyGroupTable = 0xff;
     rtScheduler->interval = 0;
-    for (os_size_t i = 0; i < RTSCHED_MAX_PRIORITY; i++)
+    for (os_size_t i = 0; i < OS_RTSCHED_MAX_PRIORITY; i++)
     {
         rtScheduler->taskListArray[i] = NULL;
     }
@@ -74,7 +74,7 @@ OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler)
     if (rtScheduler->taskCount > 0)
     {
         rtScheduler->interval += rtScheduler->clockPeriod;
-        if (rtScheduler->interval >= RTSCHED_MIN_SWITCH_INTERVAL_NS)
+        if (rtScheduler->interval >= OS_RTSCHED_MIN_SWITCH_INTERVAL_NS)
         {
             if (0 == rtScheduler->skipTick)
             {
@@ -97,8 +97,8 @@ int osRtSchedulerAddTask(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTas
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osAssert(rtTaskControlBlock->priority < RTSCHED_MAX_PRIORITY);
-    if (rtTaskControlBlock->priority < RTSCHED_MAX_PRIORITY)
+    osAssert(rtTaskControlBlock->priority < OS_RTSCHED_MAX_PRIORITY);
+    if (rtTaskControlBlock->priority < OS_RTSCHED_MAX_PRIORITY)
     {
         setBitmap(rtScheduler, rtTaskControlBlock->priority, 0);
         osInsertToBack(&rtScheduler->taskListArray[rtTaskControlBlock->priority], &rtTaskControlBlock->node);
@@ -145,8 +145,8 @@ int osRtSchedulerModifyPriority(OsRtScheduler *rtScheduler, OsRtTaskControlBlock
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    osAssert(priority < RTSCHED_MAX_PRIORITY);
-    if (priority < RTSCHED_MAX_PRIORITY)
+    osAssert(priority < OS_RTSCHED_MAX_PRIORITY);
+    if (priority < OS_RTSCHED_MAX_PRIORITY)
     {
         osRemoveFromList(&rtScheduler->taskListArray[rtTaskControlBlock->priority], &rtTaskControlBlock->node);
         if (NULL == rtScheduler->taskListArray[rtTaskControlBlock->priority])

@@ -6,6 +6,7 @@
 #else
 #define fLog(format, ...) (void)0
 #endif
+#if OS_USE_VFS
 static OsVFS *sVFS;
 OsFileError osFInit(OsVFS *vfs)
 {
@@ -133,3 +134,28 @@ OsFileError osFStatfs(const char *path, OsFS *fs)
     fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osVFSStatfs(sVFS, path, fs);
 }
+
+OsFileError osFMount(const char *path, const char *drive)
+{
+    fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osVFSMount(sVFS, path, drive);
+}
+
+OsFileError osFUnmount(const char *path)
+{
+    fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osVFSUnmount(sVFS, path);
+}
+
+OsFileError osFChdir(const char *path)
+{
+    fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osVFSChdir(sVFS, path);
+}
+
+const char *osFGetcwd()
+{
+    fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osVFSGetcwd(sVFS);
+}
+#endif

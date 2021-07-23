@@ -38,7 +38,7 @@ int osSemaphoreCreateStatic(os_semaphore_h semaphore, os_size_t count, os_size_t
     int ret = -1;
     if (0 == maxCount)
     {
-        maxCount = MAX_SEMAPHORE_COUNT;
+        maxCount = OS_MAX_SEMAPHORE_COUNT;
     }
     ret = osSemaphoreManagerSemaphoreInit(sSemaphoreManager, semaphore, count, maxCount);
     return ret;

@@ -37,8 +37,8 @@ typedef struct OsTaskControlBlock
 
 typedef struct OsVScheduler
 {
-    void *schedulers[MAX_SCHEDULER_COUNT];
-    OsSchedulerInterfaces schedulerInterfaces[MAX_SCHEDULER_COUNT];
+    void *schedulers[OS_MAX_SCHEDULER_COUNT];
+    OsSchedulerInterfaces schedulerInterfaces[OS_MAX_SCHEDULER_COUNT];
     os_size_t schedulerCount;
     os_size_t clockPeriod;
     OsListNode *suspendedList;

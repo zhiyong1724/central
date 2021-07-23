@@ -8,7 +8,7 @@
 int osVSchedulerInit(OsVScheduler *vScheduler, os_size_t clockPeriod)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    for (os_size_t i = 0; i < MAX_SCHEDULER_COUNT; i++)
+    for (os_size_t i = 0; i < OS_MAX_SCHEDULER_COUNT; i++)
     {
         vScheduler->schedulers[i] = NULL;
     }
@@ -34,8 +34,8 @@ int osTaskControlBlockInit(OsVScheduler *vScheduler, OsTaskControlBlock *taskCon
 int osVSchedulerAddScheduler(OsVScheduler *vScheduler, void *scheduler, OsSchedulerInterfaces *schedulerInterfaces)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osAssert(vScheduler->schedulerCount < MAX_SCHEDULER_COUNT);
-    if (vScheduler->schedulerCount < MAX_SCHEDULER_COUNT)
+    osAssert(vScheduler->schedulerCount < OS_MAX_SCHEDULER_COUNT);
+    if (vScheduler->schedulerCount < OS_MAX_SCHEDULER_COUNT)
     {
         vScheduler->schedulers[vScheduler->schedulerCount] = scheduler;
         vScheduler->schedulerInterfaces[vScheduler->schedulerCount] = *schedulerInterfaces;
@@ -48,8 +48,8 @@ int osVSchedulerAddScheduler(OsVScheduler *vScheduler, void *scheduler, OsSchedu
 int osVSchedulerAddTask(OsVScheduler *vScheduler, OsTaskControlBlock *taskControlBlock)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osAssert(taskControlBlock->schedulerId < MAX_SCHEDULER_COUNT);
-    if (taskControlBlock->schedulerId < MAX_SCHEDULER_COUNT)
+    osAssert(taskControlBlock->schedulerId < OS_MAX_SCHEDULER_COUNT);
+    if (taskControlBlock->schedulerId < OS_MAX_SCHEDULER_COUNT)
     {
         if (NULL == vScheduler->runningTask)
         {
@@ -64,8 +64,8 @@ int osVSchedulerAddTask(OsVScheduler *vScheduler, OsTaskControlBlock *taskContro
 int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *taskControlBlock, os_size_t priority)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osAssert(vScheduler->schedulerCount < MAX_SCHEDULER_COUNT);
-    if (taskControlBlock->schedulerId < MAX_SCHEDULER_COUNT)
+    osAssert(vScheduler->schedulerCount < OS_MAX_SCHEDULER_COUNT);
+    if (taskControlBlock->schedulerId < OS_MAX_SCHEDULER_COUNT)
     {
         return vScheduler->schedulerInterfaces[taskControlBlock->schedulerId].modifyPriority(vScheduler->schedulers[taskControlBlock->schedulerId], taskControlBlock + 1, priority);
     }

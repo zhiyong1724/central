@@ -39,7 +39,7 @@ static os_byte_t *fillBlockArray(OsBuddy *buddy, os_byte_t *address, os_size_t b
     for (; buddy->totalPageNum - buddy->freePageNum >= pageCount; buddy->freePageNum += pageCount)
     {
         osInsertToFront(&buddy->blockListArray[blockArrayId], (OsListNode *)address);
-        address += pageCount * BUDDY_PAGE_SIZE;
+        address += pageCount * OS_BUDDY_PAGE_SIZE;
     }
     return address;
 }
@@ -48,7 +48,7 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     buddy->freePageNum = 0;
-    buddy->totalPageNum = size / BUDDY_PAGE_SIZE;
+    buddy->totalPageNum = size / OS_BUDDY_PAGE_SIZE;
     osAssert(buddy->totalPageNum >= 2);
     if (buddy->totalPageNum >= 2)
     {
@@ -67,7 +67,7 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
         buddy->startAddress = blockListArrayStart + offset;
         size -= offset;
 
-        buddy->totalPageNum = size / BUDDY_PAGE_SIZE;
+        buddy->totalPageNum = size / OS_BUDDY_PAGE_SIZE;
         osAssert(buddy->totalPageNum >= 2);
         if (buddy->totalPageNum >= 2)
         {
@@ -89,14 +89,14 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
 static void setBlockGroup(OsBuddy *buddy, void *address, os_byte_t value)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t index = (address - buddy->startAddress) / BUDDY_PAGE_SIZE;
+    os_size_t index = ((char *)address - (char *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE;
     buddy->blockGroup[index] = value;
 }
 
 static os_byte_t getBlockGroup(OsBuddy *buddy, void *address)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t index = (address - buddy->startAddress) / BUDDY_PAGE_SIZE;
+    os_size_t index = ((char *)address - (char *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE;
     return buddy->blockGroup[index];
 }
 
@@ -105,7 +105,7 @@ static void *splitBlock(OsBuddy *buddy, void *address, os_size_t groupId)
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     setBlockGroup(buddy, address, (os_byte_t)groupId);
     os_byte_t *blockB = (os_byte_t *)address;
-    blockB += (1 << (groupId - 1)) * BUDDY_PAGE_SIZE;
+    blockB += (1 << (groupId - 1)) * OS_BUDDY_PAGE_SIZE;
     setBlockGroup(buddy, blockB, (os_byte_t)groupId * -1);
     osInsertToFront(&buddy->blockListArray[groupId - 1], (OsListNode *)blockB);
     return address;
@@ -171,13 +171,13 @@ static os_size_t mergeBlock(OsBuddy *buddy, void *pages, os_size_t groupId)
         os_byte_t *blockA;
         os_byte_t *blockB;
         os_byte_t *buddyBlock;
-        os_size_t blockSize = BUDDY_PAGE_SIZE * (1 << groupId);
-        if (0 == (pages - buddy->startAddress) % (blockSize << 1))
+        os_size_t blockSize = OS_BUDDY_PAGE_SIZE * (1 << groupId);
+        if (0 == ((char *)pages - (char *)buddy->startAddress) % (blockSize << 1))
         {
             blockA = (os_byte_t *)pages;
             blockB = blockA + blockSize;
             buddyBlock = blockB;
-            if (blockB + blockSize >= (os_byte_t *)buddy->startAddress + buddy->totalPageNum * BUDDY_PAGE_SIZE)
+            if (blockB + blockSize >= (os_byte_t *)buddy->startAddress + buddy->totalPageNum * OS_BUDDY_PAGE_SIZE)
             {
                 return ret;
             }
@@ -220,11 +220,11 @@ int osBuddyFreePages(OsBuddy *buddy, void *pages)
     osAssert(pages >= buddy->startAddress);
     if (pages >= buddy->startAddress)
     {
-        osAssert(0 == (pages - buddy->startAddress) % BUDDY_PAGE_SIZE);
-        if (0 == (pages - buddy->startAddress) % BUDDY_PAGE_SIZE)
+        osAssert(0 == ((char *)pages - (char *)buddy->startAddress) % OS_BUDDY_PAGE_SIZE);
+        if (0 == ((char *)pages - (char *)buddy->startAddress) % OS_BUDDY_PAGE_SIZE)
         {
-            osAssert((pages - buddy->startAddress) / BUDDY_PAGE_SIZE < buddy->totalPageNum);
-            if ((pages - buddy->startAddress) / BUDDY_PAGE_SIZE < buddy->totalPageNum)
+            //osAssert(((unsigned int *)pages - (unsigned int *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE < buddy->totalPageNum);
+            if (((char *)pages - (char *)buddy->startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < buddy->totalPageNum)
             {
                 os_size_t blockGroup = getBlockGroup(buddy, pages);
                 osAssert(blockGroup > 0 && blockGroup <= buddy->groupCount);

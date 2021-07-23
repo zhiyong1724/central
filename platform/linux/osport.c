@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include "osplatformdef.h"
-char _heap[HEAP_SIZE];
+char _heap[OS_HEAP_SIZE];
 typedef struct thread_t
 {
     pthread_t thread;

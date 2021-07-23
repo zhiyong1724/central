@@ -2,10 +2,12 @@
 #define __OSF_H__
 #include <stdint.h>
 #include "osdefine.h"
+#include "oslist.h"
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+#if OS_USE_VFS
 #define OS_FILE_ATTR_OWNER_READ                0x00000100
 #define OS_FILE_ATTR_OWNER_WRITE               0x00000080
 #define OS_FILE_ATTR_OWNER_EXE                 0x00000040
@@ -42,6 +44,7 @@ typedef enum OsFileError
     OS_FILE_ERROR_INVALID_OBJECT,
     OS_FILE_ERROR_DENIED,
     OS_FILE_ERROR_INVALID_PARAMETER,
+    OS_FILE_ERROR_PATH_TOO_LONG,
     OS_FILE_ERROR_OTHER,
 } OsFileError;
 
@@ -76,24 +79,35 @@ typedef struct OsFileInfo
     OsFileTime createTime;
     OsFileTime changeTime;
     OsFileTime accessTime;
-    char name[MAX_FILE_NAME_LENGTH];
+    char name[OS_MAX_FILE_NAME_LENGTH];
     uint64_t fileSize;
 } OsFileInfo;
 
 typedef struct OsFile
 {
     void *obj;
+    void *mountInfo;
 } OsFile;
 
 typedef struct OsDir
 {
     void *obj;
+    void *mountInfo;
 } OsDir;
+
+typedef struct OsMountInfo
+{
+    OsListNode node;
+    void *obj;
+    char *path;
+    char *drive;
+    uint32_t fs;
+} OsMountInfo;
 
 typedef struct OsFS
 {
-    char type[MAX_FILE_NAME_LENGTH];
-    char path[MAX_FILE_PATH_LENGTH];
+    char type[OS_MAX_FILE_NAME_LENGTH];
+    char path[OS_MAX_FILE_PATH_LENGTH];
     uint64_t pageSize;
     uint64_t freePages;
     uint64_t totalPages;
@@ -120,6 +134,8 @@ typedef struct OsFSInterfaces
     OsFileError (*chmod)(const char *path, uint32_t attr, uint32_t mask);
     OsFileError (*chdrive)(const char *path);
     OsFileError (*statfs)(const char *path, OsFS *fs);
+    OsFileError (*mount)(OsMountInfo *mountInfo);
+    OsFileError (*unmount)(OsMountInfo *mountInfo);
 } OsFSInterfaces;
 
 /*********************************************************************************************************************
@@ -264,6 +280,31 @@ OsFileError osFChdrive(const char *path);
 * return：OsFileError
 *********************************************************************************************************************/
 OsFileError osFStatfs(const char *path, OsFS *fs);
+/*********************************************************************************************************************
+* 挂载文件系统
+* path：挂载路径
+* drive：驱动
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osFMount(const char *path, const char *drive);
+/*********************************************************************************************************************
+* 卸载文件系统
+* path：挂载路径
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osFUnmount(const char *path);
+/*********************************************************************************************************************
+* 修改当前路径
+* path：当前路径
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osFChdir(const char *path);
+/*********************************************************************************************************************
+* 获取当前路径
+* return：获取当前路径
+*********************************************************************************************************************/
+const char *osFGetcwd();
+#endif
 #ifdef __cplusplus
 }
 #endif
