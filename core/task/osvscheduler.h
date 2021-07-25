@@ -32,7 +32,7 @@ typedef struct OsTaskControlBlock
     } node;
     OsTaskState taskState;
     os_size_t schedulerId;
-    os_size_t sleepTime;
+    uint64_t sleepTime;
 } OsTaskControlBlock;
 
 typedef struct OsVScheduler
@@ -40,11 +40,11 @@ typedef struct OsVScheduler
     void *schedulers[OS_MAX_SCHEDULER_COUNT];
     OsSchedulerInterfaces schedulerInterfaces[OS_MAX_SCHEDULER_COUNT];
     os_size_t schedulerCount;
-    os_size_t clockPeriod;
+    uint64_t clockPeriod;
     OsListNode *suspendedList;
     OsTreeNode *sleepTree;
     OsTaskControlBlock *runningTask;
-    os_size_t minSleepTime;
+    uint64_t minSleepTime;
     OsTaskControlBlock *minSleepTask;
 } OsVScheduler;
 /*********************************************************************************************************************
@@ -53,7 +53,7 @@ typedef struct OsVScheduler
 * clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osVSchedulerInit(OsVScheduler *vScheduler, os_size_t clockPeriod);
+int osVSchedulerInit(OsVScheduler *vScheduler, uint64_t clockPeriod);
 /*********************************************************************************************************************
 * OsTaskControlBlock初始化
 * vScheduler：OsVScheduler对象
@@ -87,9 +87,10 @@ int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *tas
 /*********************************************************************************************************************
 * 时钟滴答
 * osVScheduler：OsVScheduler对象
+* schedulerId：指定使用哪个调度器，如果为OS_MAX_SCHEDULER_COUNT则表示按照顺序调用
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler);
+OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId);
 /*********************************************************************************************************************
 * 挂起一个任务
 * vScheduler：OsVScheduler对象
@@ -110,7 +111,7 @@ OsTaskControlBlock *osVSchedulerResume(OsVScheduler *vScheduler, OsTaskControlBl
 * ns：休眠的时间
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsTaskControlBlock *osVSchedulerSleep(OsVScheduler *vScheduler, os_size_t ns);
+OsTaskControlBlock *osVSchedulerSleep(OsVScheduler *vScheduler, uint64_t ns);
 /*********************************************************************************************************************
 * 唤醒睡眠的任务
 * vScheduler：OsVScheduler对象

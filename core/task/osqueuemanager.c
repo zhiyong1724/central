@@ -136,7 +136,7 @@ static int onCompare(void *key1, void *key2, void *arg)
     }
 }
 
-int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsQueue *queue, os_size_t wait)
+int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsQueue *queue, uint64_t wait)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;

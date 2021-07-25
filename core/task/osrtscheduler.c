@@ -7,7 +7,7 @@
 #else
 #define rtSchedulerLog(format, ...) (void)0
 #endif
-int osRtSchedulerInit(OsRtScheduler *rtScheduler, os_size_t clockPeriod)
+int osRtSchedulerInit(OsRtScheduler *rtScheduler, uint64_t clockPeriod)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMemSet(rtScheduler->readyTaskTable, 0xff, OS_RTSCHED_MAX_PRIORITY / 8);

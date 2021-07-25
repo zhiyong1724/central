@@ -10,19 +10,19 @@ typedef struct OsDtTaskControlBlock
 {
     OsTreeNode node;
     os_size_t priority;
-    os_size_t vRunTime;
+    uint64_t vRunTime;
 } OsDtTaskControlBlock;
 
 typedef struct OsDtScheduler
 {
-    os_size_t interval;
+    uint64_t interval;
     OsTreeNode *taskTree;
     os_size_t taskCount;
-    os_size_t minVRunTime;
+    uint64_t minVRunTime;
     OsDtTaskControlBlock *runningTask;
     os_size_t skipTick;
-    os_size_t clockPeriod;
-    os_size_t switchInterval;
+    uint64_t clockPeriod;
+    uint64_t switchInterval;
 } OsDtScheduler;
 /*********************************************************************************************************************
 * OsDtScheduler初始化
@@ -30,7 +30,7 @@ typedef struct OsDtScheduler
 * clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osDtSchedulerInit(OsDtScheduler *dtScheduler, os_size_t clockPeriod);
+int osDtSchedulerInit(OsDtScheduler *dtScheduler, uint64_t clockPeriod);
 /*********************************************************************************************************************
 * OsDtTaskControlBlock初始化
 * dtTaskControlBlock：OsDtTaskControlBlock对象

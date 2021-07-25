@@ -5,7 +5,7 @@
 #else
 #define vSchedulerLog(format, ...) (void)0
 #endif
-int osVSchedulerInit(OsVScheduler *vScheduler, os_size_t clockPeriod)
+int osVSchedulerInit(OsVScheduler *vScheduler, uint64_t clockPeriod)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     for (os_size_t i = 0; i < OS_MAX_SCHEDULER_COUNT; i++)
@@ -95,18 +95,28 @@ static void sleepTreeTick(OsVScheduler *vScheduler)
     }
 }
 
-OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler)
+OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sleepTreeTick(vScheduler);
-    for (os_size_t i = 0; i < vScheduler->schedulerCount; i++)
+    if (schedulerId < OS_MAX_SCHEDULER_COUNT)
     {
-        vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[i].tick(vScheduler->schedulers[i]);
-        if (vScheduler->runningTask != NULL)
+        vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[schedulerId].tick(vScheduler->schedulers[schedulerId]);
+    }
+    else
+    {
+        for (os_size_t i = 0; i < vScheduler->schedulerCount; i++)
         {
-            vScheduler->runningTask--;
-            break;
+            vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[i].tick(vScheduler->schedulers[i]);
+            if (vScheduler->runningTask != NULL)
+            {
+                break;
+            }
         }
+    }
+    if (vScheduler->runningTask != NULL)
+    {
+        vScheduler->runningTask--;
     }
     return vScheduler->runningTask;
 }
@@ -184,7 +194,7 @@ static int onCompare(void *key1, void *key2, void *arg)
     }
 }
 
-OsTaskControlBlock *osVSchedulerSleep(OsVScheduler *vScheduler, os_size_t ns)
+OsTaskControlBlock *osVSchedulerSleep(OsVScheduler *vScheduler, uint64_t ns)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osAssert(vScheduler->runningTask != NULL);

@@ -17,6 +17,10 @@
 #include "osf.h"
 #include "ff.h"
 #include "fatfsadapter.h"
+#include "lfsadapter.h"
+#include "lfs.h"
+extern const struct lfs_config gLfsConfig;
+extern lfs_t gLFS;
 struct Test
 {
     OsTreeNode node;
@@ -303,6 +307,9 @@ void testMem()
     osInit();
     printf("total mem = %ld\n", osTotalMem());
     printf("total page = %ld\n", osTotalPage());
+
+    printf("free mem = %ld\n", osFreeMem());
+    printf("free page = %ld\n", osFreePage());
     static void *buff[1024 * 1024];
     for (int i = 1; i < 1024; i++)
     {
@@ -904,8 +911,8 @@ void *taskA(void *arg)
     for (;;)
     {
         printf("This is task A\n");
-        printf("时钟周期：%ld\n", osTaskGetClockPeriod());
-        printf("系统滴答：%ld\n", osTaskGetTickCount());
+        printf("时钟周期：%lld\n", osTaskGetClockPeriod());
+        printf("系统滴答：%lld\n", osTaskGetTickCount());
         printf("任务个数：%ld\n", osTaskGetTaskCount());
 
         os_tid_t tid = osTaskGetTid();
@@ -931,9 +938,6 @@ void *taskA(void *arg)
         ret = osTaskGetTaskStackSize(&stackSize, tid);
         printf("任务堆栈大小：%ld\n", stackSize);
 
-        os_size_t tickCount;
-        ret = osTaskGetTaskTickCount(&tickCount, tid);
-        printf("任务滴答：%ld\n", tickCount);
         (void)ret;
         osTaskSleep(1000);
     }
@@ -1033,7 +1037,7 @@ int main()
     // testTree();
     // testBuddy();
     // testMemPool();
-    // testMem();
+    //testMem();
     // testVector();
     // testDtScheduler();
     // testRtScheduler();
@@ -1046,9 +1050,11 @@ int main()
     // osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
     // osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);
     // osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
-    registerFatfs();  
-    f_mkfs("0:", NULL, NULL, 1024);
-    osFMount("/", "0:");
+    registerLFS();
+    registerFatfs(); 
+    lfs_format(&gLFS, &gLfsConfig);
+    f_mkfs("0:", NULL, NULL, FF_MAX_SS);
+    osFMount("/", "RAM");
     shellIOInit();
     osTaskStart();
     return 0;

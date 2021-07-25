@@ -78,7 +78,7 @@ int osSemaphorePost(os_semaphore_h semaphore)
     return ret;
 }
 
-int osSemaphoreWait(os_semaphore_h semaphore, os_size_t wait)
+int osSemaphoreWait(os_semaphore_h semaphore, uint64_t wait)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;

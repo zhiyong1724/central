@@ -1,9 +1,12 @@
 #include "ramio.h"
 #include <time.h>
+#include "lfs.h"
+#include <string.h>
 #define SECTOR_SIZE 512
 #define SECTOR_COUNT 2 * 1024
 static unsigned int sDisk[SECTOR_COUNT * SECTOR_SIZE / sizeof(unsigned int)];
 static unsigned char sInit = 0;
+
 int ramIOInit()
 {
     sInit = 1;
@@ -109,3 +112,56 @@ DWORD get_fattime()
     ret |= (year - 1980) << 25;
     return ret;
 }
+
+#define BLOCK_SIZE 4096
+#define PAGE_SIZE 512
+#define BLOCK_COUNT 256
+static unsigned int sLfsBuffer[BLOCK_COUNT * BLOCK_SIZE / sizeof(unsigned int)];
+static unsigned int sReadBuffer[PAGE_SIZE / sizeof(unsigned int)];
+static unsigned int sProgBuffer[PAGE_SIZE / sizeof(unsigned int)];
+static unsigned int sLookaheadBuffer[PAGE_SIZE / sizeof(unsigned int)];
+static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
+{
+    memcpy(buffer, &sLfsBuffer[block * BLOCK_SIZE + off], size);
+    return LFS_ERR_OK;
+}
+
+static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
+{
+    memcpy(&sLfsBuffer[block * BLOCK_SIZE + off], buffer, size);
+    return LFS_ERR_OK;
+}
+
+static int erase(const struct lfs_config *c, lfs_block_t block)
+{
+    return LFS_ERR_OK;
+}
+
+static int sync(const struct lfs_config *c)
+{
+    return LFS_ERR_OK;
+}
+
+const struct lfs_config gLfsConfig =
+{
+    .read = read,
+    .prog = prog,
+    .erase = erase,
+    .sync = sync,
+    .read_size = PAGE_SIZE,
+    .prog_size = PAGE_SIZE,
+    .block_size = BLOCK_SIZE,
+    .block_count = BLOCK_COUNT,
+    .block_cycles = 100,
+    .cache_size = PAGE_SIZE,
+    .lookahead_size = PAGE_SIZE,
+    .read_buffer = sReadBuffer,
+    .prog_buffer = sProgBuffer,
+    .lookahead_buffer = sLookaheadBuffer,
+    .name_max = 0,
+    .file_max = 0,
+    .attr_max = 0,
+    .metadata_max = 0,
+};
+
+lfs_t gLFS;

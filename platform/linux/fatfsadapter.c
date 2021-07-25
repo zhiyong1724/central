@@ -4,7 +4,7 @@
 #include "osstring.h"
 static OsFileError parseResult(FRESULT result)
 {
-    OsFileError ret = FR_OK;
+    OsFileError ret = OS_FILE_ERROR_OK;
     switch (result)
     {
     case FR_OK:
@@ -55,7 +55,7 @@ static OsFileError parseResult(FRESULT result)
 
 static OsFileError fatfsOpen(OsFile *file, const char *path, uint32_t mode)
 {
-    OsFileError ret = OS_FILE_ERROR_MALLOC_ERR;
+    OsFileError ret = OS_FILE_ERROR_NOMEM;
     file->obj = osMalloc(sizeof(FIL));
     if (file->obj != NULL)
     {
@@ -162,6 +162,17 @@ static OsFileError fatfsSeek(OsFile *file, int64_t offset, OsSeekType whence)
     return ret;
 }
 
+static OsFileError fatfsTell(OsFile *file, uint64_t *offset)
+{
+    OsFileError ret = OS_FILE_ERROR_INVALID_OBJECT;
+    if (file != NULL && file->obj != NULL)
+    {
+        *offset = f_tell((FIL *)file->obj);
+        ret = OS_FILE_ERROR_OK;
+    }
+    return ret;
+}
+
 static OsFileError fatfsTruncate(OsFile *file, uint64_t size)
 {
     OsFileError ret = OS_FILE_ERROR_INVALID_OBJECT;
@@ -189,7 +200,7 @@ static OsFileError fatfsSync(OsFile *file)
 
 static OsFileError fatfsOpenDir(OsDir *dir, const char *path)
 {
-    OsFileError ret = OS_FILE_ERROR_MALLOC_ERR;
+    OsFileError ret = OS_FILE_ERROR_NOMEM;
     dir->obj = osMalloc(sizeof(DIR));
     if (dir->obj != NULL)
     {
@@ -225,6 +236,9 @@ static void parseFileInfo(FILINFO* fno, OsFileInfo *fileInfo)
     if ((fno->fattrib & AM_DIR) > 0)
     {
         fileInfo->type = OS_FILE_TYPE_DIRECTORY;
+    }
+    else
+    {
         fileInfo->type = OS_FILE_TYPE_NORMAL;
     }
     fileInfo->attribute = 0;
@@ -239,7 +253,7 @@ static void parseFileInfo(FILINFO* fno, OsFileInfo *fileInfo)
     OsFileTime time;
     time.day = (uint8_t)(fno->fdate & 0x1f);
     time.month = (uint8_t)(fno->fdate >> 5 & 0x0f);
-    time.year = (uint16_t)(fno->fdate >> 9 & 0x7f);
+    time.year = 1980 + (uint16_t)(fno->fdate >> 9 & 0x7f);
 
     time.second = (uint8_t)(fno->ftime & 0x1f);
     time.minute = (uint8_t)(fno->ftime >> 5 & 0x3f);
@@ -249,7 +263,7 @@ static void parseFileInfo(FILINFO* fno, OsFileInfo *fileInfo)
     fileInfo->changeTime = time;
     fileInfo->accessTime = time;
 
-    osStrCpy(fileInfo->name, (const TCHAR *)fno->fname, OS_MAX_FILE_NAME_LENGTH);
+    osStrCpy(fileInfo->name, (const char *)fno->fname, OS_MAX_FILE_NAME_LENGTH);
     fileInfo->fileSize = (uint64_t)fno->fsize;
 }
 
@@ -271,7 +285,7 @@ static OsFileError fatfsReadDir(OsDir *dir, OsFileInfo *fileInfo)
 
 static OsFileError fatfsFindFirst(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern)
 {
-    OsFileError ret = OS_FILE_ERROR_MALLOC_ERR;
+    OsFileError ret = OS_FILE_ERROR_NOMEM;
     dir->obj = osMalloc(sizeof(DIR));
     if (dir->obj != NULL)
     {
@@ -307,7 +321,7 @@ static OsFileError fatfsFindNext(OsDir *dir, OsFileInfo *fileInfo)
     return ret;
 }
 
-static OsFileError fatfsMkdir(const char *path)
+static OsFileError fatfsMkDir(const char *path)
 {
     FRESULT result = f_mkdir((const TCHAR *)path);
     return parseResult(result);
@@ -337,7 +351,7 @@ static OsFileError fatfsStat(const char *path, OsFileInfo *fileInfo)
     return ret;
 }
 
-static OsFileError fatfsChmod(const char *path, uint32_t attr, uint32_t mask)
+static OsFileError fatfsChMod(const char *path, uint32_t attr, uint32_t mask)
 {
     BYTE fattr = 0;
     BYTE fmask = 0;
@@ -349,21 +363,18 @@ static OsFileError fatfsChmod(const char *path, uint32_t attr, uint32_t mask)
     {
         fattr |= AM_RDO;
     }
-    if ((attr & mask) > 0)
-    {
-        fmask |= AM_RDO;
-    }
+    fmask |= AM_RDO;
     FRESULT result = f_chmod((const TCHAR *)path, fattr, fmask);
     return parseResult(result);
 }
 
-static OsFileError fatfsChdrive(const char *path)
+static OsFileError fatfsChDrive(const char *path)
 {
     FRESULT result = f_chdrive((const TCHAR *)path);
     return parseResult(result);
 }
 
-static OsFileError fatfsStatfs(const char *path, OsFS *fs)
+static OsFileError fatfsStatFS(const char *path, OsFS *fs)
 {
     DWORD nclst;
     FATFS *fatfs;
@@ -389,17 +400,16 @@ static OsFileError fatfsStatfs(const char *path, OsFS *fs)
             osStrCpy(fs->type, "", OS_MAX_FILE_NAME_LENGTH);
             break;
         }
-        osStrCpy(fs->path, "/", OS_MAX_FILE_NAME_LENGTH);
-        fs->pageSize = (uint64_t)fatfs->csize;
+        fs->pageSize = (uint32_t)fatfs->ssize;
         fs->freePages = (uint64_t)nclst;
-        fs->totalPages = (uint64_t)fatfs->fsize;
+        fs->totalPages = (uint64_t)fatfs->n_fatent - 2;
     }
     return ret;
 }
 
 OsFileError fatfsMount(OsMountInfo *mountInfo)
 {
-    OsFileError ret = OS_FILE_ERROR_MALLOC_ERR;
+    OsFileError ret = OS_FILE_ERROR_NOMEM;
     FATFS *fatfs = (FATFS *)osMalloc(sizeof(FATFS));
     if (fatfs != NULL)
     {
@@ -430,6 +440,7 @@ OsFileError registerFatfs()
     fsInterfaces.read = fatfsRead;
     fsInterfaces.write = fatfsWrite;
     fsInterfaces.seek = fatfsSeek;
+    fsInterfaces.tell = fatfsTell;
     fsInterfaces.truncate = fatfsTruncate;
     fsInterfaces.sync = fatfsSync;
     fsInterfaces.openDir = fatfsOpenDir;
@@ -437,13 +448,13 @@ OsFileError registerFatfs()
     fsInterfaces.readDir = fatfsReadDir;
     fsInterfaces.findFirst = fatfsFindFirst;
     fsInterfaces.findNext = fatfsFindNext;
-    fsInterfaces.mkdir = fatfsMkdir;
+    fsInterfaces.mkDir = fatfsMkDir;
     fsInterfaces.unlink = fatfsUnlink;
     fsInterfaces.rename = fatfsRename;
     fsInterfaces.stat = fatfsStat;
-    fsInterfaces.chmod = fatfsChmod;
-    fsInterfaces.chdrive = fatfsChdrive;
-    fsInterfaces.statfs = fatfsStatfs;
+    fsInterfaces.chMod = fatfsChMod;
+    fsInterfaces.chDrive = fatfsChDrive;
+    fsInterfaces.statFS = fatfsStatFS;
     fsInterfaces.mount = fatfsMount;
     fsInterfaces.unmount = fatfsUnmount;
     return osFAddFS(&fsInterfaces);

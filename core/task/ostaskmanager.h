@@ -38,7 +38,6 @@ typedef struct OsTask
     TaskFunction taskFunction;
     void *arg;
     os_tid_t waitTid;
-    os_size_t tickCount;
 } OsTask;
 
 typedef struct OsTaskManager
@@ -52,7 +51,9 @@ typedef struct OsTaskManager
     os_size_t taskCount;
     OsTask *deleteTaskList;
     OsTask *initTask;
-    os_size_t tickCount;
+    uint64_t tickCount;
+    os_size_t cpuUsage;
+    uint64_t idleTaskTickCount;
 } OsTaskManager;
 /*********************************************************************************************************************
 * OsTaskManager初始化
@@ -60,7 +61,7 @@ typedef struct OsTaskManager
 * clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osTaskManagerInit(OsTaskManager *taskManager, os_size_t clockPeriod);
+int osTaskManagerInit(OsTaskManager *taskManager, uint64_t clockPeriod);
 /*********************************************************************************************************************
 * 创建任务
 * taskManager：OsTaskManager对象
@@ -96,7 +97,7 @@ int osTaskManagerModifyPriority(OsTaskManager *taskManager, os_tid_t tid, os_siz
 * ns：休眠的时间
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerSleep(OsTaskManager *taskManager, OsTask **nextTask, os_size_t ns);
+int osTaskManagerSleep(OsTaskManager *taskManager, OsTask **nextTask, uint64_t ns);
 /*********************************************************************************************************************
 * 唤醒睡眠的任务
 * taskManager：OsTaskManager对象
@@ -148,13 +149,13 @@ int osTaskManagerDetach(OsTaskManager *taskManager, os_tid_t tid);
 * taskManager：OsTaskManager对象
 * return：系统ticks
 *********************************************************************************************************************/
-os_size_t osTaskManagerGetTickCount(OsTaskManager *taskManager);
+uint64_t osTaskManagerGetTickCount(OsTaskManager *taskManager);
 /*********************************************************************************************************************
 * 获取时钟周期 ns
 * taskManager：OsTaskManager对象
 * return：时钟周期
 *********************************************************************************************************************/
-os_size_t osTaskManagerGetClockPeriod(OsTaskManager *taskManager);
+uint64_t osTaskManagerGetClockPeriod(OsTaskManager *taskManager);
 /*********************************************************************************************************************
 * 获取任务个数
 * taskManager：OsTaskManager对象
@@ -209,14 +210,6 @@ int osTaskManagerGetTaskName(OsTaskManager *taskManager, char *name, os_size_t s
 *********************************************************************************************************************/
 int osTaskManagerGetTaskStackSize(OsTaskManager *taskManager, os_size_t *stackSize, os_tid_t tid);
 /*********************************************************************************************************************
-* 获取任务ticks
-* taskManager：OsTaskManager对象
-* tickCount：任务ticks
-* tid：任务tid
-* return：0：调用成功
-*********************************************************************************************************************/
-int osTaskManagerGetTaskTickCount(OsTaskManager *taskManager, os_size_t *tickCount, os_tid_t tid);
-/*********************************************************************************************************************
 * 返回任务是否为joinable
 * taskManager：OsTaskManager对象
 * tid：任务tid
@@ -229,6 +222,12 @@ int osTaskManagerJoinable(OsTaskManager *taskManager, os_tid_t tid);
 * return：当前任务
 *********************************************************************************************************************/
 OsTask *osTaskManagerGetRunningTask(OsTaskManager *taskManager);
+/*********************************************************************************************************************
+* 获取cpu占用
+* taskManager：OsTaskManager对象
+* return：cpu占用
+*********************************************************************************************************************/
+os_size_t osTaskManagerGetCPUUsage(OsTaskManager *taskManager);
 #ifdef __cplusplus
 }
 #endif

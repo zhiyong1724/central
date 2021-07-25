@@ -73,6 +73,14 @@ OsFileError osVFSWrite(OsVFS *vfs, OsFile *file, const void *buff, uint64_t size
 *********************************************************************************************************************/
 OsFileError osVFSSeek(OsVFS *vfs, OsFile *file, int64_t offset, OsSeekType whence);
 /*********************************************************************************************************************
+* 获取当前文件偏移
+* vfs：虚拟文件系统对象
+* file：打开的文件对象
+* offset：偏移大小
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osVFSTell(OsVFS *vfs, OsFile *file, uint64_t *offset);
+/*********************************************************************************************************************
 * 截断文件
 * vfs：虚拟文件系统对象
 * file：打开的文件对象
@@ -134,7 +142,7 @@ OsFileError osVFSFindNext(OsVFS *vfs, OsDir *dir, OsFileInfo *fileInfo);
 * path：目录的路径
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osVFSMkdir(OsVFS *vfs, const char *path);
+OsFileError osVFSMkDir(OsVFS *vfs, const char *path);
 /*********************************************************************************************************************
 * 删除目录或文件
 * vfs：虚拟文件系统对象
@@ -166,14 +174,7 @@ OsFileError osVFSStat(OsVFS *vfs, const char *path, OsFileInfo *fileInfo);
 * mask：要修改的权限信息掩码
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osVFSChmod(OsVFS *vfs, const char *path, uint32_t attr, uint32_t mask);
-/*********************************************************************************************************************
-* 修改驱动路径
-* vfs：虚拟文件系统对象
-* path：驱动路径
-* return：OsFileError
-*********************************************************************************************************************/
-OsFileError osVFSChdrive(OsVFS *vfs, const char *path);
+OsFileError osVFSChMod(OsVFS *vfs, const char *path, uint32_t attr, uint32_t mask);
 /*********************************************************************************************************************
 * 获取文件系统信息
 * vfs：虚拟文件系统对象
@@ -181,7 +182,7 @@ OsFileError osVFSChdrive(OsVFS *vfs, const char *path);
 * fs：文件系统信息
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osVFSStatfs(OsVFS *vfs, const char *path, OsFS *fs);
+OsFileError osVFSStatFS(OsVFS *vfs, const char *path, OsFS *fs);
 /*********************************************************************************************************************
 * 挂载文件系统
 * vfs：虚拟文件系统对象
@@ -203,13 +204,22 @@ OsFileError osVFSUnmount(OsVFS *vfs, const char *path);
 * path：当前路径
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osVFSChdir(OsVFS *vfs, const char *path);
+OsFileError osVFSChDir(OsVFS *vfs, const char *path);
 /*********************************************************************************************************************
 * 获取当前路径
 * vfs：虚拟文件系统对象
-* return：获取当前路径
+* buffer：指向内容返回空间
+* size：buffer大小
+* return：OsFileError
 *********************************************************************************************************************/
-const char *osVFSGetcwd(OsVFS *vfs);
+OsFileError osVFSGetCWD(OsVFS *vfs, char *buffer, uint32_t size);
+/*********************************************************************************************************************
+* 获取挂载信息
+* vfs：虚拟文件系统对象
+* mountInfo：指向内容的指针地址,第一次调用必须指向NULL，返回NULL指针表示轮询完毕
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osVFSGetMountInfo(OsVFS *vfs, const OsMountInfo **mountInfo);
 #endif
 #ifdef __cplusplus
 }

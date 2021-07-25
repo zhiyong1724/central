@@ -17,12 +17,12 @@ typedef struct OsRtScheduler
 {
     os_byte_t readyTaskTable[OS_RTSCHED_MAX_PRIORITY / 8];
     os_byte_t readyGroupTable;
-    os_size_t interval;
+    uint64_t interval;
     OsListNode *taskListArray[OS_RTSCHED_MAX_PRIORITY];
     os_size_t taskCount;
     OsRtTaskControlBlock *runningTask;
     os_size_t skipTick;
-    os_size_t clockPeriod;
+    uint64_t clockPeriod;
 } OsRtScheduler;
 /*********************************************************************************************************************
 * OsRtScheduler初始化
@@ -30,7 +30,7 @@ typedef struct OsRtScheduler
 * clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osRtSchedulerInit(OsRtScheduler *rtScheduler, os_size_t clockPeriod);
+int osRtSchedulerInit(OsRtScheduler *rtScheduler, uint64_t clockPeriod);
 /*********************************************************************************************************************
 * OsRtTaskControlBlock初始化
 * rtScheduler：OsRtScheduler对象

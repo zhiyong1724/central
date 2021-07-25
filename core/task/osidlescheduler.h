@@ -20,7 +20,7 @@ typedef struct OsIdleScheduler
 * clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osIdleSchedulerInit(OsIdleScheduler *idleScheduler, os_size_t clockPeriod);
+int osIdleSchedulerInit(OsIdleScheduler *idleScheduler, uint64_t clockPeriod);
 /*********************************************************************************************************************
 * OsIdleTaskControlBlock初始化
 * idleTaskControlBlock：OsIdleTaskControlBlock对象

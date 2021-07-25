@@ -54,7 +54,7 @@ int osQueueSendToFront(os_queue_t queue, void *message);
 * wait：等待时间，0表示马上返回，OS_MESSAGE_MAX_WAIT_TIME表示永久等待
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueReceive(void *message, os_queue_t queue, os_size_t wait);
+int osQueueReceive(void *message, os_queue_t queue, uint64_t wait);
 /*********************************************************************************************************************
 * 获取消息数量
 * queue：OsQueue对象

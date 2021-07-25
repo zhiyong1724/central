@@ -67,7 +67,7 @@ int osTasModifyPriority(os_tid_t tid, os_size_t priority)
     return ret;
 }
 
-int osTaskSleep(os_size_t ms)
+int osTaskSleep(uint64_t ms)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
@@ -155,13 +155,13 @@ int osTaskDetach(os_tid_t tid)
     return ret;
 }
 
-os_size_t osTaskGetTickCount()
+uint64_t osTaskGetTickCount()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osTaskManagerGetTickCount(sTaskManager);
 }
 
-os_size_t osTaskGetClockPeriod()
+uint64_t osTaskGetClockPeriod()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osTaskManagerGetClockPeriod(sTaskManager);
@@ -227,15 +227,6 @@ int osTaskGetTaskStackSize(os_size_t *stackSize, os_tid_t tid)
     return ret;
 }
 
-int osTaskGetTaskTickCount(os_size_t *tickCount, os_tid_t tid)
-{
-    taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
-    int ret = osTaskManagerGetTaskTickCount(sTaskManager, tickCount, tid);
-    portRecoveryInterrupts(state);
-    return ret;
-}
-
 int osTaskJoinable(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
@@ -252,4 +243,10 @@ OsTask *osTaskGetRunningTask()
     OsTask *task = osTaskManagerGetRunningTask(sTaskManager);
     portRecoveryInterrupts(state);
     return task;
+}
+
+os_size_t osTaskGetCPUUsage()
+{
+    taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return osTaskManagerGetCPUUsage(sTaskManager);
 }

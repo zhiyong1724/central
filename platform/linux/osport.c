@@ -78,7 +78,6 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
         printf("Create thread fail.");
         return -1;
     }
-    pthread_detach(thread->thread);
     return 0;
 }
 

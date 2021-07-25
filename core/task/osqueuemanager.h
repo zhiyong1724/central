@@ -58,7 +58,7 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMe
 * wait：等待时间，0表示马上返回，OS_MESSAGE_MAX_WAIT_TIME表示永久等待
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsQueue *queue, os_size_t wait);
+int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsQueue *queue, uint64_t wait);
 /*********************************************************************************************************************
 * 获取消息数量
 * queueManager：OsQueueManager对象

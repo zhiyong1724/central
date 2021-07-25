@@ -43,7 +43,7 @@ int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsSemaphore *se
 * wait：等待时间，0表示马上返回，OS_SEMAPHORE_MAX_WAIT_TIME表示永久等待
 * return：0：调用成功
 *********************************************************************************************************************/
-int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTask, OsSemaphore *semaphore, os_size_t wait);
+int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTask, OsSemaphore *semaphore, uint64_t wait);
 /*********************************************************************************************************************
 * 获取信号数量
 * semaphoreManager：OsSemaphoreManager对象

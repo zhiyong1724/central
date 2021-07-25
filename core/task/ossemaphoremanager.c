@@ -87,7 +87,7 @@ static int onCompare(void *key1, void *key2, void *arg)
     }
 }
 
-int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTask, OsSemaphore *semaphore, os_size_t wait)
+int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTask, OsSemaphore *semaphore, uint64_t wait)
 {
     semaphoreManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;

@@ -14,6 +14,7 @@ vpath %.c ./core/vfs
 vpath %.c ./third/fatfs
 vpath %.c ./third/fatfs/source
 vpath %.c ./third/letter_shell/src
+vpath %.c ./third/littlefs
 vpath %.o $(OBJ_DIR)
 
 INCLUDES := -I$(FLATFORM_DIR) \
@@ -24,7 +25,8 @@ INCLUDES := -I$(FLATFORM_DIR) \
 	-I./core/vfs \
 	-I./third/fatfs \
 	-I./third/fatfs/source \
-	-I./third/letter_shell/src
+	-I./third/letter_shell/src \
+	-I./third/littlefs
 
 CFLAGS := -Wall -Werror -Wl,-Map=$(MAP_FILE) $(COMPILE_FLAGS)
 
@@ -65,6 +67,9 @@ SRCS := $(SRCS) \
 	shell_companion.c \
 	shell_ext.c \
 	shellio.c \
+	lfs_util.c \
+	lfs.c \
+	lfsadapter.c \
 	main.c
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))

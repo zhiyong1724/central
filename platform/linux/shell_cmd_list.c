@@ -36,6 +36,15 @@ void shellUnmount(int argc, char *argv[]);
 void shellPWD(int argc, char *argv[]);
 void shellCD(int argc, char *argv[]);
 void shellLS(int argc, char *argv[]);
+void shellStatFS(int argc, char *argv[]);
+void shellDF(int argc, char *argv[]);
+void shellFind(int argc, char *argv[]);
+void shellMkDir(int argc, char *argv[]);
+void shellTouch(int argc, char *argv[]);
+void shellChMod(int argc, char *argv[]);
+void shellStat(int argc, char *argv[]);
+void shellMV(int argc, char *argv[]);
+void shellRM(int argc, char *argv[]);
 SHELL_AGENCY_FUNC(shellRun, shellGetCurrent(), (const char *)p1);
 
 
@@ -104,6 +113,24 @@ const ShellCommand shellCommandList[] =
                        cd, shellCD, cd),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        ls, shellLS, ls),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       statfs, shellStatFS, statfs),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       df, shellDF, df),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       find, shellFind, find),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       mkdir, shellMkDir, mkdir),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       touch, shellTouch, touch),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       chmod, shellChMod, chmod),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       stat, shellStat, stat),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       mv, shellMV, mv),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       rm, shellRM, rm),
 };
 
 /**

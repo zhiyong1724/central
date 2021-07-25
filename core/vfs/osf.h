@@ -30,21 +30,27 @@ typedef enum OsFileError
 {
     OS_FILE_ERROR_OK,
     OS_FILE_ERROR_FS_MAX,
-    OS_FILE_ERROR_MALLOC_ERR,
+    OS_FILE_ERROR_NOMEM,
     OS_FILE_ERROR_DISK_ERR,
+    OS_FILE_ERROR_CORRUPT,
     OS_FILE_ERROR_NOT_READY,
     OS_FILE_ERROR_WRITE_PROTECTED,
     OS_FILE_ERROR_INVALID_DRIVE,
     OS_FILE_ERROR_NO_FILESYSTEM,
+    OS_FILE_ERROR_IS_DIR,
+    OS_FILE_ERROR_DIR_NOTEMPTY,
     OS_FILE_ERROR_NO_PAGE,
-    OS_FILE_ERROR_NO_FILE,
     OS_FILE_ERROR_NO_PATH,
+    OS_FILE_ERROR_NO_FILE,
     OS_FILE_ERROR_INVALID_NAME,
     OS_FILE_ERROR_EXIST,
     OS_FILE_ERROR_INVALID_OBJECT,
     OS_FILE_ERROR_DENIED,
     OS_FILE_ERROR_INVALID_PARAMETER,
     OS_FILE_ERROR_PATH_TOO_LONG,
+    OS_FILE_ERROR_FILE_TOO_LARGE,
+    OS_FILE_ERROR_NAME_TOO_LONG,
+    OS_FILE_ERROR_NONSUPPORT,
     OS_FILE_ERROR_OTHER,
 } OsFileError;
 
@@ -107,8 +113,7 @@ typedef struct OsMountInfo
 typedef struct OsFS
 {
     char type[OS_MAX_FILE_NAME_LENGTH];
-    char path[OS_MAX_FILE_PATH_LENGTH];
-    uint64_t pageSize;
+    uint32_t pageSize;
     uint64_t freePages;
     uint64_t totalPages;
 } OsFS;
@@ -120,6 +125,7 @@ typedef struct OsFSInterfaces
     OsFileError (*read)(OsFile *file, void *buff, uint64_t size, uint64_t *length);
     OsFileError (*write)(OsFile *file, const void *buff, uint64_t size, uint64_t *length);
     OsFileError (*seek)(OsFile *file, int64_t offset, OsSeekType whence);
+    OsFileError (*tell)(OsFile *file, uint64_t *offset);
     OsFileError (*truncate)(OsFile *file, uint64_t size);
     OsFileError (*sync)(OsFile *file);
     OsFileError (*openDir)(OsDir *dir, const char *path);
@@ -127,13 +133,13 @@ typedef struct OsFSInterfaces
     OsFileError (*readDir)(OsDir *dir, OsFileInfo *fileInfo);
     OsFileError (*findFirst)(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern);
     OsFileError (*findNext)(OsDir *dir, OsFileInfo *fileInfo);
-    OsFileError (*mkdir)(const char *path);
+    OsFileError (*mkDir)(const char *path);
     OsFileError (*unlink)(const char *path);
     OsFileError (*rename)(const char *oldPath, const char *newPath);
     OsFileError (*stat)(const char *path, OsFileInfo *fileInfo);
-    OsFileError (*chmod)(const char *path, uint32_t attr, uint32_t mask);
-    OsFileError (*chdrive)(const char *path);
-    OsFileError (*statfs)(const char *path, OsFS *fs);
+    OsFileError (*chMod)(const char *path, uint32_t attr, uint32_t mask);
+    OsFileError (*chDrive)(const char *path);
+    OsFileError (*statFS)(const char *path, OsFS *fs);
     OsFileError (*mount)(OsMountInfo *mountInfo);
     OsFileError (*unmount)(OsMountInfo *mountInfo);
 } OsFSInterfaces;
@@ -184,6 +190,13 @@ OsFileError osFWrite(OsFile *file, const void *buff, uint64_t size, uint64_t *le
 * return：OsFileError
 *********************************************************************************************************************/
 OsFileError osFSeek(OsFile *file, int64_t offset, OsSeekType whence);
+/*********************************************************************************************************************
+* 获取当前文件偏移
+* file：打开的文件对象
+* offset：偏移大小
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osFTell(OsFile *file, uint64_t *offset);
 /*********************************************************************************************************************
 * 截断文件
 * file：打开的文件对象
@@ -238,7 +251,7 @@ OsFileError osFFindNext(OsDir *dir, OsFileInfo *fileInfo);
 * path：目录的路径
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osFMkdir(const char *path);
+OsFileError osFMkDir(const char *path);
 /*********************************************************************************************************************
 * 删除目录或文件
 * path：删除文件的路径
@@ -266,20 +279,14 @@ OsFileError osFStat(const char *path, OsFileInfo *fileInfo);
 * mask：要修改的权限信息掩码
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osFChmod(const char *path, uint32_t attr, uint32_t mask);
-/*********************************************************************************************************************
-* 修改驱动路径
-* path：驱动路径
-* return：OsFileError
-*********************************************************************************************************************/
-OsFileError osFChdrive(const char *path);
+OsFileError osFChMod(const char *path, uint32_t attr, uint32_t mask);
 /*********************************************************************************************************************
 * 获取文件系统信息
 * path：驱动路径
 * fs：文件系统信息
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osFStatfs(const char *path, OsFS *fs);
+OsFileError osFStatFS(const char *path, OsFS *fs);
 /*********************************************************************************************************************
 * 挂载文件系统
 * path：挂载路径
@@ -298,12 +305,20 @@ OsFileError osFUnmount(const char *path);
 * path：当前路径
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osFChdir(const char *path);
+OsFileError osFChDir(const char *path);
 /*********************************************************************************************************************
 * 获取当前路径
-* return：获取当前路径
+* buffer：指向内容返回空间
+* size：buffer大小
+* return：OsFileError
 *********************************************************************************************************************/
-const char *osFGetcwd();
+OsFileError osFGetCWD(char *buffer, uint32_t size);
+/*********************************************************************************************************************
+* 获取挂载信息
+* mountInfo：指向内容的指针地址,第一次调用必须指向NULL，返回NULL指针表示轮询完毕
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osFGetMountInfo(const OsMountInfo **mountInfo);
 #endif
 #ifdef __cplusplus
 }

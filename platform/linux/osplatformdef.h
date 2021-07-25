@@ -1,6 +1,7 @@
 #ifndef __OSPLATFORMDEF_H__
 #define __OSPLATFORMDEF_H__
 #include <stdio.h>
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C"
 {

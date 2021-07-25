@@ -16,7 +16,7 @@ static const os_size_t sVRunTimeTable[] =
     5801,  7077,  8634,  10534, 12852, 15679, 19128,  23336,                 //32-39
 };
 
-int osDtSchedulerInit(OsDtScheduler *dtScheduler, os_size_t clockPeriod)
+int osDtSchedulerInit(OsDtScheduler *dtScheduler, uint64_t clockPeriod)
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     dtScheduler->interval = 0;

@@ -1813,7 +1813,7 @@ void shellTask(void *param)
         }
 #if SHELL_TASK_WHILE == 1
     }
-#endif  
+#endif
 }
 
 

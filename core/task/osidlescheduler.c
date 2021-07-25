@@ -5,7 +5,7 @@
 #else
 #define idlechedulerLog(format, ...) (void)0
 #endif
-int osIdleSchedulerInit(OsIdleScheduler *idleScheduler, os_size_t clockPeriod)
+int osIdleSchedulerInit(OsIdleScheduler *idleScheduler, uint64_t clockPeriod)
 {
     idlechedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     idleScheduler->runningTask = NULL;
