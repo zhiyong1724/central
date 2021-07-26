@@ -12,6 +12,8 @@ typedef struct OsVFS
     OsFSInterfaces fs[OS_MAX_FS_COUNT];
     uint32_t fsCount;
     char curPath[OS_MAX_FILE_PATH_LENGTH];
+    char pathA[OS_MAX_FILE_PATH_LENGTH];
+    char pathB[OS_MAX_FILE_PATH_LENGTH];
     OsListNode *mountList;
 } OsVFS;
 /*********************************************************************************************************************

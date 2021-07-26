@@ -51,6 +51,8 @@ typedef enum OsFileError
     OS_FILE_ERROR_FILE_TOO_LARGE,
     OS_FILE_ERROR_NAME_TOO_LONG,
     OS_FILE_ERROR_NONSUPPORT,
+    OS_FILE_ERROR_DIFF_MOUNT,
+    OS_FILE_ERROR_ALREADY_MOUNT,
     OS_FILE_ERROR_OTHER,
 } OsFileError;
 
@@ -319,6 +321,13 @@ OsFileError osFGetCWD(char *buffer, uint32_t size);
 * return：OsFileError
 *********************************************************************************************************************/
 OsFileError osFGetMountInfo(const OsMountInfo **mountInfo);
+/*********************************************************************************************************************
+* 复制文件
+* srcPath：源地址
+* destPath：目标地址
+* return：OsFileError
+*********************************************************************************************************************/
+OsFileError osFCopy(const char *srcPath, const char *destPath);
 #endif
 #ifdef __cplusplus
 }

@@ -45,6 +45,7 @@ void shellChMod(int argc, char *argv[]);
 void shellStat(int argc, char *argv[]);
 void shellMV(int argc, char *argv[]);
 void shellRM(int argc, char *argv[]);
+void shellCP(int argc, char *argv[]);
 SHELL_AGENCY_FUNC(shellRun, shellGetCurrent(), (const char *)p1);
 
 
@@ -131,6 +132,8 @@ const ShellCommand shellCommandList[] =
                        mv, shellMV, mv),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        rm, shellRM, rm),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       cp, shellCP, cp),
 };
 
 /**

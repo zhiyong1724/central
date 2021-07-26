@@ -52,7 +52,7 @@ int shellIOInit()
     osFGetCWD(sShellPathBuffer, OS_MAX_FILE_PATH_LENGTH);
     shellSetPath(&sShell, sShellPathBuffer);
     os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 4096);
+    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 0);
     system("stty -echo");
     system("stty -icanon");
     return 0;
@@ -128,6 +128,12 @@ static void printFSError(OsFileError error)
     break;
     case OS_FILE_ERROR_NONSUPPORT:
     shellWriteString(&sShell, "文件系统不支持该功能\n");
+    break;
+    case OS_FILE_ERROR_DIFF_MOUNT:
+    shellWriteString(&sShell, "操作失败，因为路径挂载目录不一样\n");
+    break;
+    case OS_FILE_ERROR_ALREADY_MOUNT:
+    shellWriteString(&sShell, "该目录已经被挂载\n");
     break;
     case OS_FILE_ERROR_OTHER:
     shellWriteString(&sShell, "发生未知错误\n");
@@ -483,6 +489,19 @@ void shellRM(int argc, char *argv[])
     if (argc >= 2)
     {
         OsFileError result = osFUnlink(argv[1]);
+        printFSError(result);
+    }
+    else
+    {
+        shellWriteString(&sShell, "参数不足\n");
+    }
+}
+
+void shellCP(int argc, char *argv[])
+{
+    if (argc >= 3)
+    {
+        OsFileError result = osFCopy(argv[1], argv[2]);
         printFSError(result);
     }
     else

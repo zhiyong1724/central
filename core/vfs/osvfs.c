@@ -167,10 +167,9 @@ OsFileError osVFSOpen(OsVFS *vfs, OsFile *file, const char *path, uint32_t mode)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
@@ -178,7 +177,7 @@ OsFileError osVFSOpen(OsVFS *vfs, OsFile *file, const char *path, uint32_t mode)
         }
         
         file->mountInfo = (void *)mountInfo;
-        ret = vfs->fs[mountInfo->fs].open(file, newPath[index] != '\0' ? &newPath[index] : "/", mode);
+        ret = vfs->fs[mountInfo->fs].open(file, vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/", mode);
     }
     return ret;
 }
@@ -236,10 +235,9 @@ OsFileError osVFSOpenDir(OsVFS *vfs, OsDir *dir, const char *path)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
@@ -247,7 +245,7 @@ OsFileError osVFSOpenDir(OsVFS *vfs, OsDir *dir, const char *path)
         }
 
         dir->mountInfo = (void *)mountInfo;
-        ret = vfs->fs[mountInfo->fs].openDir(dir, newPath[index] != '\0' ? &newPath[index] : "/");
+        ret = vfs->fs[mountInfo->fs].openDir(dir, vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/");
     }
     return ret;
 }
@@ -270,10 +268,9 @@ OsFileError osVFSFindFirst(OsVFS *vfs, OsDir *dir, OsFileInfo *fileInfo, const c
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
@@ -281,7 +278,7 @@ OsFileError osVFSFindFirst(OsVFS *vfs, OsDir *dir, OsFileInfo *fileInfo, const c
         }
 
         dir->mountInfo = (void *)mountInfo;
-        ret = vfs->fs[mountInfo->fs].findFirst(dir, fileInfo, newPath[index] != '\0' ? &newPath[index] : "/", pattern);
+        ret = vfs->fs[mountInfo->fs].findFirst(dir, fileInfo, vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/", pattern);
     }
     return ret;
 }
@@ -297,17 +294,16 @@ OsFileError osVFSMkDir(OsVFS *vfs, const char *path)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
             index = osStrLen(mountInfo->path);
         }
 
-        ret = vfs->fs[mountInfo->fs].mkDir(newPath[index] != '\0' ? &newPath[index] : "/");
+        ret = vfs->fs[mountInfo->fs].mkDir(vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/");
     }
     return ret;
 }
@@ -316,16 +312,15 @@ OsFileError osVFSUnlink(OsVFS *vfs, const char *path)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
             index = osStrLen(mountInfo->path);
         }
-        ret = vfs->fs[mountInfo->fs].unlink(newPath[index] != '\0' ? &newPath[index] : "/");
+        ret = vfs->fs[mountInfo->fs].unlink(vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/");
     }
     return ret;
 }
@@ -334,13 +329,11 @@ OsFileError osVFSRename(OsVFS *vfs, const char *oldPath, const char *newPath)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char pathA[OS_MAX_FILE_PATH_LENGTH];
-    char pathB[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, pathA, OS_MAX_FILE_PATH_LENGTH, oldPath) != NULL && preparePath(vfs, pathB, OS_MAX_FILE_PATH_LENGTH, newPath) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, oldPath) != NULL && preparePath(vfs, vfs->pathB, OS_MAX_FILE_PATH_LENGTH, newPath) != NULL)
     {
-        ret = OS_FILE_ERROR_NO_PATH;
-        const OsMountInfo *mountInfoA = getMountInfo(vfs, pathA);
-        const OsMountInfo *mountInfoB = getMountInfo(vfs, pathB);
+        ret = OS_FILE_ERROR_DIFF_MOUNT;
+        const OsMountInfo *mountInfoA = getMountInfo(vfs, vfs->pathA);
+        const OsMountInfo *mountInfoB = getMountInfo(vfs, vfs->pathB);
         if (mountInfoA == mountInfoB)
         {
             os_size_t index = 0;
@@ -348,7 +341,7 @@ OsFileError osVFSRename(OsVFS *vfs, const char *oldPath, const char *newPath)
             {
                 index = osStrLen(mountInfoA->path);
             }
-            ret = vfs->fs[mountInfoA->fs].rename(pathA[index] != '\0' ? &pathA[index] : "/", pathB[index] != '\0' ? &pathB[index] : "/");
+            ret = vfs->fs[mountInfoA->fs].rename(vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/", vfs->pathB[index] != '\0' ? &vfs->pathB[index] : "/");
         }
     }
     return ret;
@@ -358,16 +351,15 @@ OsFileError osVFSStat(OsVFS *vfs, const char *path, OsFileInfo *fileInfo)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
             index = osStrLen(mountInfo->path);
         }
-        ret = vfs->fs[mountInfo->fs].stat(newPath[index] != '\0' ? &newPath[index] : "/", fileInfo);
+        ret = vfs->fs[mountInfo->fs].stat(vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/", fileInfo);
     }
     return ret;
 }
@@ -376,16 +368,15 @@ OsFileError osVFSChMod(OsVFS *vfs, const char *path, uint32_t attr, uint32_t mas
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
             index = osStrLen(mountInfo->path);
         }
-        ret = vfs->fs[mountInfo->fs].chMod(newPath[index] != '\0' ? &newPath[index] : "/", attr, mask);
+        ret = vfs->fs[mountInfo->fs].chMod(vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/", attr, mask);
     }
     return ret;
 }
@@ -394,16 +385,37 @@ OsFileError osVFSStatFS(OsVFS *vfs, const char *path, OsFS *fs)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        const OsMountInfo *mountInfo = getMountInfo(vfs, newPath);
+        const OsMountInfo *mountInfo = getMountInfo(vfs, vfs->pathA);
         os_size_t index = 0;
         if (mountInfo->fs > 0)
         {
             index = osStrLen(mountInfo->path);
         }
-        ret = vfs->fs[mountInfo->fs].statFS(newPath[index] != '\0' ? &newPath[index] : "/", fs);
+        ret = vfs->fs[mountInfo->fs].statFS(vfs->pathA[index] != '\0' ? &vfs->pathA[index] : "/", fs);
+    }
+    return ret;
+}
+
+static OsFileError checkMount(OsVFS *vfs, const char *path)
+{
+    OsFileError ret = OS_FILE_ERROR_OK;
+    OsMountInfo *curNode = (OsMountInfo *)vfs->mountList;
+    if (curNode != NULL)
+    {
+        do
+        {
+            if (osStrCmp(path, curNode->path) == 0)
+            {
+                ret = OS_FILE_ERROR_ALREADY_MOUNT;
+                break;
+            }
+            else
+            {
+                curNode = (OsMountInfo *)vfs->mountList->nextNode;
+            }
+        } while (curNode != (OsMountInfo *)vfs->mountList);
     }
     return ret;
 }
@@ -412,87 +424,90 @@ OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *drive)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
-        if (osStrCmp(newPath, "/") == 0)
-        {
-            ret = OS_FILE_ERROR_OK;
-        }
-        else
-        {
-            OsDir dir;
-            ret = osVFSOpenDir(vfs, &dir, newPath);
-            if (OS_FILE_ERROR_OK == ret)
-            {
-                ret = osVFSCloseDir(vfs, &dir);
-            }
-        }
+        ret = checkMount(vfs, vfs->pathA);
         if (OS_FILE_ERROR_OK == ret)
         {
-            OsMountInfo *mountInfo = (OsMountInfo *)osMalloc(sizeof(OsMountInfo));
-            osAssert(mountInfo != NULL);
-            if (mountInfo != NULL)
+            if (osStrCmp(vfs->pathA, "/") == 0)
             {
-                mountInfo->path = (char *)osMalloc(osStrLen(newPath) + 1);
-                osAssert(mountInfo->path != NULL);
-                if (mountInfo->path != NULL)
+                ret = OS_FILE_ERROR_OK;
+            }
+            else
+            {
+                OsDir dir;
+                ret = osVFSOpenDir(vfs, &dir, vfs->pathA);
+                if (OS_FILE_ERROR_OK == ret)
                 {
-                    mountInfo->drive = (char *)osMalloc(osStrLen(drive) + 1);
-                    osAssert(mountInfo->drive != NULL);
-                    if (mountInfo->drive != NULL)
+                    ret = osVFSCloseDir(vfs, &dir);
+                }
+            }
+            if (OS_FILE_ERROR_OK == ret)
+            {
+                OsMountInfo *mountInfo = (OsMountInfo *)osMalloc(sizeof(OsMountInfo));
+                osAssert(mountInfo != NULL);
+                if (mountInfo != NULL)
+                {
+                    mountInfo->path = (char *)osMalloc(osStrLen(vfs->pathA) + 1);
+                    osAssert(mountInfo->path != NULL);
+                    if (mountInfo->path != NULL)
                     {
-                        osStrCpy(mountInfo->drive, drive, -1);
-                        os_size_t i = 0;
-                        for (; i < vfs->fsCount; i++)
+                        mountInfo->drive = (char *)osMalloc(osStrLen(drive) + 1);
+                        osAssert(mountInfo->drive != NULL);
+                        if (mountInfo->drive != NULL)
                         {
-                            ret = vfs->fs[i].mount(mountInfo);
+                            osStrCpy(mountInfo->drive, drive, -1);
+                            os_size_t i = 0;
+                            for (; i < vfs->fsCount; i++)
+                            {
+                                ret = vfs->fs[i].mount(mountInfo);
+                                if (OS_FILE_ERROR_OK == ret)
+                                {
+                                    break;
+                                }
+                            }
                             if (OS_FILE_ERROR_OK == ret)
                             {
-                                break;
-                            }
-                        }
-                        if (OS_FILE_ERROR_OK == ret)
-                        {
-                            osStrCpy(mountInfo->path, newPath, -1);
-                            mountInfo->fs = i;
-                            os_size_t n = 0;
-                            OsMountInfo *curNode = (OsMountInfo *)vfs->mountList;
-                            if (curNode != NULL)
-                            {
-                                do
+                                osStrCpy(mountInfo->path, vfs->pathA, -1);
+                                mountInfo->fs = i;
+                                os_size_t n = 0;
+                                OsMountInfo *curNode = (OsMountInfo *)vfs->mountList;
+                                if (curNode != NULL)
                                 {
-                                    if (osStrCmp(mountInfo->path, curNode->path) <= 0)
+                                    do
                                     {
-                                        n++;
-                                        curNode = (OsMountInfo *)vfs->mountList->nextNode;
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
-                                } while (curNode != (OsMountInfo *)vfs->mountList);
+                                        if (osStrCmp(mountInfo->path, curNode->path) <= 0)
+                                        {
+                                            n++;
+                                            curNode = (OsMountInfo *)vfs->mountList->nextNode;
+                                        }
+                                        else
+                                        {
+                                            break;
+                                        }
+                                    } while (curNode != (OsMountInfo *)vfs->mountList);
+                                }
+                                osInsertToMiddle(&vfs->mountList, &mountInfo->node, n);
                             }
-                            osInsertToMiddle(&vfs->mountList, &mountInfo->node, n);
+                            else
+                            {
+                                osFree(mountInfo->path);
+                                osFree(mountInfo->drive);
+                                osFree(mountInfo);
+                            }
                         }
                         else
                         {
                             osFree(mountInfo->path);
-                            osFree(mountInfo->drive);
                             osFree(mountInfo);
+                            ret = OS_FILE_ERROR_NOMEM;
                         }
                     }
                     else
                     {
-                        osFree(mountInfo->path);
                         osFree(mountInfo);
                         ret = OS_FILE_ERROR_NOMEM;
                     }
-                }
-                else
-                {
-                    osFree(mountInfo);
-                    ret = OS_FILE_ERROR_NOMEM;
                 }
             }
         }
@@ -504,8 +519,7 @@ OsFileError osVFSUnmount(OsVFS *vfs, const char *path)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
         ret = OS_FILE_ERROR_NO_FILESYSTEM;
         OsMountInfo *curNode = (OsMountInfo *)vfs->mountList;
@@ -513,7 +527,7 @@ OsFileError osVFSUnmount(OsVFS *vfs, const char *path)
         {
             do
             {
-                if (osStrCmp(newPath, curNode->path) == 0)
+                if (osStrCmp(vfs->pathA, curNode->path) == 0)
                 {
                     ret = OS_FILE_ERROR_OK;
                     vfs->fs[curNode->fs].unmount(curNode);
@@ -537,14 +551,13 @@ OsFileError osVFSChDir(OsVFS *vfs, const char *path)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
-    char newPath[OS_MAX_FILE_PATH_LENGTH];
-    if (preparePath(vfs, newPath, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
+    if (preparePath(vfs, vfs->pathA, OS_MAX_FILE_PATH_LENGTH, path) != NULL)
     {
         OsDir dir;
-        ret = osVFSOpenDir(vfs, &dir, newPath);
+        ret = osVFSOpenDir(vfs, &dir, vfs->pathA);
         if (OS_FILE_ERROR_OK == ret)
         {
-            osStrCpy(vfs->curPath, newPath, OS_MAX_FILE_PATH_LENGTH);
+            osStrCpy(vfs->curPath, vfs->pathA, OS_MAX_FILE_PATH_LENGTH);
             osVFSCloseDir(vfs, &dir);
         }
     }
