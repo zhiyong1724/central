@@ -25,6 +25,15 @@ void *osMalloc(os_size_t size)
     return ret;
 }
 
+void *osRealloc(void *address, os_size_t newSize)
+{
+    memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    osMutexLock(&sMutex);
+    void *ret = osMemManagerRealloc(&sMemManager, address, newSize);
+    osMutexUnlock(&sMutex);
+    return ret;
+}
+
 int osFree(void *address)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);

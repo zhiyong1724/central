@@ -1,0 +1,3 @@
+/home/chenzhiyong/projects/central/third/lvgl/CMakeFiles/edit_cache.dir
+/home/chenzhiyong/projects/central/third/lvgl/CMakeFiles/rebuild_cache.dir
+/home/chenzhiyong/projects/central/third/lvgl/CMakeFiles/lvgl.dir

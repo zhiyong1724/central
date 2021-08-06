@@ -1,4 +1,5 @@
 #include "osmemmanager.h"
+#include "osstring.h"
 #define ENABLE_MEM_MANAGER_LOG 0
 #if ENABLE_MEM_MANAGER_LOG
 #define memManagerLog(format, ...) osPrintf(format, ##__VA_ARGS__)
@@ -177,6 +178,44 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size)
 						usedMem->usedMem += memBlock->header.size;
 						ret = blockToMem(memBlock);
 					}
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+void *osMemManagerRealloc(OsMemManager *memManager, void *address, os_size_t newSize)
+{
+	memManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	void *ret = NULL;
+	osAssert(address >= memManager->pageFactory.startAddress);
+	if (address >= memManager->pageFactory.startAddress)
+	{
+		osAssert(((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
+		if (((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
+		{
+			os_size_t offset = ((char *)address - (char *)memManager->pageFactory.startAddress) % (os_size_t)OS_BUDDY_PAGE_SIZE;
+			osAssert(offset > 0);
+			if (offset > 0)
+			{
+				OsMemBlockHeader *header = (OsMemBlockHeader *)address;
+				header -= 1;
+				os_size_t mark = (os_size_t)1 << (sizeof(os_size_t) * 8 - 1);
+				osAssert((header->size & mark) > 0);
+				if ((header->size & mark) > 0)
+				{
+					ret = 0;
+					mark = ~mark;
+					header->size &= mark;
+					ret = osMemManagerAlloc(memManager, newSize);
+					osAssert(ret != NULL);
+					if (ret != NULL)
+					{
+						os_size_t size = header->size < newSize ? header->size : newSize;
+						osMemCpy(ret, address, size);
+					}
+					osMemManagerFree(memManager, address);
 				}
 			}
 		}

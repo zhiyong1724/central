@@ -30,7 +30,7 @@ echo "LD=$LD"
 export DUMP=objdump
 echo "DUMP=$DUMP"
 
-export LIBS=-lpthread
+export LIBS="-lpthread -lX11"
 echo "LIBS=$LIBS"
 
 export COMPILE_FLAGS="-g -m32"

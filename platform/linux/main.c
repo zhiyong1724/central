@@ -19,6 +19,7 @@
 #include "fatfsadapter.h"
 #include "lfsadapter.h"
 #include "lfs.h"
+#include "lvglio.h"
 extern const struct lfs_config gLfsConfig;
 extern lfs_t gLFS;
 struct Test
@@ -1010,13 +1011,13 @@ int main()
     // double ib;
     // double ic;
     // double input = 25000000;
-    // double output = 49152000;
-    // double offset = 49152000;
-    // for (double i = 5; i <= 63; i++)
+    // double output = 6144000;
+    // double offset = output;
+    // for (double i = 0; i <= 63; i++)
     // {
-    //     for (double j = 4; j <= 512; j++)
+    //     for (double j = 0; j <= 512; j++)
     //     {
-    //         for (double k = 5; k < 128; k++)
+    //         for (double k = 0; k < 128; k++)
     //         {
     //             double real = input / i * j / k - output;
     //             if (real < 0)
@@ -1045,6 +1046,8 @@ int main()
     //testSemaphore();
     //testMutex();
     //testQueue();
+    lvglIOInit();
+    lvglIORun();
     osInit();
     // os_tid_t tid;
     // osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);

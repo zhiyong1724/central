@@ -70,6 +70,7 @@ SRCS := $(SRCS) \
 	lfs_util.c \
 	lfs.c \
 	lfsadapter.c \
+	lvglio.c \
 	main.c
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))
