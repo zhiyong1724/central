@@ -1046,9 +1046,8 @@ int main()
     //testSemaphore();
     //testMutex();
     //testQueue();
-    lvglIOInit();
-    lvglIORun();
     osInit();
+    lvglIOInit();
     // os_tid_t tid;
     // osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
     // osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);

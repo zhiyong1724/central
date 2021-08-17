@@ -5,7 +5,6 @@ extern "C" {
 #endif
 int lvglIOInit();
 int lvglIOUninit();
-int lvglIORun();
 #ifdef __cplusplus
 }
 #endif

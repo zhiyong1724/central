@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include "osplatformdef.h"
+#include "lvgl.h"
 char _heap[OS_HEAP_SIZE];
 typedef struct thread_t
 {
@@ -84,6 +85,7 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
 static void handleTimerTick(int arg)
 {
     osTaskTick();
+    lv_tick_inc(10);
 }
 
 int portStartScheduler(void **stackTop)

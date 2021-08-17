@@ -189,36 +189,40 @@ void *osMemManagerRealloc(OsMemManager *memManager, void *address, os_size_t new
 {
 	memManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	void *ret = NULL;
-	osAssert(address >= memManager->pageFactory.startAddress);
-	if (address >= memManager->pageFactory.startAddress)
+	if (address != NULL)
 	{
-		osAssert(((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
-		if (((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
+		osAssert(address >= memManager->pageFactory.startAddress);
+		if (address >= memManager->pageFactory.startAddress)
 		{
-			os_size_t offset = ((char *)address - (char *)memManager->pageFactory.startAddress) % (os_size_t)OS_BUDDY_PAGE_SIZE;
-			osAssert(offset > 0);
-			if (offset > 0)
+			osAssert(((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
+			if (((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
 			{
-				OsMemBlockHeader *header = (OsMemBlockHeader *)address;
-				header -= 1;
-				os_size_t mark = (os_size_t)1 << (sizeof(os_size_t) * 8 - 1);
-				osAssert((header->size & mark) > 0);
-				if ((header->size & mark) > 0)
+				os_size_t offset = ((char *)address - (char *)memManager->pageFactory.startAddress) % (os_size_t)OS_BUDDY_PAGE_SIZE;
+				osAssert(offset > 0);
+				if (offset > 0)
 				{
-					ret = 0;
-					mark = ~mark;
-					header->size &= mark;
-					ret = osMemManagerAlloc(memManager, newSize);
-					osAssert(ret != NULL);
-					if (ret != NULL)
+					OsMemBlockHeader *header = (OsMemBlockHeader *)address;
+					header -= 1;
+					os_size_t mark = (os_size_t)1 << (sizeof(os_size_t) * 8 - 1);
+					osAssert((header->size & mark) > 0);
+					if ((header->size & mark) > 0)
 					{
-						os_size_t size = header->size < newSize ? header->size : newSize;
-						osMemCpy(ret, address, size);
+						ret = osMemManagerAlloc(memManager, newSize);
+						osAssert(ret != NULL);
+						if (ret != NULL)
+						{
+							os_size_t size = header->size < newSize ? header->size : newSize;
+							osMemCpy(ret, address, size);
+						}
+						osMemManagerFree(memManager, address);
 					}
-					osMemManagerFree(memManager, address);
 				}
 			}
 		}
+	}
+	else
+	{
+		ret = osMemManagerAlloc(memManager, newSize);
 	}
 	return ret;
 }

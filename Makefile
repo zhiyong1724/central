@@ -17,7 +17,8 @@ vpath %.c ./third/letter_shell/src
 vpath %.c ./third/littlefs
 vpath %.o $(OBJ_DIR)
 
-INCLUDES := -I$(FLATFORM_DIR) \
+INCLUDES := -I$(INCLUDES) \
+	-I$(FLATFORM_DIR) \
 	-I./core \
 	-I./core/base \
 	-I./core/mem \
@@ -26,7 +27,7 @@ INCLUDES := -I$(FLATFORM_DIR) \
 	-I./third/fatfs \
 	-I./third/fatfs/source \
 	-I./third/letter_shell/src \
-	-I./third/littlefs
+	-I./third/littlefs 
 
 CFLAGS := -Wall -Werror -Wl,-Map=$(MAP_FILE) $(COMPILE_FLAGS)
 

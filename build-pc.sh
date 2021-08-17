@@ -30,7 +30,13 @@ echo "LD=$LD"
 export DUMP=objdump
 echo "DUMP=$DUMP"
 
-export LIBS="-lpthread -lX11"
+export INCLUDES="./third/lvgl/"
+echo "INCLUDES=$INCLUDES"
+
+export LIBS_DIR="-L./third/lvgl/"
+echo "LIBS_DIR=$LIBS_DIR"
+
+export LIBS="-lpthread -lX11 -llvgl"
 echo "LIBS=$LIBS"
 
 export COMPILE_FLAGS="-g -m32"
