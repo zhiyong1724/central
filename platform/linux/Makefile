@@ -5,31 +5,40 @@ ELF_FILE := $(BIN_DIR)/main.elf
 MAP_FILE := $(BIN_DIR)/main.map
 DUMP_FILE := $(BIN_DIR)/main.dump
 
-vpath %.c $(FLATFORM_DIR)
-vpath %.c ./core
-vpath %.c ./core/base
-vpath %.c ./core/mem
-vpath %.c ./core/task
-vpath %.c ./core/vfs
-vpath %.c ./third/fatfs
-vpath %.c ./third/fatfs/source
-vpath %.c ./third/letter_shell/src
-vpath %.c ./third/littlefs
+vpath %.c ../../core
+vpath %.c ../../core/base
+vpath %.c ../../core/mem
+vpath %.c ../../core/task
+vpath %.c ../../core/vfs
+vpath %.c ../../third/fatfs
+vpath %.c ../../third/fatfs/source
+vpath %.c ../../third/letter_shell/src
+vpath %.c ../../third/littlefs
 vpath %.o $(OBJ_DIR)
 
-INCLUDES := -I$(INCLUDES) \
-	-I$(FLATFORM_DIR) \
-	-I./core \
-	-I./core/base \
-	-I./core/mem \
-	-I./core/task \
-	-I./core/vfs \
-	-I./third/fatfs \
-	-I./third/fatfs/source \
-	-I./third/letter_shell/src \
-	-I./third/littlefs 
+CC := gcc
+CXX := g++
+AR := ar
+LD := ld
+DUMP := objdump
 
-CFLAGS := -Wall -Werror -Wl,-Map=$(MAP_FILE) $(COMPILE_FLAGS)
+INCLUDES := -I. \
+	-I../../core \
+	-I../../core/base \
+	-I../../core/mem \
+	-I../../core/task \
+	-I../../core/vfs \
+	-I../../third/fatfs \
+	-I../../third/fatfs/source \
+	-I../../third/letter_shell/src \
+	-I../../third/littlefs \
+	-I../../third/lvgl/
+
+LIBS_DIR := -L.
+
+LIBS := -lpthread -lX11 -llvgl
+
+CFLAGS := -Wall -Werror -g -m32 -Wl,-Map=$(MAP_FILE)
 
 SRCS := $(SRCS) \
 	ostree.c \
