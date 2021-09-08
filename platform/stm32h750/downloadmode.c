@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "usart.h"
 #include "xmodem.h"
+#include "norflash.h"
 int _inbyte(unsigned short timeout)
 {
   char data = 0;
@@ -24,6 +25,31 @@ void _outbyte(int c)
   MX_USART1_UART_Transmit(&data, 1);
 }
 
+void eraseFlash(unsigned int len)
+{
+  printf("Start erase flash...\n");
+  unsigned int sector = len / 4096;
+  if (len % 4096 > 0)
+  {
+    sector++;
+  }
+  for (unsigned int i = 0; i < sector; i++)
+  {
+    norflashSectorErase(i * 4096);
+  }
+  printf("Erase end...\n");
+}
+
+void writeFlash(unsigned char *data, unsigned int len)
+{
+  printf("Start write flash,length = %d byte...\n", len);
+  for (unsigned int i = 0; i < len; i += 256)
+  {
+    norflashWriteData(i, (uint8_t *)data + i, 256);
+  }
+  printf("Write end...\n");
+}
+
 void enterDownloadMode()
 {
   printf("Start download mode...\n");
@@ -33,10 +59,12 @@ void enterDownloadMode()
     ;
   led0OFF();
   led1OFF();
-  unsigned char *data = (unsigned char *)0xc0000000;
+  unsigned char *data = (unsigned char *)0x60000000;
   int len = xmodemReceive(data, 0x800000);
   if (len > 0)
   {
-    /* code */
+    HAL_Delay(1000);
+    eraseFlash(len);
+    writeFlash(data, len);
   }
 }

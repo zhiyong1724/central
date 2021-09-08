@@ -2,16 +2,10 @@
 #include "sai.h"
 #include "dma.h"
 #include <stdio.h>
-
-static void boot()
-{
-
-}
 int sSaiA;
 int sSaiB = 177;
 void enterNormalMode()
 {
-    boot();
     printf("MX_SAI1_Init start...\n");
     sSaiA = sSaiB;
     printf("MX_SAI1_Init end...\n");

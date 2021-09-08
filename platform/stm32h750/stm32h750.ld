@@ -67,8 +67,8 @@ RAM_D2 (xrw)       : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (xrw)       : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)      : ORIGIN = 0x00000000, LENGTH = 64K
 FLASH (rx)         : ORIGIN = 0x8000000, LENGTH = 128K
-NORFLASH(rx)       : ORIGIN = 0x90000000, LENGTH = 8M
-SDRAM(xrw)         : ORIGIN = 0xC0000000, LENGTH = 64M
+NORFLASH(rx)       : ORIGIN = 0x63800000, LENGTH = 8M
+SDRAM(xrw)         : ORIGIN = 0x60000000, LENGTH = 56M
 }
 
 /* Define output sections */
@@ -233,7 +233,7 @@ SECTIONS
   .exdata : 
   {
     . = ALIGN(4);
-    _sexdata = .;        /* create a global symbol at data start */
+    _sexdata = .;
     *(EXCLUDE_FILE(*main.o \
     *system_stm32h7xx.o \
     *stm32h7xx*.o \
@@ -267,10 +267,9 @@ SECTIONS
     libgcc.a \
     libc.a \
     libm.a) .data*)          /* .data* sections */
-
     . = ALIGN(4);
-    _eexdata = .;        /* define a global symbol at data end */
-  } >SDRAM AT> NORFLASH
+    _eexdata = .; 
+  } >NORFLASH
   
   /* Uninitialized data section */
   .bss :

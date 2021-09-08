@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "downloadmode.h"
 #include "normalmode.h"
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -189,8 +190,8 @@ static void configMPU()
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   //SDRAM
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;                  //使能
-  MPU_InitStruct.BaseAddress = 0xc0000000;                    //基地址
-  MPU_InitStruct.Size = MPU_REGION_SIZE_256MB;                //256M大小
+  MPU_InitStruct.BaseAddress = 0x60000000;                    //基地址
+  MPU_InitStruct.Size = MPU_REGION_SIZE_512MB;                //512M大小
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;   //允许访问
   MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;        //写回
   MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;          //允许缓存
@@ -215,6 +216,24 @@ static void configMPU()
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enable the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+
+extern int __exbss_start__;
+extern int __exbss_end__;
+extern int _sexdata;
+extern int _eexdata;
+extern int _siexdata;
+static void boot()
+{
+  // uint8_t *dataStart = (uint8_t *)&_sexdata;
+  // uint8_t *dataEnd = (uint8_t *)&_eexdata;
+  // uint8_t *dataLoadAddress = (uint8_t *)&_siexdata;
+  // memcpy(dataStart, dataLoadAddress, dataEnd - dataStart);
+  memcpy((void *)0x63800000, (void *)0x90000000, 0x800000);
+
+  uint8_t *bssStart = (uint8_t *)&__exbss_start__;
+  uint8_t *bssEnd = (uint8_t *)&__exbss_end__;
+  memset(bssStart, 0, bssEnd - bssStart);
 }
 
 /* USER CODE END 0 */
@@ -254,15 +273,17 @@ int main(void)
   MX_GPIO_Init();
   led0OFF();
   led1OFF();
+  MX_USART1_UART_Init();
   SDRAM_Initialization_Sequence();
   norflashInit();
-  MX_USART1_UART_Init();
   if (key1Status() == KEY_STATUS_PRESS)
   {
     enterDownloadMode();
   }
   else
   {
+    norflashMemoryMapped();
+    boot();
     enterNormalMode();
   }
   /* USER CODE BEGIN 2 */

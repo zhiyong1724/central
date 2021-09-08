@@ -46,6 +46,10 @@ void MX_QUADSPI_Transmit(uint8_t *pData);
 
 void MX_QUADSPI_Receive(uint8_t *pData);
 
+void MX_Enable_Qspi();
+
+void MX_Disable_Qspi();
+
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */

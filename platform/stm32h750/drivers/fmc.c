@@ -67,6 +67,8 @@ void MX_FMC_Init(void)
     Error_Handler( );
   }
 
+  HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
+
   /* USER CODE BEGIN FMC_Init 2 */
 
   /* USER CODE END FMC_Init 2 */
