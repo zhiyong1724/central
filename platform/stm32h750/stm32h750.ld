@@ -86,8 +86,8 @@ SECTIONS
   .text :
   {
     . = ALIGN(4);
-    *(EXCLUDE_FILE(*normalmode.o) .text)           /* .text sections (code) */
-    *(EXCLUDE_FILE(*normalmode.o) .text*)          /* .text* sections (code) */
+    *(.text)           /* .text sections (code) */
+    *(.text*)          /* .text* sections (code) */
     *(.glue_7)         /* glue arm to thumb code */
     *(.glue_7t)        /* glue thumb to arm code */
     *(.eh_frame)
@@ -132,9 +132,9 @@ SECTIONS
     *crc16.o \
     *xmodem.o \
     *downloadmode.o \
-    libgcc.a \
-    libc.a \
-    libm.a) .text*)          /* .text* sections (code) */
+    *libgcc.a \
+    *libc.a \
+    *libm.a) .text*)          /* .text* sections (code) */
     . = ALIGN(4);
   } >NORFLASH
 
@@ -142,8 +142,8 @@ SECTIONS
   .rodata :
   {
     . = ALIGN(4);
-    *(EXCLUDE_FILE(*normalmode.o) .rodata)         /* .rodata sections (constants, strings, etc.) */
-    *(EXCLUDE_FILE(*normalmode.o) .rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
   } >FLASH
 
@@ -180,9 +180,9 @@ SECTIONS
     *crc16.o \
     *xmodem.o \
     *downloadmode.o \
-    libgcc.a \
-    libc.a \
-    libm.a) .rodata*)         /* .rodata sections (constants, strings, etc.) */
+    *libgcc.a \
+    *libc.a \
+    *libm.a) .rodata*)         /* .rodata sections (constants, strings, etc.) */
     . = ALIGN(4);
   } >NORFLASH
 
@@ -222,8 +222,8 @@ SECTIONS
   {
     . = ALIGN(4);
     _sdata = .;        /* create a global symbol at data start */
-    *(EXCLUDE_FILE(*normalmode.o) .data)           /* .data sections */
-    *(EXCLUDE_FILE(*normalmode.o) .data*)          /* .data* sections */
+    *(.data)           /* .data sections */
+    *(.data*)          /* .data* sections */
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
@@ -264,9 +264,9 @@ SECTIONS
     *crc16.o \
     *xmodem.o \
     *downloadmode.o \
-    libgcc.a \
-    libc.a \
-    libm.a) .data*)          /* .data* sections */
+    *libgcc.a \
+    *libc.a \
+    *libm.a) .data*)          /* .data* sections */
     . = ALIGN(4);
     _eexdata = .; 
   } >NORFLASH
@@ -278,9 +278,9 @@ SECTIONS
     /* This is used by the startup in order to initialize the .bss secion */
     _sbss = .;         /* define a global symbol at bss start */
     __bss_start__ = _sbss;
-    *(EXCLUDE_FILE(*normalmode.o) .bss)
-    *(EXCLUDE_FILE(*normalmode.o) .bss*)
-    *(EXCLUDE_FILE(*normalmode.o) COMMON)
+    *(.bss)
+    *(.bss*)
+    *(COMMON)
 
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
@@ -338,9 +338,9 @@ SECTIONS
     *crc16.o \
     *xmodem.o \
     *downloadmode.o \
-    libgcc.a \
-    libc.a \
-    libm.a) COMMON)
+    *libgcc.a \
+    *libc.a \
+    *libm.a) COMMON)
 
     . = ALIGN(4);
     _eexbss = .;         /* define a global symbol at bss end */

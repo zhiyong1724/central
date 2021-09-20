@@ -717,7 +717,7 @@ void testTid()
     }
 }
 void *testMutexTaskD(void *arg);
-static os_mutex_h sMutex;
+static os_mutex_t sMutex;
 void *testMutexTaskA(void *arg)
 {
     osMutexLock(sMutex);
@@ -742,7 +742,7 @@ void *testMutexTaskB(void *arg)
     return NULL;
 }
 
-os_recursive_mutex_h sRecursiveMutex;
+os_recursive_mutex_t sRecursiveMutex;
 
 void *testMutexTaskC(void *arg)
 {
@@ -785,7 +785,7 @@ void testMutex()
     osTaskStart();
 }
 
-static os_semaphore_h sSemaphore;
+static os_semaphore_t sSemaphore;
 void *testSemaphoreTaskA(void *arg)
 {
     printf("This is task A\n");

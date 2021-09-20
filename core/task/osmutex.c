@@ -1,5 +1,4 @@
 #include "osmutex.h"
-#include "osmem.h"
 #include "ossemaphore.h"
 #include "ostaskmanager.h"
 #define ENABLE_MUTEX_LOG 0
@@ -11,73 +10,47 @@
 os_size_t portDisableInterrupts();
 int portRecoveryInterrupts(os_size_t state);
 OsTask *osTaskGetRunningTask();
-int osMutexCreate(os_mutex_h *mutex)
+int osMutexCreate(os_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    int ret = -1;
-    *mutex = (os_mutex_h)osMalloc(sizeof(OsMutex));
-    osAssert(*mutex != NULL);
-    if (*mutex != NULL)
-    {
-        ret = osMutexCreateStatic(*mutex);
-    }
-    return ret;
+    return osSemaphoreCreate(&mutex->semaphore, 1, 1);
 }
 
-int osMutexCreateStatic(os_mutex_h mutex)
-{
-    mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    return osSemaphoreCreateStatic(&mutex->semaphore, 1, 1);
-}
-
-int osMutexDestory(os_mutex_h mutex)
+int osMutexDestory(os_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osSemaphoreDestory(&mutex->semaphore);
 }
 
-int osMutexLock(os_mutex_h mutex)
+int osMutexLock(os_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = osSemaphoreWait(&mutex->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
     return ret;
 }
 
-int osMutexUnlock(os_mutex_h mutex)
+int osMutexUnlock(os_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = osSemaphorePost(&mutex->semaphore);
     return ret;
 }
 
-int osRecursiveMutexCreate(os_recursive_mutex_h *mutex)
-{
-    mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    int ret = -1;
-    *mutex = (os_recursive_mutex_h)osMalloc(sizeof(OsRecursiveMutex));
-    osAssert(*mutex != NULL);
-    if (*mutex != NULL)
-    {
-        ret = osRecursiveMutexCreateStatic(*mutex);
-    }
-    return ret;
-}
-
-int osRecursiveMutexCreateStatic(os_recursive_mutex_h mutex)
+int osRecursiveMutexCreate(os_recursive_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     mutex->owner = NULL;
     mutex->recursiveCount = 0;
-    return osSemaphoreCreateStatic(&mutex->semaphore, 1, 1);
+    return osSemaphoreCreate(&mutex->semaphore, 1, 1);
 }
 
-int osRecursiveMutexDestory(os_recursive_mutex_h mutex)
+int osRecursiveMutexDestory(os_recursive_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osSemaphoreDestory(&mutex->semaphore);
 }
 
-int osRecursiveMutexLock(os_recursive_mutex_h mutex)
+int osRecursiveMutexLock(os_recursive_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -104,7 +77,7 @@ int osRecursiveMutexLock(os_recursive_mutex_h mutex)
     return ret;
 }
 
-int osRecursiveMutexUnlock(os_recursive_mutex_h mutex)
+int osRecursiveMutexUnlock(os_recursive_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;

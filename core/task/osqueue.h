@@ -13,14 +13,7 @@ typedef struct OsQueue * os_queue_t;
 * messageSize：消息大小
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueCreate(os_queue_t *queue, os_size_t queueLength, os_size_t messageSize);
-/*********************************************************************************************************************
-* 静态创建队列
-* queue：队列对象
-* messageSize：消息大小
-* return：0：调用成功
-*********************************************************************************************************************/
-int osQueueCreateStatic(os_queue_t queue, os_size_t queueLength, os_size_t messageSize);
+int osQueueCreate(os_queue_t queue, os_size_t queueLength, os_size_t messageSize);
 /*********************************************************************************************************************
 * 删除一个队列，如果有任务正在阻塞，会删除失败
 * queue：队列对象

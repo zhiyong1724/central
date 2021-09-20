@@ -30,6 +30,7 @@
 
 /* USER CODE END Includes */
 
+extern NAND_HandleTypeDef hnand1;
 extern SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN Private defines */

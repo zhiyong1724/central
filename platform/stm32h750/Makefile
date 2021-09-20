@@ -48,7 +48,7 @@ LIBS_DIR :=
 
 LIBS := -lc -lm
 
-CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE)
+CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE) -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 SRCS := main.c \
 	stm32h7xx_it.c \
@@ -79,6 +79,7 @@ SRCS := main.c \
 	stm32h7xx_hal_usart_ex.c \
 	stm32h7xx_hal_sdram.c \
 	stm32h7xx_hal_qspi.c \
+	stm32h7xx_hal_nand.c \
 	stm32h7xx_ll_fmc.c \
 	system_stm32h7xx.c \
 	newlibio.c \
@@ -95,7 +96,8 @@ SRCS := main.c \
 	crc16.c \
 	xmodem.c \
 	downloadmode.c \
-	normalmode.c
+	normalmode.c \
+	nandflash.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

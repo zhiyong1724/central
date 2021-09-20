@@ -20,20 +20,7 @@ int osQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
     return osQueueManagerInit(sQueueManager, taskManager);
 }
 
-int osQueueCreate(os_queue_t *queue, os_size_t queueLength, os_size_t messageSize)
-{
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    int ret = -1;
-    *queue = (os_queue_t)osMalloc(sizeof(OsQueue));
-    osAssert(*queue != NULL);
-    if (*queue != NULL)
-    {
-        ret = osQueueCreateStatic(*queue, queueLength, messageSize);
-    }
-    return ret;
-}
-
-int osQueueCreateStatic(os_queue_t queue, os_size_t queueLength, os_size_t messageSize)
+int osQueueCreate(os_queue_t queue, os_size_t queueLength, os_size_t messageSize)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -57,7 +44,6 @@ int osQueueDestory(os_queue_t queue)
         {
             osFree(message);
         }
-        osFree(queue);
     }
     portRecoveryInterrupts(state);
     return ret;

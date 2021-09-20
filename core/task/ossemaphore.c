@@ -1,5 +1,4 @@
 #include "ossemaphore.h"
-#include "osmem.h"
 #include "ossemaphoremanager.h"
 #define ENABLE_SEMAPHORE_LOG 0
 #if ENABLE_SEMAPHORE_LOG
@@ -19,20 +18,7 @@ int osSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *taskMan
     return osSemaphoreManagerInit(sSemaphoreManager, taskManager);
 }
 
-int osSemaphoreCreate(os_semaphore_h *semaphore, os_size_t count, os_size_t maxCount)
-{
-    semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    int ret = -1;
-    *semaphore = (os_semaphore_h)osMalloc(sizeof(OsSemaphore));
-    osAssert(*semaphore != NULL);
-    if (*semaphore != NULL)
-    {
-        ret = osSemaphoreCreateStatic(*semaphore, count, maxCount);
-    }
-    return ret;
-}
-
-int osSemaphoreCreateStatic(os_semaphore_h semaphore, os_size_t count, os_size_t maxCount)
+int osSemaphoreCreate(os_semaphore_t semaphore, os_size_t count, os_size_t maxCount)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -44,23 +30,22 @@ int osSemaphoreCreateStatic(os_semaphore_h semaphore, os_size_t count, os_size_t
     return ret;
 }
 
-int osSemaphoreDestory(os_semaphore_h semaphore)
+int osSemaphoreDestory(os_semaphore_t semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
-    osAssert(NULL == semaphore->waitTaskList && NULL == semaphore->waitTaskList);
-    if (NULL == semaphore->waitTaskList && NULL == semaphore->waitTaskList)
+    osAssert(NULL == semaphore->waitRtTaskList && NULL == semaphore->waitTaskList);
+    if (NULL == semaphore->waitRtTaskList && NULL == semaphore->waitTaskList)
     {
         osSemaphoreReset(semaphore);
-        osFree(semaphore);
         ret = 0;
     }
     portRecoveryInterrupts(state);
     return ret;
 }
 
-int osSemaphoreReset(os_semaphore_h semaphore)
+int osSemaphoreReset(os_semaphore_t semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
@@ -69,7 +54,7 @@ int osSemaphoreReset(os_semaphore_h semaphore)
     return ret;
 }
 
-int osSemaphorePost(os_semaphore_h semaphore)
+int osSemaphorePost(os_semaphore_t semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
@@ -78,7 +63,7 @@ int osSemaphorePost(os_semaphore_h semaphore)
     return ret;
 }
 
-int osSemaphoreWait(os_semaphore_h semaphore, uint64_t wait)
+int osSemaphoreWait(os_semaphore_t semaphore, uint64_t wait)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -108,13 +93,13 @@ int osSemaphoreWait(os_semaphore_h semaphore, uint64_t wait)
     return ret;
 }
 
-os_size_t osSemaphoreGetSemaphoreCount(os_semaphore_h semaphore)
+os_size_t osSemaphoreGetSemaphoreCount(os_semaphore_t semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osSemaphoreManagerGetSemaphoreCount(sSemaphoreManager, semaphore);
 }
 
-os_size_t osSemaphoreGetMaxSemaphoreCount(os_semaphore_h semaphore)
+os_size_t osSemaphoreGetMaxSemaphoreCount(os_semaphore_t semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osSemaphoreManagerGetMaxSemaphoreCount(sSemaphoreManager, semaphore);

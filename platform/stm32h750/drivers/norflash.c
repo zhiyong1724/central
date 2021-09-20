@@ -13,10 +13,6 @@
 #define SECTOR_ERASE_COMMAND 0x20
 #define PAGE_PROGRAM_COMMAND 0x02
 #define READ_DATA_COMMAND 0xeb
-static void writeEnable()
-{
-    MX_QUADSPI_Command(WRITE_ENABLE_COMMAND, 0, 0, 0, 0, (0x01 << 0) | (0x02 << 2) | (0x00 << 4) | (0x00 << 6) | (0x00 << 8) | (0x00 << 10));
-}
 
 static uint8_t readStatusRegister(uint8_t id)
 {
@@ -52,6 +48,11 @@ static void waitBusy()
     }
 }
 
+static void writeEnable()
+{
+    MX_QUADSPI_Command(WRITE_ENABLE_COMMAND, 0, 0, 0, 0, (0x01 << 0) | (0x02 << 2) | (0x00 << 4) | (0x00 << 6) | (0x00 << 8) | (0x00 << 10));
+}
+
 /* static void writeStatusRegister(uint8_t id, uint8_t value)
 {
     writeEnable();
@@ -85,29 +86,30 @@ void norflashInit()
     MX_QUADSPI_Init();  
     MX_Disable_Qspi();
     reset();  
-    HAL_Delay(1);
+    HAL_Delay(100);
 }
 
 void norflashSectorErase(uint32_t address)
 {
     MX_Disable_Qspi();
     writeEnable();
-    MX_QUADSPI_Command(SECTOR_ERASE_COMMAND, address, 0, 0, 0, (0x01 << 0) | (0x02 << 2) | (0x01 << 4) | (0x00 << 6) | (0x00 << 8) | (0x00 << 10));
     waitBusy();
+    MX_QUADSPI_Command(SECTOR_ERASE_COMMAND, address, 0, 0, 0, (0x01 << 0) | (0x02 << 2) | (0x01 << 4) | (0x00 << 6) | (0x00 << 8) | (0x00 << 10));
 }
 
 void norflashWriteData(uint32_t address, uint8_t *data, uint32_t size)
 {
     MX_Disable_Qspi();
     writeEnable();
+    waitBusy();
     MX_QUADSPI_Command(PAGE_PROGRAM_COMMAND, address, 0, 0, size, (0x01 << 0) | (0x02 << 2) | (0x01 << 4) | (0x00 << 6) | (0x01 << 8) | (0x00 << 10));
     MX_QUADSPI_Transmit(data);
-    waitBusy();
 }
 
 void norflashReadData(uint32_t address, uint8_t *data, uint32_t size)
 {
     MX_Enable_Qspi();
+    waitBusy();
     MX_QUADSPI_Command(READ_DATA_COMMAND, address, 0, 1, size, (0x01 << 0) | (0x02 << 2) | (0x03 << 4) | (0x03 << 6) | (0x03 << 8) | (0x04 << 10));
     MX_QUADSPI_Receive(data);
 }
@@ -115,5 +117,6 @@ void norflashReadData(uint32_t address, uint8_t *data, uint32_t size)
 void norflashMemoryMapped()
 {
     MX_Enable_Qspi();
+    waitBusy();
     MX_QUADSPI_MemoryMapped(READ_DATA_COMMAND, 0, 1, (0x01 << 0) | (0x02 << 2) | (0x03 << 4) | (0x03 << 6) | (0x03 << 8) | (0x04 << 10));
 }

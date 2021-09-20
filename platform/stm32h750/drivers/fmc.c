@@ -24,6 +24,7 @@
 
 /* USER CODE END 0 */
 
+NAND_HandleTypeDef hnand1;
 SDRAM_HandleTypeDef hsdram1;
 
 /* FMC initialization function */
@@ -33,11 +34,48 @@ void MX_FMC_Init(void)
 
   /* USER CODE END FMC_Init 0 */
 
+  FMC_NAND_PCC_TimingTypeDef ComSpaceTiming = {0};
+  FMC_NAND_PCC_TimingTypeDef AttSpaceTiming = {0};
   FMC_SDRAM_TimingTypeDef SdramTiming = {0};
 
   /* USER CODE BEGIN FMC_Init 1 */
 
   /* USER CODE END FMC_Init 1 */
+
+  /** Perform the NAND1 memory initialization sequence
+  */
+  hnand1.Instance = FMC_NAND_DEVICE;
+  /* hnand1.Init */
+  hnand1.Init.NandBank = FMC_NAND_BANK3;
+  hnand1.Init.Waitfeature = FMC_NAND_WAIT_FEATURE_DISABLE;
+  hnand1.Init.MemoryDataWidth = FMC_NAND_MEM_BUS_WIDTH_8;
+  hnand1.Init.EccComputation = FMC_NAND_ECC_DISABLE;
+  hnand1.Init.ECCPageSize = FMC_NAND_ECC_PAGE_SIZE_2048BYTE;
+  hnand1.Init.TCLRSetupTime = 10;
+  hnand1.Init.TARSetupTime = 10;
+  /* hnand1.Config */
+  hnand1.Config.PageSize = 2048;
+  hnand1.Config.SpareAreaSize = 64;
+  hnand1.Config.BlockSize = 64;
+  hnand1.Config.BlockNbr = 4096;
+  hnand1.Config.PlaneNbr = 2;
+  hnand1.Config.PlaneSize = 2048;
+  hnand1.Config.ExtraCommandEnable = DISABLE;
+  /* ComSpaceTiming */
+  ComSpaceTiming.SetupTime = 10;
+  ComSpaceTiming.WaitSetupTime = 10;
+  ComSpaceTiming.HoldSetupTime = 10;
+  ComSpaceTiming.HiZSetupTime = 10;
+  /* AttSpaceTiming */
+  AttSpaceTiming.SetupTime = 10;
+  AttSpaceTiming.WaitSetupTime = 10;
+  AttSpaceTiming.HoldSetupTime = 10;
+  AttSpaceTiming.HiZSetupTime = 10;
+
+  if (HAL_NAND_Init(&hnand1, &ComSpaceTiming, &AttSpaceTiming) != HAL_OK)
+  {
+    Error_Handler( );
+  }
 
   /** Perform the SDRAM1 memory initialization sequence
   */
@@ -103,6 +141,9 @@ static void HAL_FMC_MspInit(void){
   PI6   ------> FMC_D28
   PI5   ------> FMC_NBL3
   PI4   ------> FMC_NBL2
+  PG9   ------> FMC_NCE
+  PD5   ------> FMC_NWE
+  PD4   ------> FMC_NOE
   PI1   ------> FMC_D25
   PI0   ------> FMC_D24
   PI7   ------> FMC_D29
@@ -146,6 +187,8 @@ static void HAL_FMC_MspInit(void){
   PE15   ------> FMC_D12
   PH9   ------> FMC_D17
   PH12   ------> FMC_D20
+  PD11   ------> FMC_CLE
+  PD12   ------> FMC_ALE
   PF11   ------> FMC_SDNRAS
   PG0   ------> FMC_A10
   PE8   ------> FMC_D5
@@ -170,6 +213,27 @@ static void HAL_FMC_MspInit(void){
   HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
 
   /* GPIO_InitStruct */
+  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_15|GPIO_PIN_8|GPIO_PIN_5
+                          |GPIO_PIN_4|GPIO_PIN_2|GPIO_PIN_0|GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
+
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /* GPIO_InitStruct */
+  GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_4|GPIO_PIN_0|GPIO_PIN_1
+                          |GPIO_PIN_15|GPIO_PIN_14|GPIO_PIN_10|GPIO_PIN_9
+                          |GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
+
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* GPIO_InitStruct */
   GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_9
                           |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_15|GPIO_PIN_8
                           |GPIO_PIN_13|GPIO_PIN_7|GPIO_PIN_14;
@@ -191,26 +255,6 @@ static void HAL_FMC_MspInit(void){
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
   /* GPIO_InitStruct */
-  GPIO_InitStruct.Pin = GPIO_PIN_15|GPIO_PIN_8|GPIO_PIN_5|GPIO_PIN_4
-                          |GPIO_PIN_2|GPIO_PIN_0|GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
-
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
-  /* GPIO_InitStruct */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_15|GPIO_PIN_14
-                          |GPIO_PIN_10|GPIO_PIN_9|GPIO_PIN_8;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
-
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /* GPIO_InitStruct */
   GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_1|GPIO_PIN_0|GPIO_PIN_3
                           |GPIO_PIN_5|GPIO_PIN_4|GPIO_PIN_13|GPIO_PIN_14
                           |GPIO_PIN_12|GPIO_PIN_15|GPIO_PIN_11;
@@ -230,9 +274,27 @@ static void HAL_FMC_MspInit(void){
 
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /* GPIO_InitStruct */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
   /* USER CODE BEGIN FMC_MspInit 1 */
 
   /* USER CODE END FMC_MspInit 1 */
+}
+
+void HAL_NAND_MspInit(NAND_HandleTypeDef* nandHandle){
+  /* USER CODE BEGIN NAND_MspInit 0 */
+
+  /* USER CODE END NAND_MspInit 0 */
+  HAL_FMC_MspInit();
+  /* USER CODE BEGIN NAND_MspInit 1 */
+
+  /* USER CODE END NAND_MspInit 1 */
 }
 
 void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* sdramHandle){
@@ -262,6 +324,9 @@ static void HAL_FMC_MspDeInit(void){
   PI6   ------> FMC_D28
   PI5   ------> FMC_NBL3
   PI4   ------> FMC_NBL2
+  PG9   ------> FMC_NCE
+  PD5   ------> FMC_NWE
+  PD4   ------> FMC_NOE
   PI1   ------> FMC_D25
   PI0   ------> FMC_D24
   PI7   ------> FMC_D29
@@ -305,6 +370,8 @@ static void HAL_FMC_MspDeInit(void){
   PE15   ------> FMC_D12
   PH9   ------> FMC_D17
   PH12   ------> FMC_D20
+  PD11   ------> FMC_CLE
+  PD12   ------> FMC_ALE
   PF11   ------> FMC_SDNRAS
   PG0   ------> FMC_A10
   PE8   ------> FMC_D5
@@ -322,18 +389,19 @@ static void HAL_FMC_MspDeInit(void){
                           |GPIO_PIN_0|GPIO_PIN_7|GPIO_PIN_2|GPIO_PIN_3
                           |GPIO_PIN_9|GPIO_PIN_10);
 
+  HAL_GPIO_DeInit(GPIOG, GPIO_PIN_9|GPIO_PIN_15|GPIO_PIN_8|GPIO_PIN_5
+                          |GPIO_PIN_4|GPIO_PIN_2|GPIO_PIN_0|GPIO_PIN_1);
+
+  HAL_GPIO_DeInit(GPIOD, GPIO_PIN_5|GPIO_PIN_4|GPIO_PIN_0|GPIO_PIN_1
+                          |GPIO_PIN_15|GPIO_PIN_14|GPIO_PIN_11|GPIO_PIN_12
+                          |GPIO_PIN_10|GPIO_PIN_9|GPIO_PIN_8);
+
   HAL_GPIO_DeInit(GPIOE, GPIO_PIN_1|GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_9
                           |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_15|GPIO_PIN_8
                           |GPIO_PIN_13|GPIO_PIN_7|GPIO_PIN_14);
 
   HAL_GPIO_DeInit(GPIOH, GPIO_PIN_15|GPIO_PIN_14|GPIO_PIN_13|GPIO_PIN_10
                           |GPIO_PIN_11|GPIO_PIN_9|GPIO_PIN_12|GPIO_PIN_8);
-
-  HAL_GPIO_DeInit(GPIOG, GPIO_PIN_15|GPIO_PIN_8|GPIO_PIN_5|GPIO_PIN_4
-                          |GPIO_PIN_2|GPIO_PIN_0|GPIO_PIN_1);
-
-  HAL_GPIO_DeInit(GPIOD, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_15|GPIO_PIN_14
-                          |GPIO_PIN_10|GPIO_PIN_9|GPIO_PIN_8);
 
   HAL_GPIO_DeInit(GPIOF, GPIO_PIN_2|GPIO_PIN_1|GPIO_PIN_0|GPIO_PIN_3
                           |GPIO_PIN_5|GPIO_PIN_4|GPIO_PIN_13|GPIO_PIN_14
@@ -344,6 +412,16 @@ static void HAL_FMC_MspDeInit(void){
   /* USER CODE BEGIN FMC_MspDeInit 1 */
 
   /* USER CODE END FMC_MspDeInit 1 */
+}
+
+void HAL_NAND_MspDeInit(NAND_HandleTypeDef* nandHandle){
+  /* USER CODE BEGIN NAND_MspDeInit 0 */
+
+  /* USER CODE END NAND_MspDeInit 0 */
+  HAL_FMC_MspDeInit();
+  /* USER CODE BEGIN NAND_MspDeInit 1 */
+
+  /* USER CODE END NAND_MspDeInit 1 */
 }
 
 void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* sdramHandle){

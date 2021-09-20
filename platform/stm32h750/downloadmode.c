@@ -46,7 +46,10 @@ void writeFlash(unsigned char *data, unsigned int len)
   for (unsigned int i = 0; i < len; i += 256)
   {
     norflashWriteData(i, (uint8_t *)data + i, 256);
+    printf("Write %d%%...\r", i * 100 / len);
+    fflush(stdout);
   }
+  printf("Write 100%%...\r\n");
   printf("Write end...\n");
 }
 
