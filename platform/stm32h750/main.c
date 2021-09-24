@@ -217,13 +217,13 @@ static void configMPU()
   //nand flash
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;                  //使能
   MPU_InitStruct.BaseAddress = 0x80000000;                    //基地址
-  MPU_InitStruct.Size = MPU_REGION_SIZE_64KB;                 //64K大小
+  MPU_InitStruct.Size = MPU_REGION_SIZE_256MB;                //256M大小
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;   //允许访问
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;    //写通
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;        //设备
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;      //禁止缓存
   MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;      //禁止共享
   MPU_InitStruct.Number = MPU_REGION_NUMBER11;                //bank11
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;               //tex1
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;               //tex0
   MPU_InitStruct.SubRegionDisable = 0x00;                     //禁止子Region
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE; //允许指令访问
   HAL_MPU_ConfigRegion(&MPU_InitStruct);

@@ -6,6 +6,6 @@
 #define NAND_FLASH_PAGE_SIZE 2048
 void nandFlashInit();
 void nandFlashEraseBlock(unsigned int block);
-void nandFlashWritePage(unsigned int block, unsigned int page, const void *buffer);
-void nandFlashReadPage(unsigned int block, unsigned int page, void *buffer);
+int nandFlashWritePage(unsigned int block, unsigned int page, const void *buffer);
+int nandFlashReadPage(unsigned int block, unsigned int page, void *buffer);
 #endif
