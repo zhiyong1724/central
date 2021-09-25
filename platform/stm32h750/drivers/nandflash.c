@@ -3,6 +3,7 @@
 #include "stm32h7xx_hal_nand.h"
 #include "stm32h7xx_hal.h"
 #include <stdint.h>
+#include <stdio.h>
 static void delay(uint32_t n)
 {
     while (n--)
@@ -14,6 +15,7 @@ int gNandFlashReady = 0;
 
 void nandFlashInit()
 {
+    printf("Init nandflash...");
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -30,9 +32,10 @@ void nandFlashInit()
     while(0 == gNandFlashReady)
     {
     }
+    printf("Init nandflash succeed, size 64M byte, block size 128K byte, page size 2K byte\n");
 }
 
-void nandFlashEraseBlock(unsigned int block)
+void nandFlashEraseBlock(uint32_t block)
 {
     gNandFlashReady = 0;
     block <<= 6;
@@ -81,7 +84,7 @@ static void read(uint32_t block, uint32_t page, uint32_t column, void *buffer, u
     }
 }
 
-int nandFlashReadPage(unsigned int block, unsigned int page, void *buffer)
+int nandFlashReadPage(uint32_t block, uint32_t page, void *buffer)
 {
     int ret = -1;
     read(block, page, 0, buffer, NAND_FLASH_PAGE_SIZE);
@@ -122,7 +125,7 @@ static void write(uint32_t block, uint32_t page, uint32_t column, const void *bu
     }
 }
 
-int nandFlashWritePage(unsigned int block, unsigned int page, const void *buffer)
+int nandFlashWritePage(uint32_t block, uint32_t page, const void *buffer)
 {
     int ret = -1;
     write(block, page, 0, buffer, NAND_FLASH_PAGE_SIZE);

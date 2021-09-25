@@ -80,7 +80,9 @@ SRCS := main.c \
 	stm32h7xx_hal_sdram.c \
 	stm32h7xx_hal_qspi.c \
 	stm32h7xx_hal_nand.c \
+	stm32h7xx_hal_sd.c \
 	stm32h7xx_ll_fmc.c \
+	stm32h7xx_ll_sdmmc.c \
 	system_stm32h7xx.c \
 	newlibio.c \
 	gpio.c \
@@ -97,7 +99,9 @@ SRCS := main.c \
 	xmodem.c \
 	downloadmode.c \
 	normalmode.c \
-	nandflash.c
+	nandflash.c \
+	sdmmc.c \
+	sdcard.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

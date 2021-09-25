@@ -1,6 +1,7 @@
 #include "sdram.h"
 #include "fmc.h"
 #include "stm32h7xx_hal.h"
+#include <stdio.h>
 //向SDRAM发送命令
 //bankx:0,向BANK5上面的SDRAM发送指令
 //      1,向BANK6上面的SDRAM发送指令
@@ -31,6 +32,7 @@ uint8_t SDRAM_Send_Cmd(uint8_t bankx, uint8_t cmd, uint8_t refresh, uint16_t reg
 //发送SDRAM初始化序列
 void SDRAM_Initialization_Sequence()
 {
+  printf("Init sdram...\n");
   MX_FMC_Init();
   uint32_t temp = 0;
   //SDRAM控制器初始化完成以后还需要按照如下顺序初始化SDRAM
@@ -53,4 +55,5 @@ void SDRAM_Initialization_Sequence()
   //我们使用的SDRAM刷新周期为64ms,SDCLK=240/2=120Mhz,行数为8192(2^13).
   //所以,COUNT=64*1000*120/8192-20=917
   HAL_SDRAM_ProgramRefreshRate(&hsdram1, 917);
+  printf("Init sdram succeed, size 64M byte.\n");
 }

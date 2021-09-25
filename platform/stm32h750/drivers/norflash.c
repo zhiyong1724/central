@@ -1,5 +1,6 @@
 #include "norflash.h"
 #include "quadspi.h"
+#include <stdio.h>
 #define ENABLE_RESET_COMMAND 0x66
 #define RESET_COMMAND 0x99
 #define WRITE_ENABLE_COMMAND 0x06
@@ -83,10 +84,12 @@ static void reset()
 
 void norflashInit()
 {
+    printf("Init norflash...\n");
     MX_QUADSPI_Init();  
     MX_Disable_Qspi();
     reset();  
     HAL_Delay(100);
+    printf("Init norflash succeed, size 8M byte, block size 4K byte, page size 256 byte.\n");
 }
 
 void norflashSectorErase(uint32_t address)
