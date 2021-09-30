@@ -12,7 +12,7 @@ static OsMutex sMutex;
 os_size_t osMemInit(void *startAddress, os_size_t size)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osMutexCreateStatic(&sMutex);
+    osMutexCreate(&sMutex);
     return osMemManagerInit(&sMemManager, startAddress, size);
 }
 

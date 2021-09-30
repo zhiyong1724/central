@@ -6,6 +6,9 @@
 #include "sdcard.h"
 #include "key.h"
 #include "led.h"
+#include "stm32h7xx_hal_cortex.h"
+#include "oscentral.h"
+#include "ostask.h"
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
@@ -13,21 +16,12 @@ void enterNormalMode()
     MX_SAI1_Init();
     nandFlashInit();
     sdcardInit();
-    while (keyUpStatus() != KEY_STATUS_PRESS)
+    // HAL_NVIC_EnableIRQ(PendSV_IRQn);
+    // HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
+    while (key1Status() == KEY_STATUS_RELEASE)
     {
-    }    
-    led0ON();
-    led1ON();
-    static uint8_t buff[2048];
-    for (size_t i = 0; i < 2048; i++)
-    {
-        buff[i] = i;
+        /* code */
     }
-    //sdcardWriteBlock(0, 1, buff);
-    for (size_t i = 0; i < 2048; i++)
-    {
-        buff[i] = 0;
-    }
-    sdcardReadBlock(0, 1, buff);
-    sdcardReadBlock(0, 1, buff);
+    osInit();
+    osTaskStart();
 }

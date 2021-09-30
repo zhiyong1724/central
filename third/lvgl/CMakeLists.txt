@@ -1,7 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/../../core/mem
     ${CMAKE_SOURCE_DIR}/../../core/base
     ${CMAKE_SOURCE_DIR}/../../platform/linux)
-add_compile_options(-m32)
+add_compile_options(-Wall -Werror -g -m32)
 if(ESP_PLATFORM)
 file(GLOB_RECURSE SOURCES src/*.c)
 

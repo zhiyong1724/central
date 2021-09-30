@@ -14,7 +14,7 @@ OsFileError osFInit(OsVFS *vfs)
 {
     fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sVFS = vfs;
-    osRecursiveMutexCreateStatic(&sMutex);
+    osRecursiveMutexCreate(&sMutex);
     return osVFSInit(sVFS);
 }
 

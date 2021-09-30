@@ -7,6 +7,7 @@
 #define taskLog(format, ...) (void)0
 #endif
 static OsTaskManager *sTaskManager;
+static int sRunning = 0;
 int portStartScheduler(void **stackTop);
 int portYield(void **stackTop);
 os_size_t portDisableInterrupts();
@@ -50,11 +51,15 @@ int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const ch
 int osTaskTick()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
-    OsTask *nextTask;
-    int ret = osTaskManagerTick(sTaskManager, &nextTask);
-    portYield(&nextTask->stackTop);
-    portRecoveryInterrupts(state);
+    int ret = -1;
+    if (sRunning > 0)
+    {
+        os_size_t state = portDisableInterrupts();
+        OsTask *nextTask;
+        ret = osTaskManagerTick(sTaskManager, &nextTask);
+        portYield(&nextTask->stackTop);
+        portRecoveryInterrupts(state);
+    }
     return ret;
 }
 
@@ -118,19 +123,21 @@ int osTaskExit(void *arg)
     return ret;
 }
 
-int osTaskStart()
+void osTaskStart()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    int ret = -1;
     os_size_t state = portDisableInterrupts();
+    sRunning = 1;
     OsTask *task = osTaskManagerGetRunningTask(sTaskManager);
     osAssert(task != NULL);
     if (task != NULL)
     {
-        ret = portStartScheduler(&task->stackTop);
+        portStartScheduler(&task->stackTop);
     }
     portRecoveryInterrupts(state);
-    return ret;
+    while (1)
+    {
+    }
 }
 
 int osTaskJoin(void **retval, os_size_t tid)

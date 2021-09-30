@@ -4,6 +4,9 @@
 #include "stm32h7xx_hal.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "bch_codec.h"
+#define MAX_CORRECT_BITS 32
+static struct bch_control *sBchHandle = NULL;
 static void delay(uint32_t n)
 {
     while (n--)
@@ -33,6 +36,8 @@ void nandFlashInit()
     {
     }
     printf("Init nandflash succeed, size 64M byte, block size 128K byte, page size 2K byte\n");
+
+    sBchHandle = init_bch(15, MAX_CORRECT_BITS, 0);
 }
 
 void nandFlashEraseBlock(uint32_t block)
@@ -88,6 +93,15 @@ int nandFlashReadPage(uint32_t block, uint32_t page, void *buffer)
 {
     int ret = -1;
     read(block, page, 0, buffer, NAND_FLASH_PAGE_SIZE);
+    uint8_t ecc[NAND_FLASH_SPAREAREA] = {0, };
+    read(block, page, NAND_FLASH_PAGE_SIZE, ecc, NAND_FLASH_SPAREAREA);
+    unsigned int errloc[MAX_CORRECT_BITS] = {0, };
+    int errNum = decode_bch(sBchHandle, buffer, NAND_FLASH_PAGE_SIZE, ecc, NULL, NULL, errloc);
+    if (errNum >= 0 && errNum <= MAX_CORRECT_BITS)
+    {
+        ret = 0;
+        correct_bch(sBchHandle, buffer, NAND_FLASH_PAGE_SIZE, errloc, errNum);
+    }
     return ret;
 }
 
@@ -127,7 +141,9 @@ static void write(uint32_t block, uint32_t page, uint32_t column, const void *bu
 
 int nandFlashWritePage(uint32_t block, uint32_t page, const void *buffer)
 {
-    int ret = -1;
     write(block, page, 0, buffer, NAND_FLASH_PAGE_SIZE);
-    return ret;
+    uint8_t ecc[NAND_FLASH_SPAREAREA] = {0, };
+    encode_bch(sBchHandle, (const uint8_t *)buffer, NAND_FLASH_PAGE_SIZE, ecc);
+    write(block, page, NAND_FLASH_PAGE_SIZE, ecc, NAND_FLASH_SPAREAREA);
+    return 0;
 }

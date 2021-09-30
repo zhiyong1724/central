@@ -717,12 +717,12 @@ void testTid()
     }
 }
 void *testMutexTaskD(void *arg);
-static os_mutex_t sMutex;
+static OsMutex sMutex;
 void *testMutexTaskA(void *arg)
 {
-    osMutexLock(sMutex);
+    osMutexLock(&sMutex);
     printf("This is task A\n");
-    osMutexUnlock(sMutex);
+    osMutexUnlock(&sMutex);
     os_tid_t tid;
     osTaskCreate(&tid, testMutexTaskD, NULL, "testMutexTaskD", 20, 512);
     return NULL;
@@ -731,47 +731,47 @@ void *testMutexTaskA(void *arg)
 void *testMutexTaskB(void *arg)
 {
     printf("This is task B\n");
-    osMutexUnlock(sMutex);
-    osMutexUnlock(sMutex);
-    osMutexUnlock(sMutex);
-    osMutexLock(sMutex);
+    osMutexUnlock(&sMutex);
+    osMutexUnlock(&sMutex);
+    osMutexUnlock(&sMutex);
+    osMutexLock(&sMutex);
     os_tid_t tid;
     osTaskCreateRT(&tid, testMutexTaskA, NULL, "testMutexTaskA", 20, 512);
     osTaskSleep(5000);
-    osMutexUnlock(sMutex);
+    osMutexUnlock(&sMutex);
     return NULL;
 }
 
-os_recursive_mutex_t sRecursiveMutex;
+OsRecursiveMutex sRecursiveMutex;
 
 void *testMutexTaskC(void *arg)
 {
-    osRecursiveMutexLock(sRecursiveMutex);
+    osRecursiveMutexLock(&sRecursiveMutex);
     printf("This is task C\n");
-    osRecursiveMutexUnlock(sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
     return NULL;
 }
 
 void *testMutexTaskD(void *arg)
 {
     printf("This is task D\n");
-    osRecursiveMutexUnlock(sRecursiveMutex);
-    osRecursiveMutexUnlock(sRecursiveMutex);
-    osRecursiveMutexUnlock(sRecursiveMutex);
-    osRecursiveMutexLock(sRecursiveMutex);
-    osRecursiveMutexLock(sRecursiveMutex);
-    osRecursiveMutexLock(sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
+    osRecursiveMutexLock(&sRecursiveMutex);
+    osRecursiveMutexLock(&sRecursiveMutex);
+    osRecursiveMutexLock(&sRecursiveMutex);
     os_tid_t tid;
     osTaskCreateRT(&tid, testMutexTaskC, NULL, "testMutexTaskC", 20, 512);
     osTaskSleep(2000);
     printf("osRecursiveMutexUnlock\n");
-    osRecursiveMutexUnlock(sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
     osTaskSleep(2000);
     printf("osRecursiveMutexUnlock\n");
-    osRecursiveMutexUnlock(sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
     osTaskSleep(2000);
     printf("osRecursiveMutexUnlock\n");
-    osRecursiveMutexUnlock(sRecursiveMutex);
+    osRecursiveMutexUnlock(&sRecursiveMutex);
     return NULL;
 }
 
@@ -785,24 +785,24 @@ void testMutex()
     osTaskStart();
 }
 
-static os_semaphore_t sSemaphore;
+static OsSemaphore sSemaphore;
 void *testSemaphoreTaskA(void *arg)
 {
     printf("This is task A\n");
     osTaskSleep(5000);
     for (int i = 0; i < 10; i++)
     {
-        osSemaphorePost(sSemaphore);
+        osSemaphorePost(&sSemaphore);
     }
     osTaskSleep(1000);
-    osSemaphoreDestory(sSemaphore);
+    osSemaphoreDestory(&sSemaphore);
     return NULL;
 }
 
 void *testSemaphoreTaskB(void *arg)
 {
     printf("This is task B\n");
-    int ret = osSemaphoreWait(sSemaphore, OS_MESSAGE_MAX_WAIT_TIME);
+    int ret = osSemaphoreWait(&sSemaphore, OS_MESSAGE_MAX_WAIT_TIME);
     printf("ret = %d\n", ret);
     return NULL;
 }
@@ -810,7 +810,7 @@ void *testSemaphoreTaskB(void *arg)
 void *testSemaphoreTaskC(void *arg)
 {
     printf("This is task C\n");
-    int ret = osSemaphoreWait(sSemaphore, OS_MESSAGE_MAX_WAIT_TIME);
+    int ret = osSemaphoreWait(&sSemaphore, OS_MESSAGE_MAX_WAIT_TIME);
     printf("ret = %d\n", ret);
     return NULL;
 }
@@ -818,7 +818,7 @@ void *testSemaphoreTaskC(void *arg)
 void *testSemaphoreTaskD(void *arg)
 {
     printf("This is task D\n");
-    int ret = osSemaphoreWait(sSemaphore, 2000);
+    int ret = osSemaphoreWait(&sSemaphore, 2000);
     printf("ret = %d\n", ret);
     return NULL;
 }
@@ -829,11 +829,11 @@ void testSemaphore()
     osSemaphoreCreate(&sSemaphore, 0, 0);
     for (int i = 0; i < 10; i++)
     {
-        osSemaphorePost(sSemaphore);
+        osSemaphorePost(&sSemaphore);
     }
     for (int i = 0; i < 10; i++)
     {
-        int ret = osSemaphoreWait(sSemaphore, 0);
+        int ret = osSemaphoreWait(&sSemaphore, 0);
         printf("ret = %d\n", ret);
     }
     os_tid_t tid;
@@ -844,17 +844,17 @@ void testSemaphore()
     osTaskStart();
 }
 
-static os_queue_t sQueue;
+static OsQueue sQueue;
 void *testQueueTaskA(void *arg)
 {
     printf("This is task A\n");
     osTaskSleep(5000);
     for (int i = 0; i < 10; i++)
     {
-        osQueueSend(sQueue, &i);
+        osQueueSend(&sQueue, &i);
     }
     osTaskSleep(1000);
-    osQueueDestory(sQueue);
+    osQueueDestory(&sQueue);
     return NULL;
 }
 
@@ -862,7 +862,7 @@ void *testQueueTaskB(void *arg)
 {
     printf("This is task B\n");
     int message = -1;
-    osQueueReceive(&message, sQueue, OS_MESSAGE_MAX_WAIT_TIME);
+    osQueueReceive(&message, &sQueue, OS_MESSAGE_MAX_WAIT_TIME);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -871,7 +871,7 @@ void *testQueueTaskC(void *arg)
 {
     printf("This is task C\n");
     int message = -1;
-    osQueueReceive(&message, sQueue, OS_MESSAGE_MAX_WAIT_TIME);
+    osQueueReceive(&message, &sQueue, OS_MESSAGE_MAX_WAIT_TIME);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -880,7 +880,7 @@ void *testQueueTaskD(void *arg)
 {
     printf("This is task D\n");
     int message = -1;
-    osQueueReceive(&message, sQueue, 2000);
+    osQueueReceive(&message, &sQueue, 2000);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -891,12 +891,12 @@ void testQueue()
     osQueueCreate(&sQueue, 0, sizeof(int));
     for (int i = 0; i < 10; i++)
     {
-        osQueueSend(sQueue, &i);
+        osQueueSend(&sQueue, &i);
     }
     for (int i = 0; i < 10; i++)
     {
         int message;
-        osQueueReceive(&message, sQueue, 0);
+        osQueueReceive(&message, &sQueue, 0);
         printf("message = %d\n", message);
     }
     os_tid_t tid;
@@ -1047,7 +1047,7 @@ int main()
     //testMutex();
     //testQueue();
     osInit();
-    lvglIOInit();
+    //lvglIOInit();
     // os_tid_t tid;
     // osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
     // osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);

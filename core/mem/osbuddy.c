@@ -34,7 +34,6 @@ static os_size_t calculateGroupCount(os_size_t pageNum)
 static os_byte_t *fillBlockArray(OsBuddy *buddy, os_byte_t *address, os_size_t blockArrayId)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    buddy->blockListArray[blockArrayId] = NULL;
     os_size_t pageCount = 1 << blockArrayId;
     for (; buddy->totalPageNum - buddy->freePageNum >= pageCount; buddy->freePageNum += pageCount)
     {
@@ -73,6 +72,11 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
         {
             buddy->groupCount = calculateGroupCount(buddy->totalPageNum);
             os_byte_t *handle = (os_byte_t *)buddy->startAddress;
+            for (int i = 0; i < (int)buddy->groupCount; i++)
+            {
+                buddy->blockListArray[i] = NULL;
+            }
+            
             for (int i = (int)buddy->groupCount - 1; i >= 0; i--)
             {
                 handle = fillBlockArray(buddy, handle, (os_size_t)i);

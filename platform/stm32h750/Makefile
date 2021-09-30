@@ -19,6 +19,7 @@ vpath %.c ../../third/fatfs
 vpath %.c ../../third/fatfs/source
 vpath %.c ../../third/letter_shell/src
 vpath %.c ../../third/littlefs
+vpath %.c ../../third/utilities
 vpath %.o $(OBJ_DIR)
 
 CC := arm-none-eabi-gcc
@@ -42,7 +43,8 @@ INCLUDES := -I. \
 	-I../../third/fatfs \
 	-I../../third/fatfs/source \
 	-I../../third/letter_shell/src \
-	-I../../third/littlefs 
+	-I../../third/littlefs \
+	-I../../third/utilities
 
 LIBS_DIR := 
 
@@ -50,7 +52,32 @@ LIBS := -lc -lm
 
 CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE) -ffunction-sections -fdata-sections -Wl,--gc-sections
 
-SRCS := main.c \
+SRCS := ostree.c \
+	osstring.c \
+	oslist.c \
+	osbuddy.c \
+	osmempool.c \
+	osmemmanager.c \
+	osmem.c \
+	osvector.c \
+	osdtscheduler.c \
+	osrtscheduler.c \
+	osidlescheduler.c \
+	osbitmapindex.c \
+	ostidmanager.c \
+	osvscheduler.c \
+	ostaskmanager.c \
+	ostask.c \
+	ossemaphoremanager.c \
+	ossemaphore.c \
+	osmutex.c \
+	osqueuemanager.c \
+	osqueue.c \
+	oscentral.c \
+	osport.c \
+	osvfs.c \
+	osf.c \
+	main.c \
 	stm32h7xx_it.c \
 	stm32h7xx_hal_msp.c \
 	stm32h7xx_hal_cortex.c \
@@ -101,7 +128,8 @@ SRCS := main.c \
 	normalmode.c \
 	nandflash.c \
 	sdmmc.c \
-	sdcard.c
+	sdcard.c \
+	bch_codec.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

@@ -11,7 +11,6 @@ typedef unsigned long os_size_t;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define ENABLE_PRINTF                                     1
 #define ENABLE_ASSERT                                     1
-#define OS_SYS_CLOCK_PERIOD_NS         (10 * 1000 * 1000)                        //系统时钟周期ns
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if ENABLE_PRINTF
 #define osPrintf(format, ...) printf(format, ##__VA_ARGS__)
@@ -33,9 +32,9 @@ else \
 #else
 #define osAssert(e) (void)0
 #endif
-extern char _heap[];
-#define OS_HEAP_ADDRESS                _heap                                      //堆空间指针
-#define OS_HEAP_SIZE                   (1024 * 1024)                              //堆空间大小
+extern int _eexbss;
+#define OS_HEAP_ADDRESS                &_eexbss                                      //堆空间指针
+#define OS_HEAP_SIZE                   ((os_size_t)0x3800000 - ((os_size_t)&_eexbss - (os_size_t)0x60000000))
 #ifdef __cplusplus
 }
 #endif

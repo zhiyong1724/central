@@ -20,7 +20,7 @@
 #endif
 //时钟相关
 #ifndef OS_SYS_CLOCK_PERIOD_NS
-#define OS_SYS_CLOCK_PERIOD_NS         (10 * 1000 * 1000)                        //系统时钟周期ns
+#define OS_SYS_CLOCK_PERIOD_NS         (1 * 1000 * 1000)                        //系统时钟周期ns
 #endif
 //调度器相关
 #ifndef OS_MAX_SCHEDULER_COUNT
@@ -65,7 +65,7 @@
 #endif
 //虚拟文件系统相关
 #ifndef OS_USE_VFS
-#define OS_USE_VFS                                  1                 //是否开启虚拟文件系统
+#define OS_USE_VFS                                  0                 //是否开启虚拟文件系统
 #endif
 #ifndef OS_MAX_FILE_NAME_LENGTH
 #define OS_MAX_FILE_NAME_LENGTH                     256               //最大文件名长度
