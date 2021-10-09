@@ -1,37 +1,40 @@
 #include "shellio.h"
 #include "shell.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "ostask.h"
 #include "osf.h"
 #include "osmem.h"
+#include "usart.h"
+#include <stdio.h>
+#include <string.h>
+#include "osqueue.h"
 static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
+static char sBuffer;
+static OsQueue sQueue;
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(huart);
+  osQueueSend(&sQueue, &sBuffer);
+  MX_USART1_UART_Receive(&sBuffer, 1);
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_UART_RxCpltCallback can be implemented in the user file.
+   */
+}
+
 static short shellRead(char *data, unsigned short len)
 {
-    for (unsigned short i = 0; i < len; i++)
+    if (osQueueReceive(&sQueue, data, OS_MESSAGE_MAX_WAIT_TIME) == 0)
     {
-        int ret = getchar();
-        if (ret != EOF)
-        {
-            data[i] = (char)ret;
-        }
-        else
-        {
-            break;
-        }
+        return 1;
     }
-    return len;
+    return 0;
 }
 
 static short shellWrite(char *data, unsigned short len)
 {
-    for (unsigned short i = 0; i < len; i++)
-    {
-        putchar(data[i]);
-    }
+    MX_USART1_UART_Transmit(data, len);
     return 0;
 }
 
@@ -40,7 +43,6 @@ static void *_shellTask(void *arg)
     while (1)
     {
         shellTask(arg);
-        osTaskSleep(50);
     }
     return NULL;
 }
@@ -52,10 +54,10 @@ int shellIOInit()
     shellInit(&sShell, sShellBuffer, 1024);
     osFGetCWD(sShellPathBuffer, OS_MAX_FILE_PATH_LENGTH);
     shellSetPath(&sShell, sShellPathBuffer);
+    osQueueCreate(&sQueue, OS_MAX_QUEUE_LENGTH, 1);
     os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 0);
-    system("stty -echo");
-    system("stty -icanon");
+    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 4096);
+    MX_USART1_UART_Receive(&sBuffer, 1);
     return 0;
 }
 

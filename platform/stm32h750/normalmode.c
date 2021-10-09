@@ -9,6 +9,10 @@
 #include "stm32h7xx_hal_cortex.h"
 #include "oscentral.h"
 #include "ostask.h"
+#include "shellio.h"
+#include "lfs.h"
+#include "lfsio.h"
+#include "lfsadapter.h"
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
@@ -16,12 +20,12 @@ void enterNormalMode()
     MX_SAI1_Init();
     nandFlashInit();
     sdcardInit();
-    // HAL_NVIC_EnableIRQ(PendSV_IRQn);
-    // HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
-    while (key1Status() == KEY_STATUS_RELEASE)
-    {
-        /* code */
-    }
+    //lfs_format(&gLFS, &gLfsConfig);
+    HAL_NVIC_EnableIRQ(PendSV_IRQn);
+    HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
     osInit();
+    registerLFS();
+    osFMount("/", "nand");
+    shellIOInit();
     osTaskStart();
 }

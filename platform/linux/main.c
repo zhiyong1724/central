@@ -862,7 +862,7 @@ void *testQueueTaskB(void *arg)
 {
     printf("This is task B\n");
     int message = -1;
-    osQueueReceive(&message, &sQueue, OS_MESSAGE_MAX_WAIT_TIME);
+    osQueueReceive(&sQueue, &message, OS_MESSAGE_MAX_WAIT_TIME);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -871,7 +871,7 @@ void *testQueueTaskC(void *arg)
 {
     printf("This is task C\n");
     int message = -1;
-    osQueueReceive(&message, &sQueue, OS_MESSAGE_MAX_WAIT_TIME);
+    osQueueReceive(&sQueue, &message, OS_MESSAGE_MAX_WAIT_TIME);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -880,7 +880,7 @@ void *testQueueTaskD(void *arg)
 {
     printf("This is task D\n");
     int message = -1;
-    osQueueReceive(&message, &sQueue, 2000);
+    osQueueReceive(&sQueue, &message, 2000);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -896,7 +896,7 @@ void testQueue()
     for (int i = 0; i < 10; i++)
     {
         int message;
-        osQueueReceive(&message, &sQueue, 0);
+        osQueueReceive(&sQueue, &message, 0);
         printf("message = %d\n", message);
     }
     os_tid_t tid;

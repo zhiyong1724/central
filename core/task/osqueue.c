@@ -109,7 +109,7 @@ int osQueueSendToFront(os_queue_t queue, void *message)
     return ret;
 }
 
-int osQueueReceive(void *message, os_queue_t queue, uint64_t wait)
+int osQueueReceive(os_queue_t queue, void *message, uint64_t wait)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;

@@ -129,7 +129,16 @@ SRCS := ostree.c \
 	nandflash.c \
 	sdmmc.c \
 	sdcard.c \
-	bch_codec.c
+	bch_codec.c \
+	shell.c \
+	shell_cmd_list.c \
+	shell_companion.c \
+	shell_ext.c \
+	shellio.c \
+	lfs_util.c \
+	lfs.c \
+	lfsadapter.c \
+	lfsio.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

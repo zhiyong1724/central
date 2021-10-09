@@ -78,7 +78,7 @@ void MX_USART1_UART_Transmit(const void *data, int size)
 
 void MX_USART1_UART_Receive(void *data, int size)
 {
-  HAL_UART_Receive(&huart1, (uint8_t *)data, (uint16_t)size, HAL_MAX_DELAY);
+  HAL_UART_Receive_IT(&huart1, (uint8_t *)data, (uint16_t)size);
 }
 
 int MX_USART1_UART_ReceiveTimeout(void *data, int size, unsigned int timeout)
@@ -133,6 +133,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    /* USART1 interrupt Init */
+    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
 
   /* USER CODE BEGIN USART1_MspInit 1 */
 
@@ -162,9 +165,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
   /* USER CODE END USART1_MspDeInit 1 */
   }
 }
-
-/* USER CODE BEGIN 1 */
-
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

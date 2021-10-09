@@ -55,6 +55,14 @@
 #ifndef OS_DEFAULT_TASK_STACK_SIZE
 #define OS_DEFAULT_TASK_STACK_SIZE                  512               //堆栈大小
 #endif
+
+#ifndef OS_DEFAULT_TASK_PRIORITY
+#define OS_DEFAULT_TASK_PRIORITY                    20               //默认任务优先级
+#endif
+
+#ifndef OS_DEFAULT_RTTASK_PRIORITY
+#define OS_DEFAULT_RTTASK_PRIORITY                  32               //默认实时任务优先级
+#endif
 //信号量相关
 #ifndef OS_MAX_SEMAPHORE_COUNT
 #define OS_MAX_SEMAPHORE_COUNT                      1024              //最大信号个数
@@ -65,7 +73,7 @@
 #endif
 //虚拟文件系统相关
 #ifndef OS_USE_VFS
-#define OS_USE_VFS                                  0                 //是否开启虚拟文件系统
+#define OS_USE_VFS                                  1                 //是否开启虚拟文件系统
 #endif
 #ifndef OS_MAX_FILE_NAME_LENGTH
 #define OS_MAX_FILE_NAME_LENGTH                     256               //最大文件名长度
