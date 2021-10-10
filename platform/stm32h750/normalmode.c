@@ -13,6 +13,8 @@
 #include "lfs.h"
 #include "lfsio.h"
 #include "lfsadapter.h"
+#include "ff.h"
+#include "fatfsadapter.h"
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
@@ -25,6 +27,7 @@ void enterNormalMode()
     HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
     osInit();
     registerLFS();
+    registerFatfs();
     osFMount("/", "nand");
     shellIOInit();
     osTaskStart();

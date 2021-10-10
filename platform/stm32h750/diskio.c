@@ -7,7 +7,7 @@
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
 #include "diskio.h"		/* Declarations of disk functions */
-#include "ramio.h"
+#include "sdcard.h"
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
@@ -17,6 +17,11 @@
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
 /*-----------------------------------------------------------------------*/
+
+static DSTATUS mmcStatus()
+{
+    return 0;
+}
 
 DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
@@ -31,14 +36,14 @@ DSTATUS disk_status (
 
 		// translate the reslut code here
 
-		return (DSTATUS)ramIOStatus();
+		return STA_NODISK;
 
 	case DEV_MMC :
 		//result = MMC_disk_status();
 
 		// translate the reslut code here
 
-		return STA_NODISK;
+		return mmcStatus();
 
 	case DEV_USB :
 		//result = USB_disk_status();
@@ -50,11 +55,13 @@ DSTATUS disk_status (
 	return STA_NOINIT;
 }
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
+static DSTATUS mmcInit()
+{
+    return 0;
+}
 
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
@@ -69,14 +76,14 @@ DSTATUS disk_initialize (
 
 		// translate the reslut code here
 
-		return (DSTATUS)ramIOInit();;
+		return STA_NODISK;
 
 	case DEV_MMC :
 		//result = MMC_disk_initialize();
 
 		// translate the reslut code here
 
-		return STA_NODISK;
+		return mmcInit();
 
 	case DEV_USB :
 		//result = USB_disk_initialize();
@@ -88,11 +95,20 @@ DSTATUS disk_initialize (
 	return STA_NOINIT;
 }
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Read Sector(s)                                                        */
 /*-----------------------------------------------------------------------*/
+static DRESULT mmcRead(BYTE *buff, LBA_t sector, UINT count)
+{
+	if (sdcardReadBlock((uint32_t)sector, (uint32_t)count, (void *)buff) == 0)
+	{
+		return RES_OK;
+	}
+	else
+	{
+		return RES_ERROR;
+	}
+}
 
 DRESULT disk_read (
 	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
@@ -112,7 +128,7 @@ DRESULT disk_read (
 
 		// translate the reslut code here
 
-		return (DRESULT)ramIORead(buff, sector, count);
+		return RES_NOTRDY;
 
 	case DEV_MMC :
 		// translate the arguments here
@@ -121,7 +137,7 @@ DRESULT disk_read (
 
 		// translate the reslut code here
 
-		return RES_NOTRDY;
+		return mmcRead(buff, sector, count);
 
 	case DEV_USB :
 		// translate the arguments here
@@ -136,13 +152,22 @@ DRESULT disk_read (
 	return RES_PARERR;
 }
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
 
 #if FF_FS_READONLY == 0
+static DRESULT mmcWrite(const BYTE *buff, LBA_t sector, UINT count)
+{
+	if (sdcardWriteBlock((uint32_t)sector, (uint32_t)count, (const void *)buff) == 0)
+	{
+		return RES_OK;
+	}
+	else
+	{
+		return RES_ERROR;
+	}
+}
 
 DRESULT disk_write (
 	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
@@ -162,7 +187,7 @@ DRESULT disk_write (
 
 		// translate the reslut code here
 
-		return (DRESULT)ramIOWrite(buff, sector, count);
+		return RES_NOTRDY;
 
 	case DEV_MMC :
 		// translate the arguments here
@@ -171,7 +196,7 @@ DRESULT disk_write (
 
 		// translate the reslut code here
 
-		return RES_NOTRDY;
+		return mmcWrite(buff, sector, count);
 
 	case DEV_USB :
 		// translate the arguments here
@@ -188,10 +213,35 @@ DRESULT disk_write (
 
 #endif
 
-
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
+static DRESULT mmcIoctl(BYTE cmd, void *buff)
+{
+    if (cmd > CTRL_TRIM)
+    {
+        return RES_PARERR;
+    }
+    switch (cmd)
+    {
+    case CTRL_SYNC:
+        break;
+    case GET_SECTOR_COUNT:
+        *((unsigned int *)buff) = (unsigned int)sdcardGetBlockNumber();
+        break;
+    case GET_SECTOR_SIZE:
+        *((unsigned int *)buff) = (unsigned int)sdcardGetBlockSize();
+        break;
+    case GET_BLOCK_SIZE:
+        *((unsigned int *)buff) = 1;
+        break;
+    case CTRL_TRIM:
+        break;
+    default:
+        break;
+    }
+    return RES_OK;
+}
 
 DRESULT disk_ioctl (
 	BYTE pdrv,		/* Physical drive nmuber (0..) */
@@ -207,13 +257,13 @@ DRESULT disk_ioctl (
 
 		// Process of the command for the RAM drive
 
-		return (DRESULT)ramIOCtl(cmd, buff);
+		return RES_NOTRDY;
 
 	case DEV_MMC :
 
 		// Process of the command for the MMC/SD card
 
-		return RES_NOTRDY;
+		return mmcIoctl(cmd, buff);
 
 	case DEV_USB :
 
@@ -225,3 +275,7 @@ DRESULT disk_ioctl (
 	return RES_PARERR;
 }
 
+DWORD get_fattime()
+{
+    return 0;
+}

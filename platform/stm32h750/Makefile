@@ -138,7 +138,12 @@ SRCS := ostree.c \
 	lfs_util.c \
 	lfs.c \
 	lfsadapter.c \
-	lfsio.c
+	lfsio.c \
+	ff.c \
+	ffsystem.c \
+	ffunicode.c \
+	diskio.c \
+	fatfsadapter.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

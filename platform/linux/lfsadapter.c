@@ -2,7 +2,8 @@
 #include "lfs.h"
 #include <string.h>
 #include "osmem.h"
-#include "lfsio.h"
+extern const struct lfs_config gLfsConfig;
+extern lfs_t gLFS;
 static int sMount = 0;
 static OsFileError parseResult(int result)
 {
