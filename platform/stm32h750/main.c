@@ -231,22 +231,19 @@ static void configMPU()
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
 
-extern int __exbss_start__;
-extern int __exbss_end__;
-extern int _sexdata;
-extern int _eexdata;
-extern int _siexdata;
+int main(void);
+const void *_enter __attribute__((section(".enter"))) = (void *)main;
+extern int _sbss;
+extern int _ebss;
 static void boot()
 {
-  // uint8_t *dataStart = (uint8_t *)&_sexdata;
-  // uint8_t *dataEnd = (uint8_t *)&_eexdata;
-  // uint8_t *dataLoadAddress = (uint8_t *)&_siexdata;
-  // memcpy(dataStart, dataLoadAddress, dataEnd - dataStart);
+  printf("boot\n");
+  SDRAM_Initialization_Sequence();
   memcpy((void *)0x63800000, (void *)0x90000000, 0x800000);
-
-  uint8_t *bssStart = (uint8_t *)&__exbss_start__;
-  uint8_t *bssEnd = (uint8_t *)&__exbss_end__;
-  memset(bssStart, 0, bssEnd - bssStart);
+  SCB_CleanInvalidateDCache();
+  SCB->VTOR = 0x63800000;
+  void **enter = (void **)0x63800298;
+  ((void (*)())*enter)();
 }
 
 /* USER CODE END 0 */
@@ -270,7 +267,6 @@ int main(void)
   configMPU();
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -287,17 +283,36 @@ int main(void)
   led0OFF();
   led1OFF();
   MX_USART1_UART_Init();
-  SDRAM_Initialization_Sequence();
   norflashInit();
   if (key1Status() == KEY_STATUS_PRESS)
   {
+    SDRAM_Initialization_Sequence();
     enterDownloadMode();
+    SCB->VTOR = 0x63800000;
+    void **enter = (void **)0x63800298;
+    ((int (*)()) *enter)();
   }
   else
   {
+    norflashSectorErase(0);
+    static uint8_t buff[5000];
+    for (size_t i = 0; i < 5000; i++)
+    {
+      buff[i] = 165;
+    }
+    for (size_t i = 0; i < 4096; i += 256)
+    {
+      norflashWriteData(i, buff, 256);
+    }
+    for (size_t i = 0; i < 5000; i++)
+    {
+      buff[i] = 0;
+    }
     norflashMemoryMapped();
+    memcpy(buff, (void *)0x90000000, 5000);
     boot();
-    enterNormalMode();
+    // memset(&_sbss, 0, ((uint8_t *)&_ebss) - ((uint8_t *)&_sbss));
+  // enterNormalMode();
   }
   /* USER CODE BEGIN 2 */
   

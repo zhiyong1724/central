@@ -8,6 +8,7 @@
 /*-----------------------------------------------------------------------*/
 #include "diskio.h"		/* Declarations of disk functions */
 #include "sdcard.h"
+#include <stdio.h>
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
@@ -100,6 +101,7 @@ DSTATUS disk_initialize (
 /*-----------------------------------------------------------------------*/
 static DRESULT mmcRead(BYTE *buff, LBA_t sector, UINT count)
 {
+	printf("mmcRead sector = %lld, count = %d\n", sector, count);
 	if (sdcardReadBlock((uint32_t)sector, (uint32_t)count, (void *)buff) == 0)
 	{
 		return RES_OK;
@@ -159,6 +161,7 @@ DRESULT disk_read (
 #if FF_FS_READONLY == 0
 static DRESULT mmcWrite(const BYTE *buff, LBA_t sector, UINT count)
 {
+	printf("mmcWrite sector = %lld, count = %d\n", sector, count);
 	if (sdcardWriteBlock((uint32_t)sector, (uint32_t)count, (const void *)buff) == 0)
 	{
 		return RES_OK;
@@ -228,9 +231,11 @@ static DRESULT mmcIoctl(BYTE cmd, void *buff)
         break;
     case GET_SECTOR_COUNT:
         *((unsigned int *)buff) = (unsigned int)sdcardGetBlockNumber();
+		printf("GET_SECTOR_COUNT sector = %d\n", *((unsigned int *)buff));
         break;
     case GET_SECTOR_SIZE:
         *((unsigned int *)buff) = (unsigned int)sdcardGetBlockSize();
+		printf("GET_SECTOR_SIZE sector = %d\n", *((unsigned int *)buff));
         break;
     case GET_BLOCK_SIZE:
         *((unsigned int *)buff) = 1;

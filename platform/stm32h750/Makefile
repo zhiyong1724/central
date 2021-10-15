@@ -3,8 +3,7 @@ OBJ_DIR	:= $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
 ELF_FILE := $(BIN_DIR)/main.elf
 HEX_FILE := $(BIN_DIR)/main.hex
-BIN_FILE := $(BIN_DIR)/flash.bin
-EXBIN_FILE := $(BIN_DIR)/exflash.bin
+BIN_FILE := $(BIN_DIR)/main.bin
 MAP_FILE := $(BIN_DIR)/main.map
 DUMP_FILE := $(BIN_DIR)/main.dump
 
@@ -152,7 +151,7 @@ OBJS := $(addprefix $(OBJ_DIR)/,$(BASE_OBJS))
 BASE_ASM_OBJS := $(patsubst %.s, %.o, $(ASM_SRCS))
 OBJS += $(addprefix $(OBJ_DIR)/,$(BASE_ASM_OBJS))
 
-all : $(BUILD_DIR) $(OBJ_DIR) $(BIN_DIR) $(ELF_FILE) $(HEX_FILE) $(BIN_FILE) $(EXBIN_FILE) $(DUMP_FILE)
+all : $(BUILD_DIR) $(OBJ_DIR) $(BIN_DIR) $(ELF_FILE) $(HEX_FILE) $(BIN_FILE) $(DUMP_FILE)
 
 $(DUMP_FILE) : $(ELF_FILE)
 	@echo DUMP $(DUMP_FILE)
@@ -161,11 +160,7 @@ $(DUMP_FILE) : $(ELF_FILE)
 
 $(BIN_FILE) : $(ELF_FILE)
 	@echo CP $(BIN_FILE)
-	@$(CP)  -O binary -S -R .extext -R .exrodata -R .exdata $(ELF_FILE) $(BIN_FILE)
-
-$(EXBIN_FILE) : $(ELF_FILE)
-	@echo CP $(EXBIN_FILE)
-	@$(CP)  -O binary -S -j .extext -j .exrodata -j .exdata $(ELF_FILE) $(EXBIN_FILE)
+	@$(CP)  -O binary -S $(ELF_FILE) $(BIN_FILE)
 
 $(HEX_FILE) : $(ELF_FILE)
 	@echo CP $(HEX_FILE)

@@ -22,7 +22,7 @@ void enterNormalMode()
     MX_SAI1_Init();
     nandFlashInit();
     sdcardInit();
-    //lfs_format(&gLFS, &gLfsConfig);
+    lfs_format(&gLFS, &gLfsConfig);
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
     HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
     osInit();

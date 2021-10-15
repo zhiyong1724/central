@@ -58,16 +58,29 @@ void enterDownloadMode()
   printf("Start download mode...\n");
   led0ON();
   led1ON();
-  while (keyUpStatus() == KEY_STATUS_RELEASE)
-    ;
-  led0OFF();
-  led1OFF();
-  unsigned char *data = (unsigned char *)0x60000000;
-  int len = xmodemReceive(data, 0x800000);
-  if (len > 0)
+  while (1)
   {
-    HAL_Delay(1000);
-    eraseFlash(len);
-    writeFlash(data, len);
+    if (keyUpStatus() == KEY_STATUS_PRESS)
+    {
+      led0OFF();
+      led1OFF();
+      unsigned char *data = (unsigned char *)0x63800000;
+      int len = xmodemReceive(data, 0x800000);
+      if (len > 0)
+      {
+        HAL_Delay(1000);
+        eraseFlash(len);
+        writeFlash(data, len);
+      }
+      break;
+    }
+    else if (key2Status() == KEY_STATUS_PRESS)
+    {
+      led0OFF();
+      led1OFF();
+      unsigned char *data = (unsigned char *)0x63800000;
+      xmodemReceive(data, 0x800000);
+      break;
+    }
   }
 }

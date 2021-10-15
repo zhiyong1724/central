@@ -55,8 +55,8 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 _estack = 0x20020000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x70000;      /* required amount of heap  */
-_Min_Stack_Size = 0x400; /* required amount of stack */
+_Min_Heap_Size = 0x070000;      /* required amount of heap  */
+_Min_Stack_Size = 0x20000; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
@@ -66,9 +66,9 @@ RAM_D1 (xrw)       : ORIGIN = 0x24000000, LENGTH = 512K
 RAM_D2 (xrw)       : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (xrw)       : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)      : ORIGIN = 0x00000000, LENGTH = 64K
-FLASH (rx)         : ORIGIN = 0x8000000, LENGTH = 128K
-NORFLASH(rx)       : ORIGIN = 0x63800000, LENGTH = 8M
-SDRAM(xrw)         : ORIGIN = 0x60000000, LENGTH = 56M
+FLASH (rx)         : ORIGIN = 0x08000000, LENGTH = 128K
+SDRAM (xrw)        : ORIGIN = 0x60000000, LENGTH = 56M
+TEXTSDRAM (rx)     : ORIGIN = 0x63800000, LENGTH = 8M
 }
 
 /* Define output sections */
@@ -80,46 +80,9 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
+    KEEP(*(.enter))
+    . = ALIGN(4);
   } >FLASH
-
-  .extext :
-  {
-    . = ALIGN(4);
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .text)           /* .text sections (code) */
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *crc16.o \
-    *xmodem.o \
-    *downloadmode.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .text*)          /* .text* sections (code) */
-    . = ALIGN(4);
-  } >NORFLASH
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -137,45 +100,6 @@ SECTIONS
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
   } >FLASH
-
-  .exrodata :
-  {
-    . = ALIGN(4);
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .rodata)           /* .text sections (code) */
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *crc16.o \
-    *xmodem.o \
-    *downloadmode.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .rodata*)         /* .rodata sections (constants, strings, etc.) */
-    . = ALIGN(4);
-  } >NORFLASH
 
   /* Constant data goes into FLASH */
   .rodata :
@@ -214,48 +138,6 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
-  _siexdata = LOADADDR(.exdata);
-  .exdata : 
-  {
-    . = ALIGN(4);
-    _sexdata = .;
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .data)           /* .data sections */
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *crc16.o \
-    *xmodem.o \
-    *downloadmode.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .data*)          /* .data* sections */
-    . = ALIGN(4);
-    _eexdata = .; 
-  } >NORFLASH
-
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
@@ -269,72 +151,13 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >DTCMRAM AT> FLASH
+  } >RAM_D1 AT> FLASH
 
-  .exbss :
-  {
-    . = ALIGN(4);
-    /* This is used by the startup in order to initialize the .bss secion */
-    _sexbss = .;         /* define a global symbol at bss start */
-    __exbss_start__ = _sexbss;
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .bss)
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) .bss*)
-    *(EXCLUDE_FILE(*main.o \
-    *system_stm32h7xx.o \
-    *stm32h7xx*.o \
-    *usart.o \
-    *newlibio.o \
-    *gpio.o \
-    *key.o \
-    *led.o \
-    *quadspi.o \
-    *norflash.o \
-    *fmc.o \
-    *sdram.o \
-    *crc16.o \
-    *xmodem.o \
-    *downloadmode.o \
-    *libgcc.a \
-    *libc.a \
-    *libm.a) COMMON)
-
-    . = ALIGN(4);
-    _eexbss = .;         /* define a global symbol at bss end */
-    __exbss_end__ = _eexbss;
-  } >SDRAM
   
   /* Uninitialized data section */
+  . = ALIGN(4);
   .bss :
   {
-    . = ALIGN(4);
     /* This is used by the startup in order to initialize the .bss secion */
     _sbss = .;         /* define a global symbol at bss start */
     __bss_start__ = _sbss;
@@ -347,7 +170,7 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM_D1
 
-  /* User_stack section, used to check that there is enough RAM left */
+  /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_stack :
   {
     . = ALIGN(8);
@@ -355,14 +178,13 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
-  /* User_heap section, used to check that there is enough RAM left */
   ._user_heap :
   {
-    . = ALIGN(8);
+    . = ALIGN(4);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
     . = . + _Min_Heap_Size;
-    . = ALIGN(8);
+    . = ALIGN(4);
   } >RAM_D1
 
   /* Remove information from the standard libraries */
