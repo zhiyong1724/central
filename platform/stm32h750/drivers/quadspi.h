@@ -38,7 +38,7 @@ extern QSPI_HandleTypeDef hqspi;
 
 void MX_QUADSPI_Init(void);
 
-void MX_QUADSPI_Command(uint32_t command, uint32_t addrerss, uint32_t alternateBytes, uint32_t alternateBytesSize, uint32_t dataSize, uint32_t mode);
+void MX_QUADSPI_Command(uint32_t command, uint32_t addrerss, uint32_t alternateBytes, uint32_t alternateBytesSize, uint32_t dataSize, uint32_t mode, uint8_t wait);
 
 void MX_QUADSPI_MemoryMapped(uint32_t command, uint32_t alternateBytes, uint32_t alternateBytesSize, uint32_t mode);
 

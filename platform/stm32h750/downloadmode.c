@@ -43,9 +43,9 @@ void eraseFlash(unsigned int len)
 void writeFlash(unsigned char *data, unsigned int len)
 {
   printf("Start write flash,length = %d byte...\n", len);
-  for (unsigned int i = 0; i < len; i += 256)
+  for (unsigned int i = 0; i < len; i += 32)
   {
-    norflashWriteData(i, (uint8_t *)data + i, 256);
+    norflashWriteData(i, (uint8_t *)data + i, 32);
     printf("Write %d%%...\r", i * 100 / len);
     fflush(stdout);
   }

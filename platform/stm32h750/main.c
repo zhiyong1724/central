@@ -239,13 +239,13 @@ static void boot()
 {
   printf("boot\n");
   SDRAM_Initialization_Sequence();
+  norflashMemoryMapped();
   memcpy((void *)0x63800000, (void *)0x90000000, 0x800000);
   SCB_CleanInvalidateDCache();
   SCB->VTOR = 0x63800000;
   void **enter = (void **)0x63800298;
   ((void (*)())*enter)();
 }
-
 /* USER CODE END 0 */
 
 /**
@@ -294,22 +294,6 @@ int main(void)
   }
   else
   {
-    norflashSectorErase(0);
-    static uint8_t buff[5000];
-    for (size_t i = 0; i < 5000; i++)
-    {
-      buff[i] = 165;
-    }
-    for (size_t i = 0; i < 4096; i += 256)
-    {
-      norflashWriteData(i, buff, 256);
-    }
-    for (size_t i = 0; i < 5000; i++)
-    {
-      buff[i] = 0;
-    }
-    norflashMemoryMapped();
-    memcpy(buff, (void *)0x90000000, 5000);
     boot();
     // memset(&_sbss, 0, ((uint8_t *)&_ebss) - ((uint8_t *)&_sbss));
   // enterNormalMode();

@@ -25,7 +25,9 @@
 /* USER CODE END 0 */
 
 QSPI_HandleTypeDef hqspi;
-
+static int sIsCommandCompleted = 0;
+static int sIsTransmitCompleted = 0;
+static int sIsReceiveCompleted = 0;
 /* QUADSPI init function */
 void MX_QUADSPI_Init(void)
 {
@@ -39,7 +41,7 @@ void MX_QUADSPI_Init(void)
   /* USER CODE END QUADSPI_Init 1 */
   hqspi.Instance = QUADSPI;
   hqspi.Init.ClockPrescaler = 1;
-  hqspi.Init.FifoThreshold = 1;
+  hqspi.Init.FifoThreshold = 32;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
   hqspi.Init.FlashSize = 22;
   hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_7_CYCLE;
@@ -56,7 +58,7 @@ void MX_QUADSPI_Init(void)
 
 }
 
-void MX_QUADSPI_Command(uint32_t command, uint32_t addrerss, uint32_t alternateBytes, uint32_t alternateBytesSize, uint32_t dataSize, uint32_t mode)
+void MX_QUADSPI_Command(uint32_t command, uint32_t addrerss, uint32_t alternateBytes, uint32_t alternateBytesSize, uint32_t dataSize, uint32_t mode, uint8_t wait)
 {
   QSPI_CommandTypeDef commandTypeDef;
   commandTypeDef.Instruction = command;
@@ -152,9 +154,17 @@ void MX_QUADSPI_Command(uint32_t command, uint32_t addrerss, uint32_t alternateB
   commandTypeDef.DdrMode = QSPI_DDR_MODE_DISABLE;
   commandTypeDef.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
   commandTypeDef.DummyCycles = mode >> 10 & 0x1f;
-  if (HAL_QSPI_Command(&hqspi, &commandTypeDef, HAL_MAX_DELAY) != HAL_OK)
+  sIsCommandCompleted = 0;
+  if (HAL_QSPI_Command_IT(&hqspi, &commandTypeDef) != HAL_OK)
   {
     Error_Handler();
+  }
+  if (wait > 0)
+  {
+    while (0 == sIsCommandCompleted)
+    {
+      /* code */
+    }
   }
 }
 
@@ -262,17 +272,26 @@ void MX_QUADSPI_MemoryMapped(uint32_t command, uint32_t alternateBytes, uint32_t
 
 void MX_QUADSPI_Transmit(uint8_t *pData)
 {
-  if (HAL_QSPI_Transmit(&hqspi, pData, HAL_MAX_DELAY) != HAL_OK)
+  sIsTransmitCompleted = 0;
+  if (HAL_QSPI_Transmit_IT(&hqspi, pData) != HAL_OK)
   {
     Error_Handler();
   }
+  while (0 == sIsTransmitCompleted)
+  {
+  }
+  
 }
 
 void MX_QUADSPI_Receive(uint8_t *pData)
 {
-  if (HAL_QSPI_Receive(&hqspi, pData, HAL_MAX_DELAY) != HAL_OK)
+  sIsReceiveCompleted = 0;
+  if (HAL_QSPI_Receive_IT(&hqspi, pData) != HAL_OK)
   {
     Error_Handler();
+  }
+  while (0 == sIsReceiveCompleted)
+  {
   }
 }
 
@@ -336,6 +355,10 @@ void HAL_QSPI_MspInit(QSPI_HandleTypeDef* qspiHandle)
     GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* QUADSPI interrupt Init */
+    HAL_NVIC_SetPriority(QUADSPI_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
+
   /* USER CODE BEGIN QUADSPI_MspInit 1 */
 
   /* USER CODE END QUADSPI_MspInit 1 */
@@ -395,7 +418,50 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
 }
 
 /* USER CODE BEGIN 1 */
+/**
+  * @brief  Command completed callback.
+  * @param  hqspi : QSPI handle
+  * @retval None
+  */
+void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(hqspi);
+  sIsCommandCompleted = 1;
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the HAL_QSPI_CmdCpltCallback could be implemented in the user file
+   */
+}
 
+/**
+  * @brief  Rx Transfer completed callback.
+  * @param  hqspi : QSPI handle
+  * @retval None
+  */
+void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(hqspi);
+  sIsReceiveCompleted = 1;
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the HAL_QSPI_RxCpltCallback could be implemented in the user file
+   */
+}
+
+/**
+  * @brief  Tx Transfer completed callback.
+  * @param  hqspi : QSPI handle
+  * @retval None
+  */
+void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(hqspi);
+  sIsTransmitCompleted = 1;
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the HAL_QSPI_TxCpltCallback could be implemented in the user file
+   */
+}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
