@@ -258,9 +258,9 @@ void boot()
     printf("Read fail.\n");
   }
   SCB_CleanInvalidateDCache();
-  SCB->VTOR = 0x63800000;
   void **enter = (void **)0x63800298;
   printf("enter = 0x%02x\n", (unsigned int)*enter);
+  SCB->VTOR = 0x63800000;
   ((void (*)())*enter)();
 }
 /* USER CODE END 0 */
@@ -308,15 +308,15 @@ int main(void)
     SDRAM_Initialization_Sequence();
     enterDownloadMode();
     SCB_CleanInvalidateDCache();
-    SCB->VTOR = 0x63800000;
     void **enter = (void **)0x63800298;
     printf("enter = 0x%02x\n", (unsigned int)*enter);
+    SCB->VTOR = 0x63800000;
     ((void (*)()) * enter)();
   }
   else
   {
-    //boot();
-    enterNormalMode();
+    boot();
+    //enterNormalMode();
   }
   /* USER CODE BEGIN 2 */
   

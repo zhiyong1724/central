@@ -62,6 +62,7 @@ static OsFileError lfsOpen(OsFile *file, const char *path, uint32_t mode)
     file->obj = osMalloc(sizeof(lfs_file_t));
     if (file->obj != NULL)
     {
+        memset(file->obj, 0, sizeof(lfs_file_t));
         int flags = 0;
         if ((mode & OS_FILE_MODE_READ) > 0 && 0 == (mode & OS_FILE_MODE_WRITE))
         {
@@ -251,6 +252,7 @@ static OsFileError lfsOpenDir(OsDir *dir, const char *path)
     dir->obj = osMalloc(sizeof(lfs_dir_t));
     if (dir->obj != NULL)
     {
+        memset(dir->obj, 0, sizeof(lfs_dir_t));
         int result = lfs_dir_open(&gLFS, (lfs_dir_t *)dir->obj, path);
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)

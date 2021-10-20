@@ -59,6 +59,7 @@ static OsFileError fatfsOpen(OsFile *file, const char *path, uint32_t mode)
     file->obj = osMalloc(sizeof(FIL));
     if (file->obj != NULL)
     {
+        osMemSet(file->obj, 0, sizeof(FIL));
         BYTE fmode = 0;
         if ((mode & OS_FILE_MODE_READ) > 0)
         {
@@ -204,6 +205,7 @@ static OsFileError fatfsOpenDir(OsDir *dir, const char *path)
     dir->obj = osMalloc(sizeof(DIR));
     if (dir->obj != NULL)
     {
+        osMemSet(dir->obj, 0, sizeof(DIR));
         FRESULT result = f_opendir((DIR *)dir->obj, (const TCHAR *)path);
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)
@@ -289,6 +291,7 @@ static OsFileError fatfsFindFirst(OsDir *dir, OsFileInfo *fileInfo, const char *
     dir->obj = osMalloc(sizeof(DIR));
     if (dir->obj != NULL)
     {
+        osMemSet(dir->obj, 0, sizeof(DIR));
         FILINFO fno;
         FRESULT result = f_findfirst((DIR *)dir->obj, &fno, (const TCHAR *)path, (const TCHAR *)pattern);
         ret = parseResult(result);
@@ -413,6 +416,7 @@ OsFileError fatfsMount(OsMountInfo *mountInfo)
     FATFS *fatfs = (FATFS *)osMalloc(sizeof(FATFS));
     if (fatfs != NULL)
     {
+        osMemSet(fatfs, 0, sizeof(FATFS));
         mountInfo->obj = fatfs;
         FRESULT result = f_mount(fatfs, (const TCHAR *)mountInfo->drive, 1);
         ret = parseResult(result);
