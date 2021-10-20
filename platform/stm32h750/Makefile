@@ -114,8 +114,6 @@ SRCS := ostree.c \
 	gpio.c \
 	usart.c \
 	dma.c \
-	quadspi.c \
-	norflash.c \
 	fmc.c \
 	sdram.c \
 	key.c \

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "bch_codec.h"
+#include "fmc.h"
 #define MAX_CORRECT_BITS 32
 static struct bch_control *sBchHandle = NULL;
 static void delay(uint32_t n)
@@ -18,7 +19,8 @@ int gNandFlashReady = 0;
 
 void nandFlashInit()
 {
-    printf("Init nandflash...");
+    printf("Init nandflash...\n");
+    MX_FMC_Init();
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -26,7 +28,6 @@ void nandFlashInit()
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
     HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-    
     gNandFlashReady = 0;
     if (HAL_NAND_Reset(&hnand1) != HAL_OK)
     {
@@ -121,7 +122,7 @@ static void write(uint32_t block, uint32_t page, uint32_t column, const void *bu
     __DSB();
     *(__IO uint8_t *)((uint32_t)(NAND_DEVICE | ADDR_AREA)) = (uint8_t)(pageAddress >> 16);
     __DSB();
-    delay(30);
+    delay(50);
     const uint8_t *data = (const uint8_t *)buffer;
     for (uint32_t i = 0; i < size; i++)
     {

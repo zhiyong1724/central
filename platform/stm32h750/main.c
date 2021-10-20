@@ -24,7 +24,6 @@
 #include "usart.h"
 #include "gpio.h"
 #include "stm32h7xx_hal_rcc.h"
-#include "norflash.h"
 #include "sdram.h"
 #include "key.h"
 #include "led.h"
@@ -32,6 +31,9 @@
 #include "downloadmode.h"
 #include "normalmode.h"
 #include <string.h>
+#include "nandflash.h"
+#include "lfsio.h"
+#include "lfs.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -235,19 +237,34 @@ int main(void);
 const void *_enter __attribute__((section(".enter"))) = (void *)main;
 extern int _sbss;
 extern int _ebss;
-static void boot()
+void boot()
 {
   printf("boot\n");
+  nandFlashInit();
   SDRAM_Initialization_Sequence();
-  norflashMemoryMapped();
-  memcpy((void *)0x63800000, (void *)0x90000000, 0x800000);
+  printf("Start reading...\n");
+  lfs_mount(&gLFS, &gLfsConfig);
+  lfs_file_t file;
+  int ret = lfs_file_open(&gLFS, &file, "/system.bin", LFS_O_RDONLY);
+  if (LFS_ERR_OK == ret)
+  {
+    lfs_file_seek(&gLFS, &file, 0, LFS_SEEK_SET);
+    lfs_ssize_t size = lfs_file_read(&gLFS, &file, (void *)0x63800000, 0x800000);
+    lfs_file_close(&gLFS, &file);
+    printf("Read %ld byte.\n", size);
+  }
+  else
+  {
+    printf("Read fail.\n");
+  }
   SCB_CleanInvalidateDCache();
   SCB->VTOR = 0x63800000;
   void **enter = (void **)0x63800298;
+  printf("enter = 0x%02x\n", (unsigned int)*enter);
   ((void (*)())*enter)();
 }
 /* USER CODE END 0 */
-
+void __libc_init_array();
 /**
   * @brief  The application entry point.
   * @retval int
@@ -255,6 +272,8 @@ static void boot()
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  memset(&_sbss, 0, ((uint8_t *)&_ebss) - ((uint8_t *)&_sbss));
+  __libc_init_array();
   /* USER CODE END 1 */
 
   /* Enable I-Cache---------------------------------------------------------*/
@@ -283,20 +302,21 @@ int main(void)
   led0OFF();
   led1OFF();
   MX_USART1_UART_Init();
-  norflashInit();
   if (key1Status() == KEY_STATUS_PRESS)
   {
+    nandFlashInit();
     SDRAM_Initialization_Sequence();
     enterDownloadMode();
+    SCB_CleanInvalidateDCache();
     SCB->VTOR = 0x63800000;
     void **enter = (void **)0x63800298;
-    ((int (*)()) *enter)();
+    printf("enter = 0x%02x\n", (unsigned int)*enter);
+    ((void (*)()) * enter)();
   }
   else
   {
-    boot();
-    // memset(&_sbss, 0, ((uint8_t *)&_ebss) - ((uint8_t *)&_sbss));
-  // enterNormalMode();
+    //boot();
+    enterNormalMode();
   }
   /* USER CODE BEGIN 2 */
   
@@ -384,6 +404,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  printf("Error_Handler\n");
   while (1)
   {
   }

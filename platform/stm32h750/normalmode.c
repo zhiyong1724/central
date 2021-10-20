@@ -2,7 +2,6 @@
 #include "sai.h"
 #include "dma.h"
 #include <stdio.h>
-#include "nandflash.h"
 #include "sdcard.h"
 #include "key.h"
 #include "led.h"
@@ -11,7 +10,7 @@
 #include "ostask.h"
 #include "shellio.h"
 #include "lfs.h"
-#include "lfsio.h"
+#include "nandflash.h"
 #include "lfsadapter.h"
 #include "ff.h"
 #include "fatfsadapter.h"
@@ -22,13 +21,14 @@ void enterNormalMode()
     MX_SAI1_Init();
     nandFlashInit();
     sdcardInit();
-    lfs_format(&gLFS, &gLfsConfig);
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
     HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
     osInit();
     registerLFS();
     registerFatfs();
     osFMount("/", "nand");
+    osFMkDir("sd");
+    osFMount("sd", "1:");
     shellIOInit();
     osTaskStart();
 }

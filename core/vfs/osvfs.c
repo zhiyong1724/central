@@ -10,6 +10,7 @@
 #if OS_USE_VFS
 static int fillPath(char *dest, os_size_t destSize, char **path, os_size_t index, char first)
 {
+    vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     if (index < destSize)
     {
@@ -98,6 +99,7 @@ static int fillPath(char *dest, os_size_t destSize, char **path, os_size_t index
 
 static const char *preparePath(OsVFS *vfs, char *dest, os_size_t destSize, const char *path)
 {
+    vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     const char *ret = NULL;
     if ('/' == path[0])
     {
@@ -123,6 +125,7 @@ static const char *preparePath(OsVFS *vfs, char *dest, os_size_t destSize, const
 
 static const OsMountInfo *getMountInfo(OsVFS *vfs, const char *path)
 {
+    vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsMountInfo *curNode = (OsMountInfo *)vfs->mountList;
     if (curNode != NULL)
     {

@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include "usart.h"
 #include "xmodem.h"
-#include "norflash.h"
+#include "lfsio.h"
+#include "lfs.h"
 int _inbyte(unsigned short timeout)
 {
   char data = 0;
@@ -25,34 +26,6 @@ void _outbyte(int c)
   MX_USART1_UART_Transmit(&data, 1);
 }
 
-void eraseFlash(unsigned int len)
-{
-  printf("Start erase flash...\n");
-  unsigned int sector = len / 4096;
-  if (len % 4096 > 0)
-  {
-    sector++;
-  }
-  for (unsigned int i = 0; i < sector; i++)
-  {
-    norflashSectorErase(i * 4096);
-  }
-  printf("Erase end...\n");
-}
-
-void writeFlash(unsigned char *data, unsigned int len)
-{
-  printf("Start write flash,length = %d byte...\n", len);
-  for (unsigned int i = 0; i < len; i += 32)
-  {
-    norflashWriteData(i, (uint8_t *)data + i, 32);
-    printf("Write %d%%...\r", i * 100 / len);
-    fflush(stdout);
-  }
-  printf("Write 100%%...\r\n");
-  printf("Write end...\n");
-}
-
 void enterDownloadMode()
 {
   printf("Start download mode...\n");
@@ -66,11 +39,27 @@ void enterDownloadMode()
       led1OFF();
       unsigned char *data = (unsigned char *)0x63800000;
       int len = xmodemReceive(data, 0x800000);
+      HAL_Delay(100);
       if (len > 0)
       {
-        HAL_Delay(1000);
-        eraseFlash(len);
-        writeFlash(data, len);
+        printf("Start writing...\n");
+        if (lfs_mount(&gLFS, &gLfsConfig) != LFS_ERR_OK)
+        {
+          lfs_format(&gLFS, &gLfsConfig);
+          lfs_mount(&gLFS, &gLfsConfig);
+        }
+        lfs_file_t file;
+        int ret = lfs_file_open(&gLFS, &file, "/system.bin", LFS_O_CREAT | LFS_O_TRUNC | LFS_O_WRONLY);
+        if (LFS_ERR_OK == ret)
+        {
+          lfs_ssize_t size = lfs_file_write(&gLFS, &file, data, len);
+          lfs_file_close(&gLFS, &file);
+          printf("Write %ld byte.\n", size);
+        }
+        else
+        {
+          printf("Write fail.\n");
+        }
       }
       break;
     }
@@ -80,6 +69,7 @@ void enterDownloadMode()
       led1OFF();
       unsigned char *data = (unsigned char *)0x63800000;
       xmodemReceive(data, 0x800000);
+      HAL_Delay(100);
       break;
     }
   }
