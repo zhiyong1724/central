@@ -2,6 +2,7 @@
 #include "ff.h"
 #include "osmem.h"
 #include "osstring.h"
+#include <stdlib.h>
 static OsFileError parseResult(FRESULT result)
 {
     OsFileError ret = OS_FILE_ERROR_OK;
@@ -56,7 +57,7 @@ static OsFileError parseResult(FRESULT result)
 static OsFileError fatfsOpen(OsFile *file, const char *path, uint32_t mode)
 {
     OsFileError ret = OS_FILE_ERROR_NOMEM;
-    file->obj = osMalloc(sizeof(FIL));
+    file->obj = malloc(sizeof(FIL));
     if (file->obj != NULL)
     {
         osMemSet(file->obj, 0, sizeof(FIL));
@@ -93,7 +94,7 @@ static OsFileError fatfsOpen(OsFile *file, const char *path, uint32_t mode)
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)
         {
-            osFree(file->obj);
+            free(file->obj);
             file->obj = NULL;
         }
     }
@@ -109,7 +110,7 @@ static OsFileError fatfsClose(OsFile *file)
         ret = parseResult(result);
         if (OS_FILE_ERROR_OK == ret)
         {
-            osFree(file->obj);
+            free(file->obj);
             file->obj = NULL;
         }
     }
@@ -202,7 +203,7 @@ static OsFileError fatfsSync(OsFile *file)
 static OsFileError fatfsOpenDir(OsDir *dir, const char *path)
 {
     OsFileError ret = OS_FILE_ERROR_NOMEM;
-    dir->obj = osMalloc(sizeof(DIR));
+    dir->obj = malloc(sizeof(DIR));
     if (dir->obj != NULL)
     {
         osMemSet(dir->obj, 0, sizeof(DIR));
@@ -210,7 +211,7 @@ static OsFileError fatfsOpenDir(OsDir *dir, const char *path)
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)
         {
-            osFree(dir->obj);
+            free(dir->obj);
             dir->obj = NULL;
         }
     }
@@ -226,7 +227,7 @@ static OsFileError fatfsCloseDir(OsDir *dir)
         ret = parseResult(result);
         if (OS_FILE_ERROR_OK == ret)
         {
-            osFree(dir->obj);
+            free(dir->obj);
             dir->obj = NULL;
         }
     }
@@ -288,7 +289,7 @@ static OsFileError fatfsReadDir(OsDir *dir, OsFileInfo *fileInfo)
 static OsFileError fatfsFindFirst(OsDir *dir, OsFileInfo *fileInfo, const char *path, const char *pattern)
 {
     OsFileError ret = OS_FILE_ERROR_NOMEM;
-    dir->obj = osMalloc(sizeof(DIR));
+    dir->obj = malloc(sizeof(DIR));
     if (dir->obj != NULL)
     {
         osMemSet(dir->obj, 0, sizeof(DIR));
@@ -297,7 +298,7 @@ static OsFileError fatfsFindFirst(OsDir *dir, OsFileInfo *fileInfo, const char *
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)
         {
-            osFree(dir->obj);
+            free(dir->obj);
             dir->obj = NULL;
         }
         else
@@ -403,7 +404,7 @@ static OsFileError fatfsStatFS(const char *path, OsFS *fs)
             osStrCpy(fs->type, "", OS_MAX_FILE_NAME_LENGTH);
             break;
         }
-        fs->pageSize = (uint32_t)fatfs->ssize;
+        fs->pageSize = (uint32_t)(fatfs->ssize * fatfs->csize);
         fs->freePages = (uint64_t)nclst;
         fs->totalPages = (uint64_t)fatfs->n_fatent - 2;
     }
@@ -413,7 +414,7 @@ static OsFileError fatfsStatFS(const char *path, OsFS *fs)
 OsFileError fatfsMount(OsMountInfo *mountInfo)
 {
     OsFileError ret = OS_FILE_ERROR_NOMEM;
-    FATFS *fatfs = (FATFS *)osMalloc(sizeof(FATFS));
+    FATFS *fatfs = (FATFS *)malloc(sizeof(FATFS));
     if (fatfs != NULL)
     {
         osMemSet(fatfs, 0, sizeof(FATFS));
@@ -422,7 +423,7 @@ OsFileError fatfsMount(OsMountInfo *mountInfo)
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)
         {
-            osFree(fatfs);
+            free(fatfs);
         }
     }
     return ret;
@@ -432,7 +433,7 @@ OsFileError fatfsUnmount(OsMountInfo *mountInfo)
 {
     FRESULT result = f_unmount((const TCHAR *)mountInfo->drive);
     OsFileError ret = parseResult(result);
-    osFree(mountInfo->obj);
+    free(mountInfo->obj);
     return ret;
 }
 

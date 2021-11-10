@@ -32,9 +32,8 @@ else \
 #else
 #define osAssert(e) (void)0
 #endif
-extern int _ebss;
-#define OS_HEAP_ADDRESS                &_ebss                                      //堆空间指针
-#define OS_HEAP_SIZE                   ((os_size_t)0x3800000 - ((os_size_t)&_ebss - (os_size_t)0x60000000))
+#define OS_HEAP_ADDRESS                (void *)0x60000000                                   //堆空间指针
+#define OS_HEAP_SIZE                   ((os_size_t)0x63800000 - (os_size_t)0x60000000)
 #ifdef __cplusplus
 }
 #endif

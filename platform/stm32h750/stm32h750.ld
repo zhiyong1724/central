@@ -55,7 +55,7 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 _estack = 0x20020000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x070000;      /* required amount of heap  */
+_Min_Heap_Size = 0x080000;      /* required amount of heap  */
 _Min_Stack_Size = 0x20000; /* required amount of stack */
 
 /* Specify the memory areas */
@@ -82,7 +82,7 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.enter))
     . = ALIGN(4);
-  } >FLASH
+  } >TEXTSDRAM
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -99,7 +99,7 @@ SECTIONS
 
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
-  } >FLASH
+  } >TEXTSDRAM
 
   /* Constant data goes into FLASH */
   .rodata :
@@ -108,35 +108,35 @@ SECTIONS
     *(.rodata)         /* .rodata sections (constants, strings, etc.) */
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
-  } >FLASH
+  } >TEXTSDRAM
 
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
   .ARM : {
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
-  } >FLASH
+  } >TEXTSDRAM
 
   .preinit_array     :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >FLASH
+  } >TEXTSDRAM
   .init_array :
   {
     PROVIDE_HIDDEN (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } >FLASH
+  } >TEXTSDRAM
   .fini_array :
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
     KEEP (*(SORT(.fini_array.*)))
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } >FLASH
+  } >TEXTSDRAM
 
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
@@ -151,7 +151,7 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >RAM_D1 AT> FLASH
+  } >TEXTSDRAM
 
   
   /* Uninitialized data section */
@@ -164,11 +164,10 @@ SECTIONS
     *(.bss)
     *(.bss*)
     *(COMMON)
-
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM_D1
+  } >TEXTSDRAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_stack :

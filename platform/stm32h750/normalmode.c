@@ -14,6 +14,7 @@
 #include "lfsadapter.h"
 #include "ff.h"
 #include "fatfsadapter.h"
+#include "osmem.h"
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
@@ -28,7 +29,7 @@ void enterNormalMode()
     registerFatfs();
     osFMount("/", "nand");
     osFMkDir("sd");
-    osFMount("sd", "1:");
+    osFMount("sd", "0:");
     shellIOInit();
     osTaskStart();
 }

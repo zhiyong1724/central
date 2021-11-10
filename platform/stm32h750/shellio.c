@@ -56,7 +56,7 @@ int shellIOInit()
     shellSetPath(&sShell, sShellPathBuffer);
     osQueueCreate(&sQueue, OS_MAX_QUEUE_LENGTH, 1);
     os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 4096);
+    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 8192);
     MX_USART1_UART_Receive(&sBuffer, 1);
     return 0;
 }

@@ -40,7 +40,6 @@ int sdcardWriteBlock(uint32_t block, uint32_t num, const void *buffer)
 {
     int ret = -1;
     sTransferCompleted = 0;
-    SCB_CleanDCache_by_Addr((uint32_t*)buffer, sBlockSize * num);
     while ((HAL_SD_GetCardState(&hsd1) != HAL_SD_CARD_TRANSFER))
     {
     }
@@ -68,7 +67,6 @@ int sdcardReadBlock(uint32_t block, uint32_t num, void *buffer)
     while (0 == sTransferCompleted)
     {
     }
-    SCB_InvalidateDCache_by_Addr((uint32_t*)buffer, sBlockSize * num);
     return ret;
 }
 

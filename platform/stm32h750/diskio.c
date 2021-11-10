@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include "osmutex.h"
 /* Definitions of physical drive number for each drive */
-#define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
-#define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
+#define DEV_RAM		1	/* Example: Map Ramdisk to physical drive 0 */
+#define DEV_MMC		0	/* Example: Map MMC/SD card to physical drive 1 */
 #define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
 static OsMutex sMutex;
@@ -231,11 +231,9 @@ static DRESULT mmcIoctl(BYTE cmd, void *buff)
         break;
     case GET_SECTOR_COUNT:
         *((unsigned int *)buff) = (unsigned int)sdcardGetBlockNumber();
-		printf("GET_SECTOR_COUNT sector = %d\n", *((unsigned int *)buff));
         break;
     case GET_SECTOR_SIZE:
         *((unsigned int *)buff) = (unsigned int)sdcardGetBlockSize();
-		printf("GET_SECTOR_SIZE sector = %d\n", *((unsigned int *)buff));
         break;
     case GET_BLOCK_SIZE:
         *((unsigned int *)buff) = 1;

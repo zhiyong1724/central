@@ -403,7 +403,7 @@ static OsFileError fatfsStatFS(const char *path, OsFS *fs)
             osStrCpy(fs->type, "", OS_MAX_FILE_NAME_LENGTH);
             break;
         }
-        fs->pageSize = (uint32_t)fatfs->ssize;
+        fs->pageSize = (uint32_t)(fatfs->ssize * fatfs->csize);
         fs->freePages = (uint64_t)nclst;
         fs->totalPages = (uint64_t)fatfs->n_fatent - 2;
     }
