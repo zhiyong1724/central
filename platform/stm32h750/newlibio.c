@@ -6,6 +6,7 @@
 #include "osf.h"
 #include "osmem.h"
 #include <string.h>
+#include "led.h"
 static int sAddressMask = 0;
 void _exit(int rc)
 {

@@ -3,14 +3,20 @@
 #include "stm32h7xx_hal.h"
 #include "ostask.h"
 #include "stm32h7xx_hal_cortex.h"
+#include <reent.h>
+#include "osstring.h"
 #define NVIC_INT_CTRL_REG (*((volatile uint32_t *)0xe000ed04))
 #define NVIC_PENDSVSET_BIT (1UL << 28UL)
 static void **sPreTask = NULL;
 static void **sRunningTask = NULL;
+static struct _reent sReent = _REENT_INIT (sReent);
 int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskStackMagic, TaskFunction taskFunction, void *arg)
 {
-    os_size_t **stack = (os_size_t **)stackTop;      //8字节对齐
-    if ((os_size_t)*stack % 8 > 0)
+    os_size_t **stack = (os_size_t **)stackTop;     
+    (*stack) -= sizeof(struct _reent) / sizeof(os_size_t);    //给C库全局变量预留空间
+    (*stack)--;
+    osMemCpy(*stack, &sReent, sizeof(struct _reent));
+    if ((os_size_t)*stack % 8 > 0)                            //8字节对齐
     {
         (*stack)--;
     }
@@ -33,6 +39,12 @@ int portStartScheduler(void **stackTop)
 {
     if (stackTop != sRunningTask)
     {
+        os_size_t **stackStart = (os_size_t **)stackTop - 1;
+        os_size_t *stackSize = (os_size_t *)stackTop + 1;
+        os_size_t *stackEnd = *stackStart + *stackSize / sizeof(os_size_t);
+        stackEnd -= sizeof(struct _reent) / sizeof(os_size_t);
+        stackEnd--;
+        _REENT = (struct _reent *)stackEnd;
         sPreTask = sRunningTask;
         sRunningTask = stackTop;
         NVIC_INT_CTRL_REG = NVIC_PENDSVSET_BIT;
@@ -44,6 +56,12 @@ int portYield(void **stackTop)
 {
     if (stackTop != sRunningTask)
     {
+        os_size_t **stackStart = (os_size_t **)stackTop - 1;
+        os_size_t *stackSize = (os_size_t *)stackTop + 1;
+        os_size_t *stackEnd = *stackStart + *stackSize / sizeof(os_size_t);
+        stackEnd -= sizeof(struct _reent) / sizeof(os_size_t);
+        stackEnd--;
+        _REENT = (struct _reent *)stackEnd;
         sPreTask = sRunningTask;
         sRunningTask = stackTop;
         NVIC_INT_CTRL_REG = NVIC_PENDSVSET_BIT;

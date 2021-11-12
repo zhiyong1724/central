@@ -9,6 +9,7 @@ DUMP_FILE := $(BIN_DIR)/main.dump
 
 vpath %.c ./hal/Src
 vpath %.c ./drivers
+vpath %.c ../../apps/audioplayer
 vpath %.c ../../core
 vpath %.c ../../core/base
 vpath %.c ../../core/mem
@@ -43,7 +44,8 @@ INCLUDES := -I. \
 	-I../../third/fatfs/source \
 	-I../../third/letter_shell/src \
 	-I../../third/littlefs \
-	-I../../third/utilities
+	-I../../third/utilities \
+	-I../../apps/audioplayer
 
 LIBS_DIR := 
 
@@ -140,7 +142,12 @@ SRCS := ostree.c \
 	ffsystem.c \
 	ffunicode.c \
 	diskio.c \
-	fatfsadapter.c
+	fatfsadapter.c \
+	softiic.c \
+	pcf8574.c \
+	es8388.c \
+	audiooutput.c \
+	saiaudiooutput.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

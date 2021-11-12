@@ -34,6 +34,10 @@
 #include "nandflash.h"
 #include "lfsio.h"
 #include "lfs.h"
+#include <stdlib.h>
+#include "pcf8574.h"
+#include "es8388.h"
+#include "sai.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -248,7 +252,6 @@ void boot()
   int ret = lfs_file_open(&gLFS, &file, "/system.bin", LFS_O_RDONLY);
   if (LFS_ERR_OK == ret)
   {
-    lfs_file_seek(&gLFS, &file, 0, LFS_SEEK_SET);
     lfs_ssize_t size = lfs_file_read(&gLFS, &file, (void *)0x63800000, 0x800000);
     lfs_file_close(&gLFS, &file);
     printf("Read %ld byte.\n", size);

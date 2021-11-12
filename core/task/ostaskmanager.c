@@ -263,7 +263,6 @@ int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask)
     }
     *nextTask = (OsTask *)osVSchedulerTick(&taskManager->vScheduler, OS_MAX_SCHEDULER_COUNT);
     *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
-    taskManagerLog("stack overflow\n");
     osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
     if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
     {
@@ -275,6 +274,7 @@ int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask)
     }
     else
     {
+        printf("Task %s stack overflow\n", (*nextTask)->name);
         return -1;
     }
 }

@@ -37,8 +37,9 @@ extern SAI_HandleTypeDef hsai_BlockA1;
 
 /* USER CODE END Private defines */
 
-void MX_SAI1_Init(void);
-
+void MX_SAI1_Init();
+int MX_SAI1_Send(const void *buff, unsigned int size);
+int MX_SAI1_StopSend();
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */

@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "osqueue.h"
+#include "saiaudiooutput.h"
+#include "led.h"
+#include <stdio.h>
 static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
@@ -56,7 +59,7 @@ int shellIOInit()
     shellSetPath(&sShell, sShellPathBuffer);
     osQueueCreate(&sQueue, OS_MAX_QUEUE_LENGTH, 1);
     os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 8192);
+    osTaskCreate(&tid, _shellTask, &sShell, "shell", 0, OS_DEFAULT_TASK_STACK_SIZE);
     MX_USART1_UART_Receive(&sBuffer, 1);
     return 0;
 }
@@ -519,4 +522,59 @@ void shellFree(int argc, char *argv[])
     shellPrint(&sShell, "可用内存：%ld\n", osFreeMem());
     shellPrint(&sShell, "所有页：%ld\n", osTotalPage());
     shellPrint(&sShell, "可用页：%ld\n", osFreePage());
+}
+
+static FILE *sFile = NULL;
+static SaiAudioOutput sSaiAudioOutput;
+static int onReadDataStream(void *buffer, int bufferSize)
+{
+    bufferSize = fread(buffer, 1, bufferSize, sFile);
+    return bufferSize;
+}
+
+static void onPlaying()
+{
+    printf("onPlaying\n");
+}
+
+static void onStopped()
+{
+    printf("onStopped\n");
+    fclose(sFile);
+    sFile = NULL;
+}
+
+static void onPositionChanged(int ms)
+{
+}
+
+void shellPlay(int argc, char *argv[])
+{
+    if (argc >= 2)
+    {
+        if (strcmp(argv[1], "stop") == 0)
+        {
+            audioOutputStop((AudioOutput *)&sSaiAudioOutput);
+            saiAudioOutputUninit(&sSaiAudioOutput);
+        }
+        else
+        {
+            saiAudioOutputInit(&sSaiAudioOutput);
+            AudioOutputCallback audioOutputCallback;
+            audioOutputCallback.onReadDataStream = onReadDataStream;
+            audioOutputCallback.onPlaying = onPlaying;
+            audioOutputCallback.onStopped = onStopped;
+            audioOutputCallback.onPositionChanged = onPositionChanged;
+            audioOutputSetCallback((AudioOutput *)&sSaiAudioOutput, &audioOutputCallback);
+            sFile = fopen(argv[1], "rb");
+            if (sFile != NULL)
+            {
+                audioOutputPlay((AudioOutput *)&sSaiAudioOutput);
+            }
+        }
+    }
+    else
+    {
+        shellWriteString(&sShell, "参数不足\n");
+    }
 }

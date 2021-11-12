@@ -53,7 +53,7 @@ int shellIOInit()
     osFGetCWD(sShellPathBuffer, OS_MAX_FILE_PATH_LENGTH);
     shellSetPath(&sShell, sShellPathBuffer);
     os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell task", 0, 0);
+    osTaskCreate(&tid, _shellTask, &sShell, "shell", 0, 0);
     system("stty -echo");
     system("stty -icanon");
     return 0;

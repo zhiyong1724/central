@@ -18,17 +18,18 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "sai.h"
-#include "gpio.h"
-#include "dma.h"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
 SAI_HandleTypeDef hsai_BlockA1;
 DMA_HandleTypeDef hdma_sai1_a;
+
 /* SAI1 init function */
-void MX_SAI1_Init(void)
+void MX_SAI1_Init()
 {
+
   /* USER CODE BEGIN SAI1_Init 0 */
 
   /* USER CODE END SAI1_Init 0 */
@@ -70,33 +71,51 @@ void MX_SAI1_Init(void)
   }
 
   /* USER CODE BEGIN SAI1_Init 2 */
-
   /* USER CODE END SAI1_Init 2 */
 
 }
+
+int MX_SAI1_Send(const void *buff, unsigned int size)
+{
+  if (HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)buff, (uint16_t)size) != HAL_OK)
+  {
+    return -1;
+  }
+  return 0;
+}
+
+int MX_SAI1_StopSend()
+{
+  if (HAL_SAI_DMAStop(&hsai_BlockA1) != HAL_OK)
+  {
+    return -1;
+  }
+  return 0;
+}
+
 static uint32_t SAI1_client =0;
 
-void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
+void HAL_SAI_MspInit(SAI_HandleTypeDef* saiHandle)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct;
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 /* SAI1 */
-    if(hsai->Instance==SAI1_Block_A)
+    if(saiHandle->Instance==SAI1_Block_A)
     {
     /* SAI1 clock enable */
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
-    PeriphClkInitStruct.PLL2.PLL2M = 21;
-    PeriphClkInitStruct.PLL2.PLL2N = 289;
-    PeriphClkInitStruct.PLL2.PLL2P = 7;
-    PeriphClkInitStruct.PLL2.PLL2Q = 7;
-    PeriphClkInitStruct.PLL2.PLL2R = 2;
-    PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_0;
-    PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
-    PeriphClkInitStruct.PLL2.PLL2FRACN = 0.0;
-    PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL2;
+    PeriphClkInitStruct.PLL3.PLL3M = 21;
+    PeriphClkInitStruct.PLL3.PLL3N = 289;
+    PeriphClkInitStruct.PLL3.PLL3P = 7;
+    PeriphClkInitStruct.PLL3.PLL3Q = 7;
+    PeriphClkInitStruct.PLL3.PLL3R = 2;
+    PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_0;
+    PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
+    PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
+    PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -109,19 +128,12 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     SAI1_client ++;
 
     /**SAI1_A_Block_A GPIO Configuration
-    PD6     ------> SAI1_SD_A
     PE2     ------> SAI1_MCLK_A
     PE5     ------> SAI1_SCK_A
     PE4     ------> SAI1_FS_A
+    PE6     ------> SAI1_SD_A
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_5|GPIO_PIN_4;
+    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_5|GPIO_PIN_4|GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -147,16 +159,16 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
     /* Several peripheral DMA handle pointers point to the same DMA handle.
      Be aware that there is only one channel to perform all the requested DMAs. */
-    __HAL_LINKDMA(hsai,hdmarx,hdma_sai1_a);
-    __HAL_LINKDMA(hsai,hdmatx,hdma_sai1_a);
+    __HAL_LINKDMA(saiHandle,hdmarx,hdma_sai1_a);
+    __HAL_LINKDMA(saiHandle,hdmatx,hdma_sai1_a);
     }
 }
 
-void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
+void HAL_SAI_MspDeInit(SAI_HandleTypeDef* saiHandle)
 {
 
 /* SAI1 */
-    if(hsai->Instance==SAI1_Block_A)
+    if(saiHandle->Instance==SAI1_Block_A)
     {
     SAI1_client --;
     if (SAI1_client == 0)
@@ -166,17 +178,15 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
       }
 
     /**SAI1_A_Block_A GPIO Configuration
-    PD6     ------> SAI1_SD_A
     PE2     ------> SAI1_MCLK_A
     PE5     ------> SAI1_SCK_A
     PE4     ------> SAI1_FS_A
+    PE6     ------> SAI1_SD_A
     */
-    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_2|GPIO_PIN_5|GPIO_PIN_4|GPIO_PIN_6);
 
-    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_2|GPIO_PIN_5|GPIO_PIN_4);
-
-    HAL_DMA_DeInit(hsai->hdmarx);
-    HAL_DMA_DeInit(hsai->hdmatx);
+    HAL_DMA_DeInit(saiHandle->hdmarx);
+    HAL_DMA_DeInit(saiHandle->hdmatx);
     }
 }
 
