@@ -9,13 +9,11 @@
 #include "diskio.h"		/* Declarations of disk functions */
 #include "sdcard.h"
 #include <stdio.h>
-#include "osmutex.h"
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		1	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		0	/* Example: Map MMC/SD card to physical drive 1 */
 #define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
-static OsMutex sMutex;
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
 /*-----------------------------------------------------------------------*/
@@ -62,7 +60,6 @@ DSTATUS disk_status (
 /*-----------------------------------------------------------------------*/
 static DSTATUS mmcInit()
 {
-	osMutexCreate(&sMutex);
     return 0;
 }
 
@@ -103,13 +100,11 @@ DSTATUS disk_initialize (
 /*-----------------------------------------------------------------------*/
 static DRESULT mmcRead(BYTE *buff, LBA_t sector, UINT count)
 {
-	osMutexLock(&sMutex);
 	DRESULT ret = RES_ERROR;
 	if (sdcardReadBlock((uint32_t)sector, (uint32_t)count, (void *)buff) == 0)
 	{
 		ret = RES_OK;
 	}
-	osMutexUnlock(&sMutex);
 	return ret;
 }
 
@@ -162,13 +157,11 @@ DRESULT disk_read (
 #if FF_FS_READONLY == 0
 static DRESULT mmcWrite(const BYTE *buff, LBA_t sector, UINT count)
 {
-	osMutexLock(&sMutex);
 	DRESULT ret = RES_ERROR;
 	if (sdcardWriteBlock((uint32_t)sector, (uint32_t)count, (const void *)buff) == 0)
 	{
 		ret = RES_OK;
 	}
-	osMutexUnlock(&sMutex);
 	return ret;
 }
 

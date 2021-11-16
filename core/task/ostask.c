@@ -87,7 +87,9 @@ int osTaskWakeup(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
-    int ret = osTaskManagerWakeup(sTaskManager, tid);
+    OsTask *nextTask;
+    int ret = osTaskManagerWakeup(sTaskManager, &nextTask, tid);
+    portYield(&nextTask->stackTop);
     portRecoveryInterrupts(state);
     return ret;
 }
@@ -107,7 +109,9 @@ int osTaskResume(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
-    int ret = osTaskManagerResume(sTaskManager, tid);
+    OsTask *nextTask;
+    int ret = osTaskManagerResume(sTaskManager, &nextTask, tid);
+    portYield(&nextTask->stackTop);
     portRecoveryInterrupts(state);
     return ret;
 }

@@ -21,6 +21,7 @@
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
+    osInit();
     PCF8574_Init();
     ES8388_Init();
     ES8388_ADDA_Cfg(1, 0); //开启DAC
@@ -34,7 +35,6 @@ void enterNormalMode()
     sdcardInit();
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
     HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
-    osInit();
     registerLFS();
     registerFatfs();
     osFMount("/", "nand");

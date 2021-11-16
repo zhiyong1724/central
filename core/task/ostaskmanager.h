@@ -101,10 +101,11 @@ int osTaskManagerSleep(OsTaskManager *taskManager, OsTask **nextTask, uint64_t n
 /*********************************************************************************************************************
 * 唤醒睡眠的任务
 * taskManager：OsTaskManager对象
+* nextTask：下一个任务
 * tid：要唤醒的任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerWakeup(OsTaskManager *taskManager, os_tid_t tid);
+int osTaskManagerWakeup(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t tid);
 /*********************************************************************************************************************
 * 挂起一个任务
 * taskManager：OsTaskManager对象
@@ -116,10 +117,11 @@ int osTaskManagerSupend(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t 
 /*********************************************************************************************************************
 * 恢复一个任务
 * taskManager：OsTaskManager对象
+* nextTask：下一个任务
 * tid：要恢复的任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerResume(OsTaskManager *taskManager, os_tid_t tid);
+int osTaskManagerResume(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t tid);
 /*********************************************************************************************************************
 * 退出当前任务
 * taskManager：OsTaskManager对象

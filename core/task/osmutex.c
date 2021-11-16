@@ -55,23 +55,18 @@ int osRecursiveMutexLock(os_recursive_mutex_t mutex)
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
-    if (0 == mutex->recursiveCount)
+    if (osTaskGetRunningTask() == mutex->owner)
     {
-        mutex->owner = osTaskGetRunningTask();
         mutex->recursiveCount++;
-        ret = osSemaphoreWait(&mutex->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
+        ret = 0;
     }
     else
     {
-        if (osTaskGetRunningTask() == mutex->owner)
-        {
-            mutex->recursiveCount++;
-            ret = 0;
-        }
-        else
-        {
-            ret = osSemaphoreWait(&mutex->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
-        }
+        portRecoveryInterrupts(state);
+        ret = osSemaphoreWait(&mutex->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
+        state = portDisableInterrupts();
+        mutex->owner = osTaskGetRunningTask();
+        mutex->recursiveCount++;
     }
     portRecoveryInterrupts(state);
     return ret;
@@ -82,17 +77,15 @@ int osRecursiveMutexUnlock(os_recursive_mutex_t mutex)
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
-    if (mutex->recursiveCount > 0)
+    if (osTaskGetRunningTask() == mutex->owner)
     {
-        if (osTaskGetRunningTask() == mutex->owner)
+        mutex->recursiveCount--;
+        ret = 0;
+        if (0 == mutex->recursiveCount)
         {
-            mutex->recursiveCount--;
-            ret = 0;
+            mutex->owner = NULL;
+            ret = osSemaphorePost(&mutex->semaphore);
         }
-    }
-    if (0 == mutex->recursiveCount)
-    {
-        ret = osSemaphorePost(&mutex->semaphore);
     }
     portRecoveryInterrupts(state);
     return ret;

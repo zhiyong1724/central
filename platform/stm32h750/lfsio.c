@@ -1,19 +1,10 @@
 #include "lfsio.h"
 #include "nandflash.h"
-#include "osmutex.h"
-static OsMutex sMutex;
-static int sIsMutexInit = 0;
 static unsigned int sReadBuffer[NAND_FLASH_PAGE_SIZE / sizeof(unsigned int)];
 static unsigned int sProgBuffer[NAND_FLASH_PAGE_SIZE / sizeof(unsigned int)];
 static unsigned int sLookaheadBuffer[NAND_FLASH_PLANE_NUMBER * NAND_FLASH_PLANE_SIZE / 8 / sizeof(unsigned int)];
 static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
-    if (0 == sIsMutexInit)
-    {
-        sIsMutexInit = 1;
-        osMutexCreate(&sMutex);
-    }
-    osMutexLock(&sMutex);
     int ret = LFS_ERR_OK;
     uint8_t *data = (uint8_t *)buffer;
     for (lfs_size_t i = 0; i < size; i += NAND_FLASH_PAGE_SIZE)
@@ -24,13 +15,11 @@ static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, vo
             break;
         }
     }
-    osMutexUnlock(&sMutex);
     return ret;
 }
 
 static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
-    osMutexLock(&sMutex);
     int ret = LFS_ERR_OK;
     uint8_t *data = (uint8_t *)buffer;
     for (lfs_size_t i = 0; i < size; i += NAND_FLASH_PAGE_SIZE)
@@ -41,15 +30,12 @@ static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, co
             break;
         }
     }
-    osMutexUnlock(&sMutex);
     return ret;
 }
 
 static int erase(const struct lfs_config *c, lfs_block_t block)
 {
-    osMutexLock(&sMutex);
     nandFlashEraseBlock((uint32_t)block);
-    osMutexUnlock(&sMutex);
     return LFS_ERR_OK;
 }
 

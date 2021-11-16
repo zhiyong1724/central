@@ -170,9 +170,14 @@ OsTaskControlBlock *osVSchedulerResume(OsVScheduler *vScheduler, OsTaskControlBl
         osRemoveFromList(&vScheduler->suspendedList, &taskControlBlock->node.listNode);
         vScheduler->schedulerInterfaces[taskControlBlock->schedulerId].addTask(vScheduler->schedulers[taskControlBlock->schedulerId], taskControlBlock + 1);
         taskControlBlock->taskState = OS_TASK_STATE_READY;
-        if (NULL == vScheduler->runningTask)
+        for (os_size_t i = 0; i < vScheduler->schedulerCount; i++)
         {
-            vScheduler->runningTask = taskControlBlock;
+            vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[i].yield(vScheduler->schedulers[i]);
+            if (vScheduler->runningTask != NULL)
+            {
+                vScheduler->runningTask--;
+                break;
+            }
         }
     }
     return vScheduler->runningTask;
@@ -232,9 +237,14 @@ OsTaskControlBlock *osVSchedulerWakeup(OsVScheduler *vScheduler, OsTaskControlBl
         taskControlBlock->taskState = OS_TASK_STATE_READY;
         vScheduler->schedulerInterfaces[taskControlBlock->schedulerId].addTask(vScheduler->schedulers[taskControlBlock->schedulerId], taskControlBlock + 1);
         vScheduler->minSleepTask = (OsTaskControlBlock *)osGetLeftmostNode(vScheduler->sleepTree);
-        if (NULL == vScheduler->runningTask)
+        for (os_size_t i = 0; i < vScheduler->schedulerCount; i++)
         {
-            vScheduler->runningTask = taskControlBlock;
+            vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[i].yield(vScheduler->schedulers[i]);
+            if (vScheduler->runningTask != NULL)
+            {
+                vScheduler->runningTask--;
+                break;
+            }
         }
     }
     return vScheduler->runningTask;

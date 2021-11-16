@@ -27,7 +27,7 @@ int osSemaphoreManagerSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsSema
     return 0;
 }
 
-int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore)
+int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsTask **nextTask, OsSemaphore *semaphore)
 {
     semaphoreManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -61,11 +61,11 @@ int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsSemaphore *se
             if (OS_TASK_STATE_BLOCKED == task->taskControlBlock.taskState)
             {
                 task->taskControlBlock.taskState = OS_TASK_STATE_SUSPENDED;
-                ret = osTaskResume(task->tid);
+                ret = osTaskManagerResume(semaphoreManager->taskManager, nextTask, task->tid);
             }
             else
             {
-                ret = osTaskWakeup(task->tid);
+                ret = osTaskManagerWakeup(semaphoreManager->taskManager, nextTask, task->tid);
             }
         }
     }

@@ -38,17 +38,19 @@ int osQueueManagerQueueInit(OsQueueManager *queueManager, OsQueue *queue, os_siz
 * queueManager：OsQueueManager对象
 * queue：OsQueue对象
 * message：消息
+* nextTask：不为NULL表示下一个任务
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message);
+int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask);
 /*********************************************************************************************************************
 * 发送消息到队列前面
 * queueManager：OsQueueManager对象
 * queue：OsQueue对象
 * message：消息
+* nextTask：不为NULL表示下一个任务
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message);
+int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask);
 /*********************************************************************************************************************
 * 接收消息
 * queueManager：OsQueueManager对象

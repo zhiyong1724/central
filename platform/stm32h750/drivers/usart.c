@@ -20,6 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 #include "led.h"
+#include "osmutex.h"
+static OsMutex sMutex;
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -66,14 +68,16 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+  osMutexCreate(&sMutex);
   /* USER CODE END USART1_Init 2 */
 
 }
 
 void MX_USART1_UART_Transmit(const void *data, int size)
 {
+  osMutexLock(&sMutex);
   HAL_UART_Transmit(&huart1, (uint8_t *)data, (uint16_t)size, HAL_MAX_DELAY);
+  osMutexUnlock(&sMutex);
 }
 
 void MX_USART1_UART_Receive(void *data, int size)
@@ -83,6 +87,7 @@ void MX_USART1_UART_Receive(void *data, int size)
 
 int MX_USART1_UART_ReceiveTimeout(void *data, int size, unsigned int timeout)
 {
+  osMutexLock(&sMutex);
   if (HAL_UART_Receive(&huart1, (uint8_t *)data, (uint16_t)size, (uint32_t)timeout) == HAL_OK)
   {
     return 0;
@@ -91,6 +96,7 @@ int MX_USART1_UART_ReceiveTimeout(void *data, int size, unsigned int timeout)
   {
     return -1;
   }
+  osMutexUnlock(&sMutex);
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)

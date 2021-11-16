@@ -29,7 +29,7 @@ int osQueueManagerQueueInit(OsQueueManager *queueManager, OsQueue *queue, os_siz
     return 0;
 }
 
-int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message)
+int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -64,18 +64,18 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *
             if (OS_TASK_STATE_BLOCKED == task->taskControlBlock.taskState)
             {
                 task->taskControlBlock.taskState = OS_TASK_STATE_SUSPENDED;
-                ret = osTaskResume(task->tid);
+                ret = osTaskManagerResume(queueManager->taskManager, nextTask, task->tid);
             }
             else
             {
-                ret = osTaskWakeup(task->tid);
+                ret = osTaskManagerWakeup(queueManager->taskManager, nextTask, task->tid);
             }
         }
     }
     return ret;
 }
 
-int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message)
+int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -110,11 +110,11 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMe
             if (OS_TASK_STATE_BLOCKED == task->taskControlBlock.taskState)
             {
                 task->taskControlBlock.taskState = OS_TASK_STATE_SUSPENDED;
-                ret = osTaskResume(task->tid);
+                ret = osTaskManagerResume(queueManager->taskManager, nextTask, task->tid);
             }
             else
             {
-                ret = osTaskWakeup(task->tid);
+                ret = osTaskManagerWakeup(queueManager->taskManager, nextTask, task->tid);
             }
         }
     }

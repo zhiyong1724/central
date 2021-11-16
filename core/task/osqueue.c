@@ -65,6 +65,7 @@ int osQueueSend(os_queue_t queue, void *message)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
+    OsTask *task = NULL;
     os_size_t state = portDisableInterrupts();
     OsMessage *osMessage = (OsMessage *)osMalloc(sizeof(OsMessage) + queue->messageSize);
     if (osMessage != NULL)
@@ -72,9 +73,15 @@ int osQueueSend(os_queue_t queue, void *message)
         portRecoveryInterrupts(state);
         osMemCpy(osMessage + 1, message, queue->messageSize);
         state = portDisableInterrupts();
-        ret = osQueueManagerSend(sQueueManager, queue, osMessage);
+        ret = osQueueManagerSend(sQueueManager, queue, osMessage, &task);
         if (0 == ret)
         {
+            if (task != NULL)
+            {
+                portYield(&task->stackTop);
+                portRecoveryInterrupts(state);
+                state = portDisableInterrupts();
+            }
         }
         else
         {
@@ -89,6 +96,7 @@ int osQueueSendToFront(os_queue_t queue, void *message)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
+    OsTask *task = NULL;
     os_size_t state = portDisableInterrupts();
     OsMessage *osMessage = (OsMessage *)osMalloc(sizeof(OsMessage) + queue->messageSize);
     if (osMessage != NULL)
@@ -96,9 +104,15 @@ int osQueueSendToFront(os_queue_t queue, void *message)
         portRecoveryInterrupts(state);
         osMemCpy(osMessage + 1, message, queue->messageSize);
         state = portDisableInterrupts();
-        ret = osQueueManagerSendToFront(sQueueManager, queue, osMessage);
+        ret = osQueueManagerSendToFront(sQueueManager, queue, osMessage, &task);
         if (0 == ret)
         {
+            if (task != NULL)
+            {
+                portYield(&task->stackTop);
+                portRecoveryInterrupts(state);
+                state = portDisableInterrupts();
+            }
         }
         else
         {

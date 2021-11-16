@@ -57,8 +57,19 @@ int osSemaphoreReset(os_semaphore_t semaphore)
 int osSemaphorePost(os_semaphore_t semaphore)
 {
     semaphoreLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    OsTask *task = NULL;
     os_size_t state = portDisableInterrupts();
-    int ret = osSemaphoreManagerPost(sSemaphoreManager, semaphore);
+    ret = osSemaphoreManagerPost(sSemaphoreManager, &task, semaphore);
+    if (0 == ret)
+    {
+        if (task != NULL)
+        {
+            portYield(&task->stackTop);
+            portRecoveryInterrupts(state);
+            state = portDisableInterrupts();
+        }
+    }
     portRecoveryInterrupts(state);
     return ret;
 }

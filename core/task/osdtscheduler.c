@@ -34,7 +34,7 @@ int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *d
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     dtTaskControlBlock->priority = priority;
-    dtTaskControlBlock->vRunTime = dtScheduler->minVRunTime + sVRunTimeTable[dtTaskControlBlock->priority] + (sVRunTimeTable[dtTaskControlBlock->priority] >> 1);
+    dtTaskControlBlock->vRunTime = dtScheduler->minVRunTime;
     return 0;
 }
 
@@ -45,6 +45,10 @@ static int onCompare(void *key1, void *key2, void *arg)
     OsDtTaskControlBlock *task1 = (OsDtTaskControlBlock *)key1;
     OsDtTaskControlBlock *task2 = (OsDtTaskControlBlock *)key2;
     if (task1->vRunTime - dtScheduler->minVRunTime < task2->vRunTime - dtScheduler->minVRunTime)
+    {
+        return -1;
+    }
+    else if (task1->vRunTime == dtScheduler->minVRunTime - 1)
     {
         return -1;
     }
@@ -87,9 +91,9 @@ int osDtSchedulerAddTask(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTas
     osAssert(dtTaskControlBlock->priority < OS_DTSCHED_MAX_PRIORITY);
     if (dtTaskControlBlock->priority < OS_DTSCHED_MAX_PRIORITY)
     {
-        if(dtTaskControlBlock->vRunTime - dtScheduler->minVRunTime > (sVRunTimeTable[OS_DTSCHED_MAX_PRIORITY - 1] << 1))
+        if(dtTaskControlBlock->vRunTime - dtScheduler->minVRunTime > sVRunTimeTable[OS_DTSCHED_MAX_PRIORITY - 1])
         {
-            dtTaskControlBlock->vRunTime = dtScheduler->minVRunTime;
+            dtTaskControlBlock->vRunTime = dtScheduler->minVRunTime - 1;
         }
         if (NULL == dtScheduler->runningTask)
         {
@@ -168,15 +172,18 @@ OsDtTaskControlBlock *osDtSchedulerGetRunningTask(OsDtScheduler *dtScheduler)
 OsDtTaskControlBlock *osDtSchedulerYield(OsDtScheduler *dtScheduler)
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    dtScheduler->runningTask->vRunTime += sVRunTimeTable[dtScheduler->runningTask->priority] >> 1;
-    osDeleteNode(&dtScheduler->taskTree, &dtScheduler->runningTask->node);
-    osInsertNode(&dtScheduler->taskTree, &dtScheduler->runningTask->node, onCompare, dtScheduler);
-    OsDtTaskControlBlock *nextTask = (OsDtTaskControlBlock *)osGetLeftmostNode(dtScheduler->taskTree);
-    if (nextTask != dtScheduler->runningTask)
+    if (dtScheduler->taskCount > 0)
     {
-        dtScheduler->runningTask = nextTask;
-        dtScheduler->minVRunTime = dtScheduler->runningTask->vRunTime;
-        dtScheduler->skipTick = 1;
+        dtScheduler->runningTask->vRunTime += sVRunTimeTable[dtScheduler->runningTask->priority] >> 1;
+        osDeleteNode(&dtScheduler->taskTree, &dtScheduler->runningTask->node);
+        osInsertNode(&dtScheduler->taskTree, &dtScheduler->runningTask->node, onCompare, dtScheduler);
+        OsDtTaskControlBlock *nextTask = (OsDtTaskControlBlock *)osGetLeftmostNode(dtScheduler->taskTree);
+        dtScheduler->minVRunTime = nextTask->vRunTime;
+        if (nextTask != dtScheduler->runningTask)
+        {
+            dtScheduler->runningTask = nextTask;
+            dtScheduler->skipTick = 1;
+        }
     }
     return dtScheduler->runningTask;
 }

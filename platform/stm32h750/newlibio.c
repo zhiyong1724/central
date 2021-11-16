@@ -7,6 +7,9 @@
 #include "osmem.h"
 #include <string.h>
 #include "led.h"
+#include "osmutex.h"
+static OsRecursiveMutex sMallocMutex;
+static int sMallocMutexInit = 0;
 static int sAddressMask = 0;
 void _exit(int rc)
 {
@@ -206,4 +209,24 @@ int _isatty(int file)
 {
   errno = ENOSYS;
   return -1;
+}
+
+void __malloc_lock(struct _reent *reent)
+{
+  if (0 == sMallocMutexInit)
+  {
+    sMallocMutexInit = 1;
+    osRecursiveMutexCreate(&sMallocMutex);
+  }
+  osRecursiveMutexLock(&sMallocMutex);
+}
+
+void __malloc_unlock(struct _reent *reent)
+{
+  if (0 == sMallocMutexInit)
+  {
+    sMallocMutexInit = 1;
+    osRecursiveMutexCreate(&sMallocMutex);
+  }
+  osRecursiveMutexUnlock(&sMallocMutex);
 }

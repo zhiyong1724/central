@@ -170,14 +170,17 @@ OsRtTaskControlBlock *osRtSchedulerGetRunningTask(OsRtScheduler *rtScheduler)
 OsRtTaskControlBlock *osRtSchedulerYield(OsRtScheduler *rtScheduler)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    osRemoveFromList(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
-    osInsertToBack(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
-    os_size_t priority = getMinimunPriority(rtScheduler);
-    OsRtTaskControlBlock *nextTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
-    if (nextTask != rtScheduler->runningTask)
+    if (rtScheduler->taskCount > 0)
     {
-        rtScheduler->runningTask = nextTask;
-        rtScheduler->skipTick = 1;
+        osRemoveFromList(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
+        osInsertToBack(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
+        os_size_t priority = getMinimunPriority(rtScheduler);
+        OsRtTaskControlBlock *nextTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
+        if (nextTask != rtScheduler->runningTask)
+        {
+            rtScheduler->runningTask = nextTask;
+            rtScheduler->skipTick = 1;
+        }
     }
     return rtScheduler->runningTask;
 }

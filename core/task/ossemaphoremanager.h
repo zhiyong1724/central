@@ -31,10 +31,11 @@ int osSemaphoreManagerSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsSema
 /*********************************************************************************************************************
 * 发送一个信号
 * semaphoreManager：OsSemaphoreManager对象
+* nextTask：不为NULL表示下一个任务
 * semaphore：OsSemaphore对象
 * return：0：调用成功
 *********************************************************************************************************************/
-int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore);
+int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsTask **nextTask, OsSemaphore *semaphore);
 /*********************************************************************************************************************
 * 等待信号
 * semaphoreManager：OsSemaphoreManager对象

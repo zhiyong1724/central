@@ -313,16 +313,26 @@ int osTaskManagerSleep(OsTaskManager *taskManager, OsTask **nextTask, uint64_t n
     }
 }
 
-int osTaskManagerWakeup(OsTaskManager *taskManager, os_tid_t tid)
+int osTaskManagerWakeup(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t tid)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(tid > 1);
+    if (tid > 1)
     {
-        osVSchedulerWakeup(&taskManager->vScheduler, &(task)->taskControlBlock);
-        ret = 0;
+        OsTask *task = getTaskByTid(taskManager, tid);
+        osAssert(task != NULL);
+        if (task != NULL)
+        {
+            *nextTask = (OsTask *)osVSchedulerWakeup(&taskManager->vScheduler, &task->taskControlBlock);
+            *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
+            osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+            if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+            {
+                ret = 0;
+            }
+        }
+        
     }
     return ret;
 }
@@ -351,16 +361,25 @@ int osTaskManagerSupend(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t 
     return ret;
 }
 
-int osTaskManagerResume(OsTaskManager *taskManager, os_tid_t tid)
+int osTaskManagerResume(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t tid)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(tid > 1);
+    if (tid > 1)
     {
-        osVSchedulerResume(&taskManager->vScheduler, &(task)->taskControlBlock);
-        ret = 0;
+        OsTask *task = getTaskByTid(taskManager, tid);
+        osAssert(task != NULL);
+        if (task != NULL)
+        {
+            *nextTask = (OsTask *)osVSchedulerResume(&taskManager->vScheduler, &task->taskControlBlock);
+            *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
+            osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
+            if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
+            {
+                ret = 0;
+            }
+        }
     }
     return ret;
 }
