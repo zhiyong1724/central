@@ -249,7 +249,7 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
 
 int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask)
 {
-    taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    //taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     taskManager->tickCount++;
     uint64_t reTick = taskManager->tickCount & 0x03ff;
     if (0 == reTick)

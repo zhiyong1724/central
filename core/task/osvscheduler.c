@@ -74,7 +74,7 @@ int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *tas
 
 static void sleepTreeTick(OsVScheduler *vScheduler)
 {
-    vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    //vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (vScheduler->minSleepTask != NULL)
     {
         vScheduler->minSleepTime += vScheduler->clockPeriod;
@@ -97,7 +97,7 @@ static void sleepTreeTick(OsVScheduler *vScheduler)
 
 OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId)
 {
-    vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    //vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sleepTreeTick(vScheduler);
     if (schedulerId < OS_MAX_SCHEDULER_COUNT)
     {

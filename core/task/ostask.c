@@ -16,9 +16,7 @@ int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sTaskManager = taskManager;
-    os_size_t state = portDisableInterrupts();
     int ret = osTaskManagerInit(sTaskManager, clockPeriod);
-    portRecoveryInterrupts(state);
     return ret;
 }
 
@@ -50,7 +48,7 @@ int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const ch
 
 int osTaskTick()
 {
-    taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    //taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     if (sRunning > 0)
     {

@@ -87,7 +87,6 @@ void MX_USART1_UART_Receive(void *data, int size)
 
 int MX_USART1_UART_ReceiveTimeout(void *data, int size, unsigned int timeout)
 {
-  osMutexLock(&sMutex);
   if (HAL_UART_Receive(&huart1, (uint8_t *)data, (uint16_t)size, (uint32_t)timeout) == HAL_OK)
   {
     return 0;
@@ -96,7 +95,6 @@ int MX_USART1_UART_ReceiveTimeout(void *data, int size, unsigned int timeout)
   {
     return -1;
   }
-  osMutexUnlock(&sMutex);
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
@@ -140,7 +138,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     /* USART1 interrupt Init */
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(USART1_IRQn, 15, 15);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
   /* USER CODE BEGIN USART1_MspInit 1 */

@@ -66,8 +66,6 @@ int osSemaphorePost(os_semaphore_t semaphore)
         if (task != NULL)
         {
             portYield(&task->stackTop);
-            portRecoveryInterrupts(state);
-            state = portDisableInterrupts();
         }
     }
     portRecoveryInterrupts(state);

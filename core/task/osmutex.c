@@ -84,7 +84,9 @@ int osRecursiveMutexUnlock(os_recursive_mutex_t mutex)
         if (0 == mutex->recursiveCount)
         {
             mutex->owner = NULL;
+            portRecoveryInterrupts(state);
             ret = osSemaphorePost(&mutex->semaphore);
+            state = portDisableInterrupts();
         }
     }
     portRecoveryInterrupts(state);

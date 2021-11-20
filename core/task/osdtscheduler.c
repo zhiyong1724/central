@@ -50,6 +50,7 @@ static int onCompare(void *key1, void *key2, void *arg)
     }
     else if (task1->vRunTime == dtScheduler->minVRunTime - 1)
     {
+        task1->vRunTime = dtScheduler->minVRunTime;
         return -1;
     }
     else
@@ -60,7 +61,7 @@ static int onCompare(void *key1, void *key2, void *arg)
 
 OsDtTaskControlBlock *osDtSchedulerTick(OsDtScheduler *dtScheduler)
 {
-    dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    //dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (dtScheduler->taskCount > 0)
     {
         dtScheduler->interval += dtScheduler->clockPeriod;

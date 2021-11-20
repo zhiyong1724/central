@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include "osplatformdef.h"
 #include "lvgl.h"
+#include <unistd.h>
 char _heap[OS_HEAP_SIZE];
 typedef struct thread_t
 {
@@ -16,10 +17,11 @@ typedef struct thread_t
     int eventTriggered;
     int exit;
 } thread_t;
-
+static void **sPreTask = NULL;
 static void **sRunningTask = NULL;
 static pthread_once_t sSigSetupThread = PTHREAD_ONCE_INIT;
 static sigset_t sSignals;
+static os_size_t sInterruptFlag = 1;
 
 static void eventWait(thread_t *thread)
 {
@@ -84,14 +86,35 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
 
 static void handleTimerTick(int arg)
 {
-    osTaskTick();
-    lv_tick_inc(10);
+    if (0 == sYieldFlag)
+    {
+        osTaskTick();
+        lv_tick_inc(10);
+    }
 }
+
+static int sYieldFlag = 0;
+static void handleTaskYield(int arg)
+{
+    thread_t *oldThread = (thread_t *)*sPreTask;
+    thread_t *newThread = (thread_t *)*sRunningTask;
+    eventSignal(newThread);
+    if (oldThread->exit > 0)
+    {
+        eventWait(oldThread);
+    }
+    sYieldFlag = 0;
+} 
 
 int portStartScheduler(void **stackTop)
 {
-    signal(SIGALRM, handleTimerTick);
-
+    struct sigaction action;
+    sigfillset(&action.sa_mask);
+    action.sa_flags = 0;
+    action.sa_handler = handleTimerTick;
+    sigaction(SIGALRM, &action, NULL);
+    action.sa_handler = handleTaskYield;
+    sigaction(SIGUSR1, &action, NULL);
     struct itimerval tv;
     tv.it_interval.tv_sec = 0;
     tv.it_interval.tv_usec = 10000;
@@ -103,12 +126,14 @@ int portStartScheduler(void **stackTop)
         return -1;
     }
 
+    sPreTask = sRunningTask;
     sRunningTask = stackTop;
-    thread_t *firstthread = (thread_t *)*sRunningTask;
-    eventSignal(firstthread);
+    sInterruptFlag = 1;
+    thread_t *newThread = (thread_t *)*sRunningTask;
+    eventSignal(newThread);
     for (;;)
     {
-        /* code */
+        sleep(1000);
     }
     return 0;
 }
@@ -117,19 +142,14 @@ int portYield(void **stackTop)
 {
     if (stackTop != sRunningTask)
     {
-        thread_t *oldThread = (thread_t *)*sRunningTask;
+        sPreTask = sRunningTask;
         sRunningTask = stackTop;
-        thread_t *newThread = (thread_t *)*sRunningTask;
-        eventSignal(newThread);
-        if (oldThread->exit > 0)
-        {
-            eventWait(oldThread);
-        }
+        sYieldFlag = 1;
+        raise(SIGUSR1);
     }
     return 0;
 }
 
-static os_size_t sInterruptFlag = 1;
 os_size_t portDisableInterrupts()
 {
     pthread_sigmask(SIG_BLOCK, &sSignals, NULL);

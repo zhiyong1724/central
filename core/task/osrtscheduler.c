@@ -70,7 +70,7 @@ static void setBitmap(OsRtScheduler *rtScheduler, os_size_t priority, os_size_t 
 
 OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler)
 {
-    rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    //rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (rtScheduler->taskCount > 0)
     {
         rtScheduler->interval += rtScheduler->clockPeriod;

@@ -34,7 +34,7 @@ void enterNormalMode()
     nandFlashInit();
     sdcardInit();
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
-    HAL_NVIC_SetPriority(PendSV_IRQn, 15, 0);
+    HAL_NVIC_SetPriority(PendSV_IRQn, 0, 0);
     registerLFS();
     registerFatfs();
     osFMount("/", "nand");

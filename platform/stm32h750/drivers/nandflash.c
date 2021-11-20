@@ -28,7 +28,7 @@ void nandFlashInit()
     GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 15, 15);
     HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
     gNandFlashReady = 0;
     if (HAL_NAND_Reset(&hnand1) != HAL_OK)

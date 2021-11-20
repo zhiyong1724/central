@@ -79,8 +79,6 @@ int osQueueSend(os_queue_t queue, void *message)
             if (task != NULL)
             {
                 portYield(&task->stackTop);
-                portRecoveryInterrupts(state);
-                state = portDisableInterrupts();
             }
         }
         else
@@ -110,8 +108,6 @@ int osQueueSendToFront(os_queue_t queue, void *message)
             if (task != NULL)
             {
                 portYield(&task->stackTop);
-                portRecoveryInterrupts(state);
-                state = portDisableInterrupts();
             }
         }
         else

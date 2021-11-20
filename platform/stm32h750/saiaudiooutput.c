@@ -10,7 +10,6 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 
 void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai)
 {
-    printf("HAL_SAI_ErrorCallback\n");
     osSemaphorePost(&sSaiAudioOutput->semaphore);
 }
 

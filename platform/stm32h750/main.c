@@ -290,7 +290,7 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
   /* USER CODE BEGIN Init */
-
+  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_0);
   /* USER CODE END Init */
 
   /* Configure the system clock */
