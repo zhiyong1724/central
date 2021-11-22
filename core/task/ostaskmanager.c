@@ -71,7 +71,7 @@ static void clearDeleteTaskList(OsTaskManager *taskManager)
     portRecoveryInterrupts(state);
 }
 
-OsTask *osTaskSleep(os_size_t ms);
+int osTaskSleep(uint64_t ms);
 
 static void *initTask(void *arg)
 {
@@ -468,6 +468,7 @@ int osTaskManagerJoin(OsTaskManager *taskManager, OsTask **nextTask, void **retv
                 osRemoveFromList((OsListNode **)&runningTask->children, &task->node);
                 runningTask->childrenCount--;
                 deleteTask(taskManager, task);
+                *nextTask = runningTask;
                 ret = 0;
             }
             else

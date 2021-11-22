@@ -518,3 +518,20 @@ void shellFree(int argc, char *argv[])
     shellPrint(&sShell, "所有页：%ld\n", osTotalPage());
     shellPrint(&sShell, "可用页：%ld\n", osFreePage());
 }
+
+void shellPlay(int argc, char *argv[])
+{
+    if (argc >= 2)
+    {
+        if (strcmp(argv[1], "stop") == 0)
+        {
+        }
+        else
+        {
+        }
+    }
+    else
+    {
+        shellWriteString(&sShell, "参数不足\n");
+    }
+}

@@ -86,14 +86,10 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
 
 static void handleTimerTick(int arg)
 {
-    if (0 == sYieldFlag)
-    {
-        osTaskTick();
-        lv_tick_inc(10);
-    }
+    osTaskTick();
+    lv_tick_inc(10);
 }
 
-static int sYieldFlag = 0;
 static void handleTaskYield(int arg)
 {
     thread_t *oldThread = (thread_t *)*sPreTask;
@@ -103,7 +99,6 @@ static void handleTaskYield(int arg)
     {
         eventWait(oldThread);
     }
-    sYieldFlag = 0;
 } 
 
 int portStartScheduler(void **stackTop)
@@ -144,7 +139,6 @@ int portYield(void **stackTop)
     {
         sPreTask = sRunningTask;
         sRunningTask = stackTop;
-        sYieldFlag = 1;
         raise(SIGUSR1);
     }
     return 0;
