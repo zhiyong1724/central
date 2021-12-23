@@ -71,7 +71,7 @@ os_size_t osMemPoolInit(OsMemPool *memPool, void *startAddress, os_size_t size, 
         size -= offset;
 
         os_byte_t *bitmapEnd = memPool->bitmap + offset;
-        os_byte_t *memStart = (os_byte_t *)addressAlign(bitmapEnd, sizeof(void *));
+        os_byte_t *memStart = (os_byte_t *)addressAlign(bitmapEnd, sizeof(long long));
         offset = memStart - bitmapEnd;
         size -= offset;
         memPool->totalPageNum = size / pageSize;

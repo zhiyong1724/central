@@ -59,13 +59,13 @@ static OsMemBlock *findSuitableBlock(OsMemManager *memManager, os_size_t size)
 	return ret;
 }
 
-static os_size_t sizeAlignToAddress(os_size_t size)
+static os_size_t sizeAlign(os_size_t size)
 {
 	memManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t offset = size % sizeof(void *);
+	os_size_t offset = size % sizeof(long long);
 	if (offset > 0)
 	{
-		size += sizeof(void *) - offset;
+		size += sizeof(long long) - offset;
 	}
 	return size;
 }
@@ -114,7 +114,7 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size)
 	void *ret = NULL;
 	if (size > 0)
 	{
-		size = sizeAlignToAddress(size);
+		size = sizeAlign(size);
 		size += sizeof(OsMemBlockHeader);
 		if (size < sizeof(OsMemBlock))
 		{

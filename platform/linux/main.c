@@ -1036,8 +1036,8 @@ int main()
     // }
     // printf("offset = %lf, ia = %lf, ib = %lf, ic = %lf\n", offset, ia, ib, ic);
     // testTree();
-    // testBuddy();
-    // testMemPool();
+    //testBuddy();
+    //testMemPool();
     //testMem();
     // testVector();
     // testDtScheduler();

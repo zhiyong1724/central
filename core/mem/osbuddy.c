@@ -54,16 +54,18 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
         buddy->blockGroup = (os_byte_t *)startAddress;
         osMemSet(buddy->blockGroup, 0, buddy->totalPageNum);
         size -= buddy->totalPageNum;
-
         os_byte_t *blockGroupEnd = buddy->blockGroup + buddy->totalPageNum;
+
         os_byte_t *blockListArrayStart = (os_byte_t *)addressAlign(blockGroupEnd, sizeof(void *));
-        buddy->blockListArray = (OsListNode **)blockListArrayStart;
         os_size_t offset = blockListArrayStart - blockGroupEnd;
         size -= offset;
-
+        buddy->blockListArray = (OsListNode **)blockListArrayStart;
         buddy->groupCount = calculateGroupCount(buddy->totalPageNum);
-        offset = buddy->groupCount * sizeof(void *);
-        buddy->startAddress = blockListArrayStart + offset;
+        size -= buddy->groupCount * sizeof(void *);
+        os_byte_t *blockListArrayEnd = blockListArrayStart + buddy->groupCount * sizeof(void *);
+        
+        buddy->startAddress = (os_byte_t *)addressAlign(blockListArrayEnd, OS_BUDDY_PAGE_SIZE);
+        offset = (os_byte_t *)buddy->startAddress - blockListArrayEnd;
         size -= offset;
 
         buddy->totalPageNum = size / OS_BUDDY_PAGE_SIZE;
