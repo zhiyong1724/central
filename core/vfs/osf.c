@@ -283,7 +283,7 @@ OsFileError osFCopy(const char *srcPath, const char *destPath)
                         {
                             break;
                         }
-                        osFWrite(&destFile, &buffer, sizeof(uint64_t), &length);
+                        osFWrite(&destFile, &buffer, length, &length);
                     }
                     ret = osFClose(&srcFile);
                     osRecursiveMutexLock(&sMutex);

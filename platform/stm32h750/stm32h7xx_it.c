@@ -22,6 +22,8 @@
 #include "main.h"
 #include "stm32h7xx_it.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -53,12 +55,22 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+typedef struct Registers
+{
+  uint32_t r0;
+  uint32_t r1;
+  uint32_t r2;
+  uint32_t r3;
+  uint32_t r12;
+  uint32_t lr;
+  uint32_t pc;
+  uint32_t psr;
+} Registers;
 
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_sai1_a;
-extern SD_HandleTypeDef hsd1;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
@@ -82,13 +94,31 @@ void NMI_Handler(void)
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
+void printRegisters(Registers *registers)
+{
+  printf("HardFault_Handler\n");
+  printf("sp: 0x%08lx\n", (uint32_t)registers);
+  printf("r0: 0x%08lx\n", registers->r0);
+  printf("r1: 0x%08lx\n", registers->r1);
+  printf("r2: 0x%08lx\n", registers->r2);
+  printf("r3: 0x%08lx\n", registers->r3);
+  printf("r12: 0x%08lx\n", registers->r12);
+  printf("lr: 0x%08lx\n", registers->lr);
+  printf("pc: 0x%08lx\n", registers->pc);
+  printf("psr: 0x%08lx\n", registers->psr);
+}
 /**
   * @brief This function handles Hard fault interrupt.
   */
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-  printf("HardFault_Handler\n");
+  __asm volatile(
+    "tst lr, #4                \n"
+    "ite eq                    \n"
+    "mrseq r0, msp             \n"
+    "mrsne r0, psp             \n"
+    "bl printRegisters         \n");
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -245,20 +275,6 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles SDMMC1 global interrupt.
-  */
-void SDMMC1_IRQHandler(void)
-{
-  /* USER CODE BEGIN SDMMC1_IRQn 0 */
-
-  /* USER CODE END SDMMC1_IRQn 0 */
-  HAL_SD_IRQHandler(&hsd1);
-  /* USER CODE BEGIN SDMMC1_IRQn 1 */
-
-  /* USER CODE END SDMMC1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

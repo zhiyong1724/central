@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include "osmutex.h"
 static OsMutex sMutex;
-static int sTransferCompleted = 0;
-static int sBlockSize = 0;
 void sdcardInit()
 {
   printf("Init SD card...\n");
@@ -14,7 +12,6 @@ void sdcardInit()
   {
     Error_Handler();
   }
-  sBlockSize = sdcardInfo.LogBlockSize;
   osMutexCreate(&sMutex);
   printf("Init SD card succeed, block size %ld, block number %ld, type %ld.\n", sdcardInfo.LogBlockSize, sdcardInfo.LogBlockNbr, sdcardInfo.CardType);
 }
@@ -47,17 +44,15 @@ int sdcardWriteBlock(uint32_t block, uint32_t num, const void *buffer)
 {
   osMutexLock(&sMutex);
   int ret = -1;
-  sTransferCompleted = 0;
   while ((HAL_SD_GetCardState(&hsd1) != HAL_SD_CARD_TRANSFER))
   {
   }
-  if (HAL_SD_WriteBlocks_DMA(&hsd1, (uint8_t *)buffer, block, num) == HAL_OK)
+  __disable_irq();
+  if (HAL_SD_WriteBlocks(&hsd1, (uint8_t *)buffer, block, num, 10000) == HAL_OK)
   {
     ret = 0;
   }
-  while (0 == sTransferCompleted)
-  {
-  }
+  __enable_irq();
   osMutexUnlock(&sMutex);
   return ret;
 }
@@ -66,47 +61,15 @@ int sdcardReadBlock(uint32_t block, uint32_t num, void *buffer)
 {
   osMutexLock(&sMutex);
   int ret = -1;
-  sTransferCompleted = 0;
   while ((HAL_SD_GetCardState(&hsd1) != HAL_SD_CARD_TRANSFER))
   {
   }
-  if (HAL_SD_ReadBlocks_DMA(&hsd1, (uint8_t *)buffer, block, num) == HAL_OK)
+  __disable_irq();
+  if (HAL_SD_ReadBlocks(&hsd1, (uint8_t *)buffer, block, num, 10000) == HAL_OK)
   {
     ret = 0;
   }
-  while (0 == sTransferCompleted)
-  {
-  }
+  __enable_irq();
   osMutexUnlock(&sMutex);
   return ret;
-}
-
-/**
-  * @brief Rx Transfer completed callbacks
-  * @param hsd: SD handle
-  * @retval None
-  */
-void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd)
-{
-  sTransferCompleted = 1;
-}
-
-/**
-  * @brief Tx Transfer completed callbacks
-  * @param hsd: SD handle
-  * @retval None
-  */
-void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd)
-{
-  sTransferCompleted = 1;
-}
-
-/**
-  * @brief SD error callbacks
-  * @param hsd: SD handle
-  * @retval None
-  */
-void HAL_SD_ErrorCallback(SD_HandleTypeDef *hsd)
-{
-  Error_Handler();
 }

@@ -254,7 +254,7 @@ int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask)
     uint64_t reTick = taskManager->tickCount & 0x03ff;
     if (0 == reTick)
     {
-        taskManager->cpuUsage = (os_size_t)((taskManager->tickCount - taskManager->idleTaskTickCount) * 100 / 1024);
+        taskManager->cpuUsage = (os_size_t)((taskManager->tickCount - taskManager->idleTaskTickCount) * 100 >> 10);
         if (taskManager->cpuUsage > 100)
         {
             taskManager->cpuUsage = 100;

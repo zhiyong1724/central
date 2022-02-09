@@ -2,7 +2,8 @@
 #include "lfs.h"
 #include <string.h>
 #include "osmem.h"
-#include "lfsio.h"
+extern const struct lfs_config gLfsConfig;
+extern lfs_t gLFS;
 static int sMount = 0;
 static OsFileError parseResult(int result)
 {
@@ -180,18 +181,8 @@ static OsFileError lfsSeek(OsFile *file, int64_t offset, OsSeekType whence)
         default:
             break;
         }
-        lfs_soff_t lfsOffset = 0;
-        if (offset >= 0)
-        {
-            lfsOffset = (lfs_soff_t)offset;
-        }
-        else 
-        {
-            lfsOffset = (lfs_soff_t)(offset * -1);
-            lfsOffset *= -1;
-        }
         
-        lfs_soff_t result = lfs_file_seek(&gLFS, (lfs_file_t *)file->obj, lfsOffset, flag);
+        lfs_soff_t result = lfs_file_seek(&gLFS, (lfs_file_t *)file->obj, (lfs_soff_t)offset, flag);
         if (result >= 0)
         {
             ret = OS_FILE_ERROR_OK;

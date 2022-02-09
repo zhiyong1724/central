@@ -8,6 +8,7 @@
 #include <string.h>
 #include "led.h"
 #include "osmutex.h"
+#include <sys/times.h>
 static OsRecursiveMutex sMallocMutex;
 static int sMallocMutexInit = 0;
 static int sAddressMask = 0;
@@ -101,13 +102,13 @@ int _open(char *file, int flags, int mode)
     {
       return addressToShort(osFile);
     }
-    else 
+    else
     {
       osFree(osFile);
       return -1;
     }
   }
-  else 
+  else
   {
     return -1;
   }
@@ -116,14 +117,17 @@ int _open(char *file, int flags, int mode)
 int _close(int fildes)
 {
   int ret = -1;
-  OsFile *osFile = (OsFile *)shortToAddress((short)fildes);
-  if (osFile != NULL)
+  if (fildes > 3)
   {
-    OsFileError result = osFClose(osFile);
-    if (OS_FILE_ERROR_OK == result)
+    OsFile *osFile = (OsFile *)shortToAddress((short)fildes);
+    if (osFile != NULL)
     {
-      osFree(osFile);
-      ret = 0;
+      OsFileError result = osFClose(osFile);
+      if (OS_FILE_ERROR_OK == result)
+      {
+        osFree(osFile);
+        ret = 0;
+      }
     }
   }
   return ret;
@@ -132,14 +136,17 @@ int _close(int fildes)
 int _read(int file, char *ptr, int len)
 {
   int ret = 0;
-  OsFile *osFile = (OsFile *)shortToAddress((short)file);
-  if (osFile != NULL)
+  if (file > 3)
   {
-    uint64_t length = 0;
-    OsFileError result = osFRead(osFile, ptr, len, &length);
-    if (OS_FILE_ERROR_OK == result)
+    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    if (osFile != NULL)
     {
-      ret = (int)length;
+      uint64_t length = 0;
+      OsFileError result = osFRead(osFile, ptr, len, &length);
+      if (OS_FILE_ERROR_OK == result)
+      {
+        ret = (int)length;
+      }
     }
   }
   return ret;
@@ -148,7 +155,7 @@ int _read(int file, char *ptr, int len)
 int _write(int file, char *ptr, int len)
 {
   int ret = 0;
-  if (1 == file)
+  if (file < 4)
   {
     MX_USART1_UART_Transmit(ptr, len);
     ret = len;
@@ -171,29 +178,34 @@ int _write(int file, char *ptr, int len)
 
 int _lseek(int file, int ptr, int dir)
 {
-  OsSeekType seekType = OS_SEEK_TYPE_SET;
-  switch (dir)
-  {
-  case SEEK_SET:
-    seekType = OS_SEEK_TYPE_SET;
-    break;
-  case SEEK_CUR:
-    seekType = OS_SEEK_TYPE_CUR;
-    break;
-  case SEEK_END:
-    seekType = OS_SEEK_TYPE_END;
-    break;
-  default:
-    break;
-  }
   int ret = -1;
-  OsFile *osFile = (OsFile *)shortToAddress((short)file);
-  if (osFile != NULL)
+  if (file > 3)
   {
-    OsFileError result = osFSeek(osFile, ptr, seekType);
-    if (OS_FILE_ERROR_OK == result)
+    OsSeekType seekType = OS_SEEK_TYPE_SET;
+    switch (dir)
     {
-      ret = 0;
+    case SEEK_SET:
+      seekType = OS_SEEK_TYPE_SET;
+      break;
+    case SEEK_CUR:
+      seekType = OS_SEEK_TYPE_CUR;
+      break;
+    case SEEK_END:
+      seekType = OS_SEEK_TYPE_END;
+      break;
+    default:
+      break;
+    }
+    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    if (osFile != NULL)
+    {
+      OsFileError result = osFSeek(osFile, ptr, seekType);
+      if (OS_FILE_ERROR_OK == result)
+      {
+        uint64_t cur = 0;
+        osFTell(osFile, &cur);
+        ret = (int)cur;
+      }
     }
   }
   return ret;
@@ -201,14 +213,38 @@ int _lseek(int file, int ptr, int dir)
 
 int _fstat(int file, struct stat *st)
 {
-  errno = ENOSYS;
-  return -1;
+  if (file < 4)
+  {
+    st->st_mode = S_IFCHR;
+  }
+  else
+  {
+    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    if (osFile != NULL)
+    {
+      st->st_mode = S_IFBLK;
+      uint64_t cur = 0;
+      osFTell(osFile, &cur);
+      osFSeek(osFile, 0, OS_SEEK_TYPE_END);
+      uint64_t size = 0;
+      osFTell(osFile, &size);
+      st->st_size = (__off_t)size;
+      osFSeek(osFile, cur, OS_SEEK_TYPE_SET);
+    }
+  }
+  return 0;
 }
 
 int _isatty(int file)
 {
-  errno = ENOSYS;
-  return -1;
+  if (file < 4)
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 void __malloc_lock(struct _reent *reent)
@@ -229,4 +265,38 @@ void __malloc_unlock(struct _reent *reent)
     osRecursiveMutexCreate(&sMallocMutex);
   }
   osRecursiveMutexUnlock(&sMallocMutex);
+}
+
+clock_t _times(struct tms *buffer)
+{
+  return -1;
+}
+
+int _unlink(const char *path)
+{
+  return osFUnlink(path);
+}
+
+int _link()
+{
+  return -1;
+}
+
+int _stat(const char *path, struct stat *st)
+{
+  OsFileInfo fileInfo;
+  int ret = osFStat(path, &fileInfo);
+  st->st_mode = S_IFBLK;
+  st->st_size = fileInfo.fileSize;
+  return ret;
+}
+
+int mkdir(const char *__path, __mode_t __mode)
+{
+  return osFMkDir(__path);
+}
+
+int rmdir(const char *__path)
+{
+  return osFUnlink(__path);
 }

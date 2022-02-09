@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include "downloadmode.h"
 #include "normalmode.h"
-#include <string.h>
 #include "nandflash.h"
 #include "lfsio.h"
 #include "lfs.h"
@@ -38,6 +37,7 @@
 #include "pcf8574.h"
 #include "es8388.h"
 #include "sai.h"
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -246,6 +246,7 @@ void boot()
   printf("boot\n");
   nandFlashInit();
   SDRAM_Initialization_Sequence();
+  memset((void *)0x63800000, 0, 0x800000);
   printf("Start reading...\n");
   lfs_mount(&gLFS, &gLfsConfig);
   lfs_file_t file;
@@ -275,7 +276,6 @@ void __libc_init_array();
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  memset(&_sbss, 0, ((uint8_t *)&_ebss) - ((uint8_t *)&_sbss));
   __libc_init_array();
   /* USER CODE END 1 */
 
@@ -309,6 +309,7 @@ int main(void)
   {
     nandFlashInit();
     SDRAM_Initialization_Sequence();
+    memset((void *)0x63800000, 0, 0x800000);
     enterDownloadMode();
     SCB_CleanInvalidateDCache();
     void **enter = (void **)0x63800298;

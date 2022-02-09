@@ -121,7 +121,9 @@ static OsFileError fatfsRead(OsFile *file, void *buff, uint64_t size, uint64_t *
     OsFileError ret = OS_FILE_ERROR_INVALID_OBJECT;
     if (file != NULL && file->obj != NULL)
     {
-        FRESULT result = f_read((FIL *)file->obj, buff, (UINT)size, (UINT *)length);
+        UINT len = 0;
+        FRESULT result = f_read((FIL *)file->obj, buff, (UINT)size, &len);
+        *length = len;
         ret = parseResult(result);
     }
     return ret;
@@ -132,7 +134,9 @@ static OsFileError fatfsWrite(OsFile *file, const void *buff, uint64_t size, uin
     OsFileError ret = OS_FILE_ERROR_INVALID_OBJECT;
     if (file != NULL && file->obj != NULL)
     {
-        FRESULT result = f_write((FIL *)file->obj, buff, (UINT)size, (UINT *)length);
+        UINT len = 0;
+        FRESULT result = f_write((FIL *)file->obj, buff, (UINT)size, &len);
+        *length = len;
         ret = parseResult(result);
     }
     return ret;

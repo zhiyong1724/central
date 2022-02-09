@@ -155,10 +155,11 @@ SECTIONS
 
   
   /* Uninitialized data section */
-  . = ALIGN(4);
   .bss :
   {
     /* This is used by the startup in order to initialize the .bss secion */
+    . = . + 1024;
+    . = ALIGN(4);
     _sbss = .;         /* define a global symbol at bss start */
     __bss_start__ = _sbss;
     *(.bss)

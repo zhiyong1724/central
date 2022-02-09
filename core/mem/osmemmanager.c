@@ -251,40 +251,43 @@ int osMemManagerFree(OsMemManager *memManager, void *address)
 {
 	memManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	int ret = -1;
-	osAssert(address >= memManager->pageFactory.startAddress);
-	if (address >= memManager->pageFactory.startAddress)
+	if (address != NULL)
 	{
-		osAssert(((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
-		if (((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
+		osAssert(address >= memManager->pageFactory.startAddress);
+		if (address >= memManager->pageFactory.startAddress)
 		{
-			os_size_t offset = ((char *)address - (char *)memManager->pageFactory.startAddress) % (os_size_t)OS_BUDDY_PAGE_SIZE;
-			osAssert(offset > 0);
-			if (offset > 0)
+			osAssert(((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum);
+			if (((char *)address - (char *)memManager->pageFactory.startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < memManager->pageFactory.totalPageNum)
 			{
-				OsMemBlockHeader *header = (OsMemBlockHeader *)address;
-				header -= 1;
-				os_size_t mark = (os_size_t)1 << (sizeof(os_size_t) * 8 - 1);
-				osAssert((header->size & mark) > 0);
-				if ((header->size & mark) > 0)
+				os_size_t offset = ((char *)address - (char *)memManager->pageFactory.startAddress) % (os_size_t)OS_BUDDY_PAGE_SIZE;
+				osAssert(offset > 0);
+				if (offset > 0)
 				{
-					ret = 0;
-					mark = ~mark;
-					header->size &= mark;
-					OsMemBlock *memBlock = (OsMemBlock *)header;
-					memBlock->header.header = header->header;
-					memBlock->header.size = header->size;
-					memManager->freeMem += memBlock->header.size;
-					OsPageHeader *pageHeader = (OsPageHeader *)memBlock->header.header;
-					pageHeader->usedMem -= memBlock->header.size;
-					if (0 == pageHeader->usedMem)
+					OsMemBlockHeader *header = (OsMemBlockHeader *)address;
+					header -= 1;
+					os_size_t mark = (os_size_t)1 << (sizeof(os_size_t) * 8 - 1);
+					osAssert((header->size & mark) > 0);
+					if ((header->size & mark) > 0)
 					{
-						freeAllNodes(memManager, pageHeader, memBlock);
-						osBuddyFreePages(&memManager->pageFactory, memBlock->header.header);
-						memManager->freeMem += sizeof(OsPageHeader);
-					}
-					else
-					{
-						osInsertNode(&memManager->root, &memBlock->node, onCompare, NULL);
+						ret = 0;
+						mark = ~mark;
+						header->size &= mark;
+						OsMemBlock *memBlock = (OsMemBlock *)header;
+						memBlock->header.header = header->header;
+						memBlock->header.size = header->size;
+						memManager->freeMem += memBlock->header.size;
+						OsPageHeader *pageHeader = (OsPageHeader *)memBlock->header.header;
+						pageHeader->usedMem -= memBlock->header.size;
+						if (0 == pageHeader->usedMem)
+						{
+							freeAllNodes(memManager, pageHeader, memBlock);
+							osBuddyFreePages(&memManager->pageFactory, memBlock->header.header);
+							memManager->freeMem += sizeof(OsPageHeader);
+						}
+						else
+						{
+							osInsertNode(&memManager->root, &memBlock->node, onCompare, NULL);
+						}
 					}
 				}
 			}
