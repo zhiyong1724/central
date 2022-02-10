@@ -49,6 +49,7 @@ SRCS := $(SRCS) \
 	osmemmanager.c \
 	osmem.c \
 	osvector.c \
+	osqueue.c \
 	osdtscheduler.c \
 	osrtscheduler.c \
 	osidlescheduler.c \
@@ -61,7 +62,7 @@ SRCS := $(SRCS) \
 	ossemaphore.c \
 	osmutex.c \
 	osqueuemanager.c \
-	osqueue.c \
+	osmsgqueue.c \
 	oscentral.c \
 	osport.c \
 	osvfs.c \

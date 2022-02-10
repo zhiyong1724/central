@@ -10,7 +10,7 @@
 #include "ostask.h"
 #include "ostidmanager.h"
 #include "oscentral.h"
-#include "osqueue.h"
+#include "osmsgqueue.h"
 #include "ossemaphore.h"
 #include "osmutex.h"
 #include "shellio.h"
@@ -844,17 +844,17 @@ void testSemaphore()
     osTaskStart();
 }
 
-static OsQueue sQueue;
+static OsMsgQueue sQueue;
 void *testQueueTaskA(void *arg)
 {
     printf("This is task A\n");
     osTaskSleep(5000);
     for (int i = 0; i < 10; i++)
     {
-        osQueueSend(&sQueue, &i);
+        osMsgQueueSend(&sQueue, &i);
     }
     osTaskSleep(1000);
-    osQueueDestory(&sQueue);
+    osMsgQueueDestory(&sQueue);
     return NULL;
 }
 
@@ -862,7 +862,7 @@ void *testQueueTaskB(void *arg)
 {
     printf("This is task B\n");
     int message = -1;
-    osQueueReceive(&sQueue, &message, OS_MESSAGE_MAX_WAIT_TIME);
+    osMsgQueueReceive(&sQueue, &message, OS_MESSAGE_MAX_WAIT_TIME);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -871,7 +871,7 @@ void *testQueueTaskC(void *arg)
 {
     printf("This is task C\n");
     int message = -1;
-    osQueueReceive(&sQueue, &message, OS_MESSAGE_MAX_WAIT_TIME);
+    osMsgQueueReceive(&sQueue, &message, OS_MESSAGE_MAX_WAIT_TIME);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -880,7 +880,7 @@ void *testQueueTaskD(void *arg)
 {
     printf("This is task D\n");
     int message = -1;
-    osQueueReceive(&sQueue, &message, 2000);
+    osMsgQueueReceive(&sQueue, &message, 2000);
     printf("message = %d\n", message);
     return NULL;
 }
@@ -888,15 +888,15 @@ void *testQueueTaskD(void *arg)
 void testQueue()
 {
     osInit();
-    osQueueCreate(&sQueue, 0, sizeof(int));
+    osMsgQueueCreate(&sQueue, 0, sizeof(int));
     for (int i = 0; i < 10; i++)
     {
-        osQueueSend(&sQueue, &i);
+        osMsgQueueSend(&sQueue, &i);
     }
     for (int i = 0; i < 10; i++)
     {
         int message;
-        osQueueReceive(&sQueue, &message, 0);
+        osMsgQueueReceive(&sQueue, &message, 0);
         printf("message = %d\n", message);
     }
     os_tid_t tid;
@@ -999,10 +999,6 @@ void *taskG(void *arg)
     void *retval;
     osTaskJoin(&retval, tid);
     return NULL;
-}
-
-void testFS()
-{
 }
 
 int main()

@@ -1,28 +1,28 @@
-#include "osqueue.h"
+#include "osmsgqueue.h"
 #include "osqueuemanager.h"
 #include "osmem.h"
 #include "osstring.h"
-#define ENABLE_QUEUE_LOG 0
-#if ENABLE_QUEUE_LOG
-#define queueLog(format, ...) osPrintf(format, ##__VA_ARGS__)
+#define ENABLE_MSGQUEUE_LOG 0
+#if ENABLE_MSGQUEUE_LOG
+#define msgQueueLog(format, ...) osPrintf(format, ##__VA_ARGS__)
 #else
-#define queueLog(format, ...) (void)0
+#define msgQueueLog(format, ...) (void)0
 #endif
 int portYield(void **stackTop);
 os_size_t portDisableInterrupts();
 int portRecoveryInterrupts(os_size_t state);
 OsTask *osTaskGetRunningTask();
 static OsQueueManager *sQueueManager;
-int osQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
+int osMsgQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sQueueManager = queueManager;
     return osQueueManagerInit(sQueueManager, taskManager);
 }
 
-int osQueueCreate(os_queue_t queue, os_size_t queueLength, os_size_t messageSize)
+int osMsgQueueCreate(os_queue_t queue, os_size_t queueLength, os_size_t messageSize)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     if (0 == queueLength)
     {
@@ -32,9 +32,9 @@ int osQueueCreate(os_queue_t queue, os_size_t queueLength, os_size_t messageSize
     return ret;
 }
 
-int osQueueDestory(os_queue_t queue)
+int osMsgQueueDestory(os_queue_t queue)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
     osAssert(NULL == queue->waitTaskList && NULL == queue->waitTaskList);
@@ -49,9 +49,9 @@ int osQueueDestory(os_queue_t queue)
     return ret;
 }
 
-int osQueueReset(os_queue_t queue)
+int osMsgQueueReset(os_queue_t queue)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
     for (OsMessage *message = osQueueManagerQueuePop(sQueueManager, queue); message != NULL; message = osQueueManagerQueuePop(sQueueManager, queue))
     {
@@ -61,9 +61,9 @@ int osQueueReset(os_queue_t queue)
     return 0;
 }
 
-int osQueueSend(os_queue_t queue, void *message)
+int osMsgQueueSend(os_queue_t queue, void *message)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = NULL;
     os_size_t state = portDisableInterrupts();
@@ -90,9 +90,9 @@ int osQueueSend(os_queue_t queue, void *message)
     return ret;
 }
 
-int osQueueSendToFront(os_queue_t queue, void *message)
+int osMsgQueueSendToFront(os_queue_t queue, void *message)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = NULL;
     os_size_t state = portDisableInterrupts();
@@ -119,9 +119,9 @@ int osQueueSendToFront(os_queue_t queue, void *message)
     return ret;
 }
 
-int osQueueReceive(os_queue_t queue, void *message, uint64_t wait)
+int osMsgQueueReceive(os_queue_t queue, void *message, uint64_t wait)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsMessage *osMessage = NULL;
     OsTask *task = NULL;
@@ -162,14 +162,14 @@ int osQueueReceive(os_queue_t queue, void *message, uint64_t wait)
     return ret;
 }
 
-os_size_t osQueueGetMessageCount(os_queue_t queue)
+os_size_t osMsgQueueGetMessageCount(os_queue_t queue)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osQueueManagerGetMessageCount(sQueueManager, queue);
 }
 
-os_size_t osQueueGetQueueLength(os_queue_t queue)
+os_size_t osMsgQueueGetQueueLength(os_queue_t queue)
 {
-    queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    msgQueueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osQueueManagerGetQueueLength(sQueueManager, queue);
 }

@@ -32,7 +32,7 @@ int osQueueManagerInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
 * queueLength：队列长度
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerQueueInit(OsQueueManager *queueManager, OsQueue *queue, os_size_t queueLength, os_size_t messageSize);
+int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, os_size_t queueLength, os_size_t messageSize);
 /*********************************************************************************************************************
 * 发送消息
 * queueManager：OsQueueManager对象
@@ -41,7 +41,7 @@ int osQueueManagerQueueInit(OsQueueManager *queueManager, OsQueue *queue, os_siz
 * nextTask：不为NULL表示下一个任务
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask);
+int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessage *message, OsTask **nextTask);
 /*********************************************************************************************************************
 * 发送消息到队列前面
 * queueManager：OsQueueManager对象
@@ -50,7 +50,7 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *
 * nextTask：不为NULL表示下一个任务
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask);
+int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessage *message, OsTask **nextTask);
 /*********************************************************************************************************************
 * 接收消息
 * queueManager：OsQueueManager对象
@@ -60,28 +60,28 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMe
 * wait：等待时间，0表示马上返回，OS_MESSAGE_MAX_WAIT_TIME表示永久等待
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsQueue *queue, uint64_t wait);
+int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsMsgQueue *queue, uint64_t wait);
 /*********************************************************************************************************************
 * 获取消息数量
 * queueManager：OsQueueManager对象
 * queue：OsQueue对象
 * return：消息数量
 *********************************************************************************************************************/
-os_size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsQueue *queue);
+os_size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsMsgQueue *queue);
 /*********************************************************************************************************************
 * 获取队列长度
 * queueManager：OsQueueManager对象
 * queue：OsQueue对象
 * return：队列长度
 *********************************************************************************************************************/
-os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsQueue *queue);
+os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue *queue);
 /*********************************************************************************************************************
 * 弹出一条消息，如果没有消息则返回NULL
 * queueManager：OsQueueManager对象
 * queue：OsQueue对象
 * return：最前面的消息
 *********************************************************************************************************************/
-OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsQueue *queue);
+OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsMsgQueue *queue);
 /*********************************************************************************************************************
 * 移除等待的任务
 * queueManager：OsQueueManager对象
@@ -89,7 +89,7 @@ OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsQueue *queue);
 * task：移除的任务
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerRemoveTask(OsQueueManager *queueManager, OsQueue *queue, OsTask *task);
+int osQueueManagerRemoveTask(OsQueueManager *queueManager, OsMsgQueue *queue, OsTask *task);
 #ifdef __cplusplus
 }
 #endif

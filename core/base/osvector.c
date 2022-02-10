@@ -27,7 +27,11 @@ void osVectorFree(OsVector *obj)
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	if (obj->buff != NULL)
 	{
+		obj->unitSize = 0;
+		obj->size = 0;
+		obj->maxSize = 0;
 		osFree(obj->buff);
+		obj->buff = NULL;
 	}
 }
 
@@ -88,8 +92,8 @@ os_size_t osVectorPushFront(OsVector *obj, void *data)
 os_size_t osVectorInsert(OsVector *obj, void *data, os_size_t n)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	osAssert(obj->size < OS_VECTOR_MAX_SIZE);
-	if (obj->size < OS_VECTOR_MAX_SIZE)
+	osAssert(obj->buff != NULL && obj->size < OS_VECTOR_MAX_SIZE);
+	if (obj->buff != NULL && obj->size < OS_VECTOR_MAX_SIZE)
 	{
 		if (obj->size >= obj->maxSize)
 		{
@@ -120,8 +124,8 @@ void *osVectorFront(OsVector *obj)
 void *osVectorAt(OsVector *obj, os_size_t n)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	osAssert(n < obj->size);
-	if (n < obj->size)
+	osAssert(obj->buff != NULL && n < obj->size);
+	if (obj->buff != NULL && n < obj->size)
 	{
 		return &obj->buff[n * obj->unitSize];
 	}
@@ -131,8 +135,8 @@ void *osVectorAt(OsVector *obj, os_size_t n)
 int osVectorErase(OsVector *obj, os_size_t n)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	osAssert(n < obj->size);
-	if (n < obj->size)
+	osAssert(obj->buff != NULL && n < obj->size);
+	if (obj->buff != NULL && n < obj->size)
 	{
 		for (os_size_t i = n + 1; i < obj->size; i++)
 		{

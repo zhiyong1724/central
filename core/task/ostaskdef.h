@@ -48,7 +48,7 @@ typedef struct OsRecursiveMutex
     void *owner;
 } OsRecursiveMutex;
 
-typedef struct OsQueue
+typedef struct OsMsgQueue
 {
     OsListNode *messages;
     os_size_t messageSize;
@@ -57,7 +57,7 @@ typedef struct OsQueue
     OsTreeNode *highPriorityTask;
     OsTreeNode *waitRtTaskList;
     OsListNode *waitTaskList;
-} OsQueue;
+} OsMsgQueue;
 #ifdef __cplusplus
 }
 #endif

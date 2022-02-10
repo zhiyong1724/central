@@ -6,7 +6,7 @@
 #include "usart.h"
 #include <stdio.h>
 #include <string.h>
-#include "osqueue.h"
+#include "osmsgqueue.h"
 #include "saiaudiooutput.h"
 #include "led.h"
 #include <stdio.h>
@@ -14,12 +14,12 @@ static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
 static char sBuffer;
-static OsQueue sQueue;
+static OsMsgQueue sQueue;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   /* Prevent unused argument(s) compilation warning */
   UNUSED(huart);
-  osQueueSend(&sQueue, &sBuffer);
+  osMsgQueueSend(&sQueue, &sBuffer);
   MX_USART1_UART_Receive(&sBuffer, 1);
   /* NOTE : This function should not be modified, when the callback is needed,
             the HAL_UART_RxCpltCallback can be implemented in the user file.
@@ -28,7 +28,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 static short shellRead(char *data, unsigned short len)
 {
-    if (osQueueReceive(&sQueue, data, OS_MESSAGE_MAX_WAIT_TIME) == 0)
+    if (osMsgQueueReceive(&sQueue, data, OS_MESSAGE_MAX_WAIT_TIME) == 0)
     {
         return 1;
     }
@@ -57,7 +57,7 @@ int shellIOInit()
     shellInit(&sShell, sShellBuffer, 1024);
     osFGetCWD(sShellPathBuffer, OS_MAX_FILE_PATH_LENGTH);
     shellSetPath(&sShell, sShellPathBuffer);
-    osQueueCreate(&sQueue, OS_MAX_QUEUE_LENGTH, 1);
+    osMsgQueueCreate(&sQueue, OS_MAX_QUEUE_LENGTH, 1);
     os_tid_t tid;
     osTaskCreate(&tid, _shellTask, &sShell, "shell", 0, OS_DEFAULT_TASK_STACK_SIZE);
     MX_USART1_UART_Receive(&sBuffer, 1);

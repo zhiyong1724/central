@@ -16,7 +16,7 @@ int osQueueManagerInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
     return 0;
 }
 
-int osQueueManagerQueueInit(OsQueueManager *queueManager, OsQueue *queue, os_size_t queueLength, os_size_t messageSize)
+int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, os_size_t queueLength, os_size_t messageSize)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     queue->messages = NULL;
@@ -29,7 +29,7 @@ int osQueueManagerQueueInit(OsQueueManager *queueManager, OsQueue *queue, os_siz
     return 0;
 }
 
-int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask)
+int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessage *message, OsTask **nextTask)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -75,7 +75,7 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsQueue *queue, OsMessage *
     return ret;
 }
 
-int osQueueManagerSendToFront(OsQueueManager *queueManager, OsQueue *queue, OsMessage *message, OsTask **nextTask)
+int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessage *message, OsTask **nextTask)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -136,7 +136,7 @@ static int onCompare(void *key1, void *key2, void *arg)
     }
 }
 
-int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsQueue *queue, uint64_t wait)
+int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsMsgQueue *queue, uint64_t wait)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -188,19 +188,19 @@ int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsT
     return ret;
 }
 
-os_size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsQueue *queue)
+os_size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsMsgQueue *queue)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return queue->messageCount;
 }
 
-os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsQueue *queue)
+os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue *queue)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return queue->length;
 }
 
-OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsQueue *queue)
+OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsMsgQueue *queue)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsMessage *message = (OsMessage *)queue->messages;
@@ -212,7 +212,7 @@ OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsQueue *queue)
     return message;
 }
 
-int osQueueManagerRemoveTask(OsQueueManager *queueManager, OsQueue *queue, OsTask *task)
+int osQueueManagerRemoveTask(OsQueueManager *queueManager, OsMsgQueue *queue, OsTask *task)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (OS_TASK_TYPE_RT == task->taskControlBlock.schedulerId)
