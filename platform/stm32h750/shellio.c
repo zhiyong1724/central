@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "osmsgqueue.h"
-#include "saiaudiooutput.h"
 #include "led.h"
-#include <stdio.h>
+#include "saiaudiooutput.h"
+#include "audioplayer.h"
 static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
@@ -524,28 +524,47 @@ void shellFree(int argc, char *argv[])
     shellPrint(&sShell, "可用页：%ld\n", osFreePage());
 }
 
-static FILE *sFile = NULL;
-static SaiAudioOutput sSaiAudioOutput;
-static int onReadDataStream(void *buffer, int bufferSize)
+static int sAudioPlayerRunning = 0;
+static void onPrepared(void *object, const StreamInfo *streamInfo)
 {
-    bufferSize = fread(buffer, 1, bufferSize, sFile);
-    return bufferSize;
 }
 
-static void onPlaying()
+static void onPlaying(void *object)
 {
-    printf("onPlaying\n");
 }
 
-static void onStopped()
+static void onStopped(void *object)
 {
-    printf("onStopped\n");
-    fclose(sFile);
-    sFile = NULL;
+    sAudioPlayerRunning = 0;
 }
 
-static void onPositionChanged(int ms)
+static void onPositionChanged(void *object, int ms)
 {
+}
+
+
+static void *audioPlayerTask(void *arg)
+{
+    SaiAudioOutput saiAudioOutput;
+    saiAudioOutputInit(&saiAudioOutput);
+    AudioPlayer audioPlayer;
+    audioPlayerInit(&audioPlayer, (AudioOutput *)&saiAudioOutput);
+    AudioPlayerCallback audioPlayerCallback;
+    audioPlayerCallback.onPrepared = onPrepared;
+    audioPlayerCallback.onPlaying = onPlaying;
+    audioPlayerCallback.onStopped = onStopped;
+    audioPlayerCallback.onPositionChanged = onPositionChanged;
+    audioPlayerSetCallback(&audioPlayer, &audioPlayerCallback);
+    audioPlayerSetInput(&audioPlayer, (const char *)arg);
+    audioPlayerPlay(&audioPlayer);
+    while (sAudioPlayerRunning > 0)
+    {
+        osTaskSleep(50);
+    }
+    audioPlayerStop(&audioPlayer);
+    audioPlayerUninit(&audioPlayer);
+    saiAudioOutputUninit(&saiAudioOutput);
+    return NULL;
 }
 
 void shellPlay(int argc, char *argv[])
@@ -554,22 +573,16 @@ void shellPlay(int argc, char *argv[])
     {
         if (strcmp(argv[1], "stop") == 0)
         {
-            audioOutputStop((AudioOutput *)&sSaiAudioOutput);
-            saiAudioOutputUninit(&sSaiAudioOutput);
+            sAudioPlayerRunning = 0;
         }
         else
         {
-            saiAudioOutputInit(&sSaiAudioOutput);
-            AudioOutputCallback audioOutputCallback;
-            audioOutputCallback.onReadDataStream = onReadDataStream;
-            audioOutputCallback.onPlaying = onPlaying;
-            audioOutputCallback.onStopped = onStopped;
-            audioOutputCallback.onPositionChanged = onPositionChanged;
-            audioOutputSetCallback((AudioOutput *)&sSaiAudioOutput, &audioOutputCallback);
-            sFile = fopen(argv[1], "rb");
-            if (sFile != NULL)
+            if (0 == sAudioPlayerRunning)
             {
-                audioOutputPlay((AudioOutput *)&sSaiAudioOutput);
+                sAudioPlayerRunning = 1;
+                os_tid_t tid;
+                osTaskCreate(&tid, audioPlayerTask, argv[1], "audio player", 20, OS_DEFAULT_TASK_STACK_SIZE);
+                osTaskDetach(tid);
             }
         }
     }

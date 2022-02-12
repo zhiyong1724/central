@@ -47,6 +47,12 @@ os_size_t osVectorMaxSize(OsVector *obj)
 	return obj->maxSize;
 }
 
+os_size_t osVectorUnitSize(OsVector *obj)
+{
+	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	return obj->unitSize;
+}
+
 int osVectorEmpty(OsVector *obj)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);

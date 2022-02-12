@@ -116,6 +116,12 @@ void osQueueFree(OsQueue *obj)
 	obj->unitSize = 0;
 }
 
+os_size_t osQueueUnitSize(OsQueue *obj)
+{
+	queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	return obj->unitSize;
+}
+
 os_size_t osQueueSize(OsQueue *obj)
 {
 	queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);

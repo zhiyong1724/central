@@ -20,10 +20,11 @@ typedef struct AudioOutputInfo
 
 typedef struct AudioOutputCallback
 {
-    int (*onReadDataStream)(void *buffer, int bufferSize);
-    void (*onPlaying)();
-    void (*onStopped)();
-    void (*onPositionChanged)(int ms);
+    int (*onReadDataStream)(void *object, void *buffer, int bufferSize);
+    void (*onPlaying)(void *object);
+    void (*onStopped)(void *object);
+    void (*onPositionChanged)(void *object, int ms);
+    void *object;
 } AudioOutputCallback;
 
 typedef struct AudioOutputInterface
@@ -37,12 +38,6 @@ typedef struct AudioOutput
     AudioOutputInfo audioOutputInfo;
     AudioOutputInterface audioOutputInterface;
     AudioOutputCallback audioOutputCallback;
-    int running;
-    void *bufferA;
-    void *bufferB;
-    int bufferSize;
-    unsigned int time;
-    int exchange;
 } AudioOutput;
 
 int audioOutputInit(AudioOutput *audioOutput, const AudioOutputInfo *audioOutputInfo, const AudioOutputInterface *audioOutputInterface);

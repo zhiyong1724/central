@@ -148,7 +148,10 @@ SRCS := ostree.c \
 	pcf8574.c \
 	es8388.c \
 	audiooutput.c \
-	saiaudiooutput.c
+	saiaudiooutput.c \
+	audiodecoder.c \
+	ffmpegaudiodecoder.c \
+	audioplayer.c
 
 ASM_SRCS := startup_stm32h750xx.s
 
