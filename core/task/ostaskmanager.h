@@ -230,6 +230,22 @@ OsTask *osTaskManagerGetRunningTask(OsTaskManager *taskManager);
 * return：cpu占用
 *********************************************************************************************************************/
 os_size_t osTaskManagerGetCPUUsage(OsTaskManager *taskManager);
+/*********************************************************************************************************************
+* 发现第一个任务信息
+* taskManager：OsTaskManager对象
+* taskPtr：当前位置
+* taskInfo：任务信息
+* return：0：调用成功
+*********************************************************************************************************************/
+int osTaskManagerFindFirst(OsTaskManager *taskManager, os_task_ptr *taskPtr, OsTaskInfo *taskInfo);
+/*********************************************************************************************************************
+* 发现下一个任务信息
+* taskManager：OsTaskManager对象
+* taskPtr：当前位置
+* taskInfo：任务信息
+* return：0：调用成功
+*********************************************************************************************************************/
+int osTaskManagerFindNext(OsTaskManager *taskManager, os_task_ptr *taskPtr, OsTaskInfo *taskInfo);
 #ifdef __cplusplus
 }
 #endif

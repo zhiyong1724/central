@@ -98,11 +98,9 @@ static OsTask *getTaskByTid(OsTaskManager *taskManager, os_tid_t tid)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t size = osVectorSize(&taskManager->taskList);
-    osAssert(tid > 1 && tid < size);
-    if (tid > 1 && tid < size)
+    if (tid < size)
     {
         OsTask **ptask = (OsTask **)osVectorAt(&taskManager->taskList, tid);
-        osAssert(ptask != NULL);
         if (ptask != NULL)
         {
             return *ptask;
@@ -230,7 +228,7 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
                 os_size_t size = osVectorSize(&taskManager->taskList);
                 if (task->tid >= size)
                 {
-                    os_size_t v = 0;
+                    void *v = 0;
                     osVectorPushBack(&taskManager->taskList, &v);
                 }
                 void **t = (void **)osVectorAt(&taskManager->taskList, task->tid);
@@ -287,8 +285,8 @@ int osTaskManagerModifyPriority(OsTaskManager *taskManager, os_tid_t tid, os_siz
     if (tid > 1)
     {
         OsTask *task = getTaskByTid(taskManager, tid);
-        osAssert(task != NULL);
-        if (task != NULL)
+        osAssert(task != NULL && task->tid > 1);
+        if (task != NULL && task->tid > 1)
         {
             ret = osVSchedulerModifyPriority(&taskManager->vScheduler, &task->taskControlBlock, priority);
         }
@@ -321,8 +319,8 @@ int osTaskManagerWakeup(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t 
     if (tid > 1)
     {
         OsTask *task = getTaskByTid(taskManager, tid);
-        osAssert(task != NULL);
-        if (task != NULL)
+        osAssert(task != NULL && task->tid > 1);
+        if (task != NULL && task->tid > 1)
         {
             *nextTask = (OsTask *)osVSchedulerWakeup(&taskManager->vScheduler, &task->taskControlBlock);
             *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
@@ -345,8 +343,8 @@ int osTaskManagerSupend(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t 
     if (tid > 1)
     {
         OsTask *task = getTaskByTid(taskManager, tid);
-        osAssert(task != NULL);
-        if (task != NULL)
+        osAssert(task != NULL && task->tid > 1);
+        if (task != NULL && task->tid > 1)
         {
             *nextTask = (OsTask *)osVSchedulerSupend(&taskManager->vScheduler, &task->taskControlBlock);
             *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
@@ -369,8 +367,8 @@ int osTaskManagerResume(OsTaskManager *taskManager, OsTask **nextTask, os_tid_t 
     if (tid > 1)
     {
         OsTask *task = getTaskByTid(taskManager, tid);
-        osAssert(task != NULL);
-        if (task != NULL)
+        osAssert(task != NULL && task->tid > 1);
+        if (task != NULL && task->tid > 1)
         {
             *nextTask = (OsTask *)osVSchedulerResume(&taskManager->vScheduler, &task->taskControlBlock);
             *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
@@ -411,6 +409,8 @@ int osTaskManagerExit(OsTaskManager *taskManager, OsTask **nextTask, void *arg)
     OsTask *task = osTaskManagerGetRunningTask(taskManager);
     osAssert(OS_TASK_STACK_MAGIC == *task->taskStackMagic);
     *nextTask = (OsTask *)((os_byte_t *)osVSchedulerExit(&taskManager->vScheduler) - sizeof(OsListNode));
+    void **pp = (void **)osVectorAt(&taskManager->taskList, task->tid);
+    *pp = NULL;
     moveChildren(taskManager, task);
     if (task->parent == taskManager->initTask)
     {
@@ -454,8 +454,8 @@ int osTaskManagerJoin(OsTaskManager *taskManager, OsTask **nextTask, void **retv
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         OsTask *runningTask = osTaskManagerGetRunningTask(taskManager);
         osAssert(task->parent == runningTask);
@@ -494,8 +494,8 @@ int osTaskManagerDetach(OsTaskManager *taskManager, os_tid_t tid)
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         if (task->parent != taskManager->initTask)
         {
@@ -541,8 +541,8 @@ int osTaskManagerGetTaskPriority(OsTaskManager *taskManager, os_size_t *priority
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         switch (task->taskControlBlock.schedulerId)
         {
@@ -568,8 +568,8 @@ int osTaskManagerGetTaskType(OsTaskManager *taskManager, OsTaskType *type, os_ti
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         *type = (OsTaskType)task->taskControlBlock.schedulerId;
         ret = 0;
@@ -582,8 +582,8 @@ int osTaskManagerGetTaskState(OsTaskManager *taskManager, OsTaskState *state, os
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         OsTask *runningTask = osTaskManagerGetRunningTask(taskManager);
         if (task == runningTask)
@@ -604,8 +604,8 @@ int osTaskManagerGetTaskName(OsTaskManager *taskManager, char *name, os_size_t s
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         size = size < OS_TASK_MAX_NAME_LEN ? size : OS_TASK_MAX_NAME_LEN;
         osStrCpy(name, task->name, size);
@@ -619,8 +619,8 @@ int osTaskManagerGetTaskStackSize(OsTaskManager *taskManager, os_size_t *stackSi
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         *stackSize = task->stackSize;
         ret = 0;
@@ -633,8 +633,8 @@ int osTaskManagerJoinable(OsTaskManager *taskManager, os_tid_t tid)
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     OsTask *task = getTaskByTid(taskManager, tid);
-    osAssert(task != NULL);
-    if (task != NULL)
+    osAssert(task != NULL && task->tid > 1);
+    if (task != NULL && task->tid > 1)
     {
         if (task->parent == taskManager->initTask)
         {
@@ -664,4 +664,51 @@ os_size_t osTaskManagerGetCPUUsage(OsTaskManager *taskManager)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return taskManager->cpuUsage;
+}
+
+int osTaskManagerFindFirst(OsTaskManager *taskManager, os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
+{
+    taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    *taskPtr = 0;
+    return osTaskManagerFindNext(taskManager, taskPtr, taskInfo);
+}
+
+int osTaskManagerFindNext(OsTaskManager *taskManager, os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
+{
+    taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    int ret = -1;
+    OsTask *task = getTaskByTid(taskManager, *taskPtr);
+    if (task != NULL)
+    {
+        ret = 0;
+        (*taskPtr)++;
+        taskInfo->tid = task->tid;
+        if (task->parent != NULL)
+        {
+            taskInfo->ptid = task->parent->tid;
+        }
+        else
+        {
+            taskInfo->ptid = 0;
+        }
+        osStrCpy(taskInfo->name, task->name, OS_TASK_MAX_NAME_LEN);
+        taskInfo->stackSize = task->stackSize;
+        taskInfo->taskState = task->taskControlBlock.taskState;
+        taskInfo->taskType = task->taskControlBlock.schedulerId;
+        switch (task->taskControlBlock.schedulerId)
+        {
+        case OS_TASK_TYPE_RT:
+            taskInfo->priority = task->realTaskControlBlock.rtTaskControlBlock.priority;
+            break;
+        case OS_TASK_TYPE_DT:
+            taskInfo->priority = task->realTaskControlBlock.dtTaskControlBlock.priority;
+            break;
+        case OS_TASK_TYPE_IDLE:
+            taskInfo->priority = task->realTaskControlBlock.idleTaskControlBlock.priority;
+            break;
+        default:
+            break;
+        }
+    }
+    return ret;
 }

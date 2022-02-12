@@ -259,3 +259,21 @@ os_size_t osTaskGetCPUUsage()
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osTaskManagerGetCPUUsage(sTaskManager);
 }
+
+int osTaskFindFirst(os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
+{
+    taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    os_size_t state = portDisableInterrupts();
+    int ret = osTaskManagerFindFirst(sTaskManager, taskPtr, taskInfo);
+    portRecoveryInterrupts(state);
+    return ret;
+}
+
+int osTaskFindNext(os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
+{
+    taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    os_size_t state = portDisableInterrupts();
+    int ret = osTaskManagerFindNext(sTaskManager, taskPtr, taskInfo);
+    portRecoveryInterrupts(state);
+    return ret;
+}

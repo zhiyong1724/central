@@ -58,7 +58,7 @@ static int play(void *audioOutput)
     if (0 == saiAudioOutput->tid && 0 == saiAudioOutput->running) 
     {
         saiAudioOutput->running = 1;
-        ret = osTaskCreateRT(&saiAudioOutput->tid, audioPlayTask, audioOutput, "audio play", 30, OS_DEFAULT_TASK_STACK_SIZE);
+        ret = osTaskCreateRT(&saiAudioOutput->tid, audioPlayTask, audioOutput, "audio output", 30, OS_DEFAULT_TASK_STACK_SIZE);
         if (ret != 0)
         {
             saiAudioOutput->running = 0;

@@ -27,6 +27,18 @@ typedef enum OsTaskType
 } OsTaskType;
 typedef void *(*TaskFunction)(void *arg);
 
+typedef os_size_t os_task_ptr;
+typedef struct OsTaskInfo
+{
+    os_tid_t tid;
+    os_tid_t ptid;
+    char name[OS_TASK_MAX_NAME_LEN];
+    os_size_t stackSize;
+    OsTaskState taskState;
+    OsTaskType taskType;
+    os_size_t priority;
+} OsTaskInfo;
+
 typedef struct OsSemaphore
 {
     os_size_t count;

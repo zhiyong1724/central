@@ -591,3 +591,16 @@ void shellPlay(int argc, char *argv[])
         shellWriteString(&sShell, "参数不足\n");
     }
 }
+
+void shellPS(int argc, char *argv[])
+{
+    os_task_ptr ptr;
+    OsTaskInfo taskInfo;
+    int result = osTaskFindFirst(&ptr, &taskInfo);
+    while (0 == result)
+    {
+        shellPrint(&sShell, "tid: %ld  ptid: %ld  stack size: %ld  state: %d  type: %d  priority: %ld  name: %s\n",
+                   taskInfo.tid, taskInfo.ptid, taskInfo.stackSize, taskInfo.taskState, taskInfo.taskType, taskInfo.priority, taskInfo.name);
+        result = osTaskFindNext(&ptr, &taskInfo);
+    }
+}
