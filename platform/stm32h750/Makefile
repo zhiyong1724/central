@@ -147,6 +147,8 @@ SRCS := ostree.c \
 	softiic.c \
 	pcf8574.c \
 	es8388.c \
+	keymanager.c \
+	volumemanager.c \
 	audiooutput.c \
 	saiaudiooutput.c \
 	audiodecoder.c \

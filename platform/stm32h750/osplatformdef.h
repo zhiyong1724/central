@@ -27,9 +27,8 @@ if(e) \
 else \
 { \
     osPrintf("osAssert:%s:%s:%d\n", __FILE__, __func__, __LINE__); \
-    volatile int divisor = 0; \
-    volatile int num = 5 / divisor; \
-    (void)num; \
+    unsigned int *p = (unsigned int *)-1; \
+    *p = 0; \
 } 
 #else
 #define osAssert(e) (void)0

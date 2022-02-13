@@ -28,7 +28,8 @@ if(e) \
 else \
 { \
     osPrintf("osAssert:%s:%s:%d\n", __FILE__, __func__, __LINE__); \
-    for (;;); \
+    unsigned int *p = (unsigned int *)-1; \
+    *p = 0; \
 } 
 #else
 #define osAssert(e) (void)0

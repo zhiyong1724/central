@@ -18,6 +18,42 @@
 #include "pcf8574.h"
 #include "es8388.h"
 #include "sai.h"
+#include "keymanager.h"
+#include "volumemanager.h"
+static int onPressed(void *object, KeyType type)
+{
+    return 0;
+}
+
+static int onReleased(void *object, KeyType type)
+{
+    switch (type)
+    {
+    case KEY_TYPE_KEY_0:
+    {
+        int volume = volumeManagerVolumeUp();
+        printf("volume = %d\n", volume);
+        break;
+    }
+    case KEY_TYPE_KEY_1:
+        /* code */
+        break;
+    case KEY_TYPE_KEY_2:
+    {
+        int volume = volumeManagerVolumeDown();
+        printf("volume = %d\n", volume);
+        break;
+    }
+    case KEY_TYPE_KEY_UP:
+        /* code */
+        break;
+
+    default:
+        break;
+    }
+    return 0;
+}
+
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
@@ -26,8 +62,6 @@ void enterNormalMode()
     ES8388_Init();
     ES8388_ADDA_Cfg(1, 0); //开启DAC
     ES8388_Output_Cfg(1, 1);  //DAC选择通道输出
-    ES8388_HPvol_Set(10);     //设置耳机音量
-    ES8388_SPKvol_Set(10);     //设置喇叭音量
     ES8388_I2S_Cfg(0, 3);     //飞利浦标准I2S，16BIT
     MX_DMA_Init();
     MX_SAI1_Init();
@@ -40,6 +74,13 @@ void enterNormalMode()
     osFMount("/", "nand");
     osFMkDir("sd");
     osFMount("sd", "0:");
+    volumeManagerInit();
+    keyManagerInit();
+    KeyManagerCallBack keyManagerCallBack;
+    keyManagerCallBack.object = NULL;
+    keyManagerCallBack.onPressed = onPressed;
+    keyManagerCallBack.onReleased = onReleased;
+    keyManagerRegisterCallback(&keyManagerCallBack);
     shellIOInit();
     osTaskStart();
 }
