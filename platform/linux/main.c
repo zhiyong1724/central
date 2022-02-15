@@ -891,7 +891,7 @@ void testQueue()
     osMsgQueueCreate(&sQueue, 0, sizeof(int));
     for (int i = 0; i < 10; i++)
     {
-        osMsgQueueSend(&sQueue, &i);
+        osMsgQueueSendToFront(&sQueue, &i);
     }
     for (int i = 0; i < 10; i++)
     {

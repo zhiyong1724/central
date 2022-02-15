@@ -692,6 +692,7 @@ int osTaskManagerFindNext(OsTaskManager *taskManager, os_task_ptr *taskPtr, OsTa
             taskInfo->ptid = 0;
         }
         osStrCpy(taskInfo->name, task->name, OS_TASK_MAX_NAME_LEN);
+        taskInfo->stack = task->stackStart;
         taskInfo->stackSize = task->stackSize;
         taskInfo->taskState = task->taskControlBlock.taskState;
         taskInfo->taskType = task->taskControlBlock.schedulerId;

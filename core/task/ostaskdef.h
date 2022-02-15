@@ -33,6 +33,7 @@ typedef struct OsTaskInfo
     os_tid_t tid;
     os_tid_t ptid;
     char name[OS_TASK_MAX_NAME_LEN];
+    void *stack;
     os_size_t stackSize;
     OsTaskState taskState;
     OsTaskType taskType;
@@ -62,10 +63,12 @@ typedef struct OsRecursiveMutex
 
 typedef struct OsMsgQueue
 {
-    OsListNode *messages;
     os_size_t messageSize;
     os_size_t messageCount;
     os_size_t length;
+    os_byte_t *buffer;
+    os_size_t writeIndex;
+    os_size_t readIndex;
     OsTreeNode *highPriorityTask;
     OsTreeNode *waitRtTaskList;
     OsListNode *waitTaskList;

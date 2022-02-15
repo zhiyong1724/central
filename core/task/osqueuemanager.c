@@ -1,5 +1,7 @@
 #include "osqueuemanager.h"
 #include "ostask.h"
+#include "osmem.h"
+#include "osstring.h"
 #define ENABLE_QUEUEMANAGER_LOG 0
 #if ENABLE_QUEUEMANAGER_LOG
 #define queueManagerLog(format, ...) osPrintf(format, ##__VA_ARGS__)
@@ -19,17 +21,43 @@ int osQueueManagerInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
 int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, os_size_t queueLength, os_size_t messageSize)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    queue->messages = NULL;
+    int ret = -1;
+    queue->buffer = (os_byte_t *)osMalloc(queueLength * messageSize);
+    if (queue->buffer != NULL)
+    {
+        queue->messageCount = 0;
+        queue->length = queueLength;
+        queue->messageSize = messageSize;
+        queue->writeIndex = 0;
+        queue->readIndex = 0;
+        queue->highPriorityTask = NULL;
+        queue->waitRtTaskList = NULL;
+        queue->waitTaskList = NULL;
+        ret = 0;
+    }
+    return ret;
+}
+
+int osQueueManagerQueueUninit(OsQueueManager *queueManager, OsMsgQueue *queue)
+{
+    queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    if (queue->buffer != NULL)
+    {
+        osFree(queue->buffer);
+        queue->buffer = NULL;
+    }
     queue->messageCount = 0;
-    queue->length = queueLength;
-    queue->messageSize = messageSize;
+    queue->length = 0;
+    queue->messageSize = 0;
+    queue->writeIndex = 0;
+    queue->readIndex = 0;
     queue->highPriorityTask = NULL;
     queue->waitRtTaskList = NULL;
     queue->waitTaskList = NULL;
     return 0;
 }
 
-int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessage *message, OsTask **nextTask)
+int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, void *message, OsTask **nextTask)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -52,15 +80,16 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessag
                 task = (OsTask *)(highPriorityTask - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task->realTaskControlBlock));
             }
         }
-        if (NULL == task)
+        osMemCpy(&queue->buffer[queue->writeIndex * queue->messageSize], message, queue->messageSize);
+        queue->writeIndex++;
+        if (queue->writeIndex >= queue->length)
         {
-            osInsertToBack(&queue->messages, &message->node);
-            queue->messageCount++;
-            ret = 0;
+            queue->writeIndex = 0;
         }
-        else
+        queue->messageCount++;
+        if (task != NULL)
         {
-            task->arg = message;
+            task->arg = queue;
             if (OS_TASK_STATE_BLOCKED == task->taskControlBlock.taskState)
             {
                 task->taskControlBlock.taskState = OS_TASK_STATE_SUSPENDED;
@@ -75,7 +104,7 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessag
     return ret;
 }
 
-int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, OsMessage *message, OsTask **nextTask)
+int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, void *message, OsTask **nextTask)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -98,15 +127,19 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, O
                 task = (OsTask *)(highPriorityTask - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task->realTaskControlBlock));
             }
         }
-        if (NULL == task)
+        if (queue->readIndex > 0)
         {
-            osInsertToFront(&queue->messages, &message->node);
-            queue->messageCount++;
-            ret = 0;
+            queue->readIndex--;
         }
         else
         {
-            task->arg = message;
+            queue->readIndex = queue->length - 1;
+        }
+        osMemCpy(&queue->buffer[queue->readIndex * queue->messageSize], message, queue->messageSize);
+        queue->messageCount++;
+        if (task != NULL)
+        {
+            task->arg = queue;
             if (OS_TASK_STATE_BLOCKED == task->taskControlBlock.taskState)
             {
                 task->taskControlBlock.taskState = OS_TASK_STATE_SUSPENDED;
@@ -136,14 +169,15 @@ static int onCompare(void *key1, void *key2, void *arg)
     }
 }
 
-int osQueueManagerReceive(OsQueueManager *queueManager, OsMessage **message, OsTask **nextTask, OsMsgQueue *queue, uint64_t wait)
+int osQueueManagerReceive(OsQueueManager *queueManager, void *message, OsTask **nextTask, OsMsgQueue *queue, uint64_t wait)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     *nextTask = NULL;
-    *message = osQueueManagerQueuePop(queueManager, queue);
-    if (*message != NULL)
+    void *result = osQueueManagerQueuePop(queueManager, queue);
+    if (result != NULL)
     {
+        osMemCpy(message, result, queue->messageSize);
         ret = 0;
     }
     else
@@ -200,16 +234,21 @@ os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue 
     return queue->length;
 }
 
-OsMessage *osQueueManagerQueuePop(OsQueueManager *queueManager, OsMsgQueue *queue)
+void *osQueueManagerQueuePop(OsQueueManager *queueManager, OsMsgQueue *queue)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    OsMessage *message = (OsMessage *)queue->messages;
-    if (message != NULL)
+    void *ret = NULL;
+    if (queue->messageCount > 0)
     {
-        osRemoveFromList(&queue->messages, queue->messages);
+        ret = &queue->buffer[queue->readIndex * queue->messageSize];
+        queue->readIndex++;
+        if (queue->readIndex >= queue->length)
+        {
+            queue->readIndex = 0;
+        }
         queue->messageCount--;
     }
-    return message;
+    return ret;
 }
 
 int osQueueManagerRemoveTask(OsQueueManager *queueManager, OsMsgQueue *queue, OsTask *task)
@@ -224,5 +263,14 @@ int osQueueManagerRemoveTask(OsQueueManager *queueManager, OsMsgQueue *queue, Os
     {
         osRemoveFromList(&queue->waitTaskList, &task->exNode.listNode);
     }
+    return 0;
+}
+
+int osQueueManagerReset(OsQueueManager *queueManager, OsMsgQueue *queue)
+{
+    queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    queue->messageCount = 0;
+    queue->writeIndex = 0;
+    queue->readIndex = 0;
     return 0;
 }

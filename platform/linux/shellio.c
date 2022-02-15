@@ -543,8 +543,8 @@ void shellPS(int argc, char *argv[])
     int result = osTaskFindFirst(&ptr, &taskInfo);
     while (0 == result)
     {
-        shellPrint(&sShell, "tid: %ld  ptid: %ld  stack size: %ld  state: %d  type: %d  priority: %ld  name: %s\n",
-                   taskInfo.tid, taskInfo.ptid, taskInfo.stackSize, taskInfo.taskState, taskInfo.taskType, taskInfo.priority, taskInfo.name);
+        shellPrint(&sShell, "tid: %ld  ptid: %ld  stack: 0x%x  stack size: %ld  state: %d  type: %d  priority: %ld  name: %s\n",
+                   taskInfo.tid, taskInfo.ptid, taskInfo.stack, taskInfo.stackSize, taskInfo.taskState, taskInfo.taskType, taskInfo.priority, taskInfo.name);
         result = osTaskFindNext(&ptr, &taskInfo);
     }
 }
