@@ -32,14 +32,19 @@ static int prepare(void *audioDecoder)
                 ffmpegAudioDecoder->codec = avcodec_find_decoder(ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->codec_id);
                 if (NULL == ffmpegAudioDecoder->codec)
                 {
-                    printf("Call avcodec_find_decoder fail.\n");
-                    break;
+                    continue;
                 }
                 if (AVMEDIA_TYPE_AUDIO == ffmpegAudioDecoder->codec->type)
                 {
                     break;
                 }
             }
+            if (NULL == ffmpegAudioDecoder->codec)
+            {
+                ret = -1;
+                break;
+            }
+            
             if (ffmpegAudioDecoder->audioStreamIndex < ffmpegAudioDecoder->formatContext->nb_streams)
             {
                 StreamInfo streamInfo;
