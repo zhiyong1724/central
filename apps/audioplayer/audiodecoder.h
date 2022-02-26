@@ -3,6 +3,7 @@
 #include <stdint.h>
 typedef enum AudioType
 {
+    AUDIO_TYPE_PCM_U8,
     AUDIO_TYPE_PCM_S16,
     AUDIO_TYPE_PCM_S32,
     AUDIO_TYPE_PCM_S64,
@@ -21,7 +22,7 @@ typedef struct AudioInfo
 typedef struct StreamInfo
 {
     int duration;
-    char codecName[32];
+    char codecName[256];
     int bitRate;
     AudioInfo audioInfo;
 } StreamInfo;

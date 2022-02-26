@@ -77,13 +77,13 @@ int ramIOCtl(unsigned char cmd, void *buff)
     case CTRL_SYNC:
         break;
     case GET_SECTOR_COUNT:
-        *((unsigned int *)buff) = SECTOR_COUNT;
+        *((uint16_t *)buff) = SECTOR_COUNT;
         break;
     case GET_SECTOR_SIZE:
-        *((unsigned int *)buff) = SECTOR_SIZE;
+        *((uint16_t *)buff) = SECTOR_SIZE;
         break;
     case GET_BLOCK_SIZE:
-        *((unsigned int *)buff) = 1;
+        *((uint16_t *)buff) = 1;
         break;
     case CTRL_TRIM:
         break;

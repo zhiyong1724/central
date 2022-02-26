@@ -36,7 +36,7 @@ else \
 #endif
 extern char _heap[];
 #define OS_HEAP_ADDRESS                _heap                                      //堆空间指针
-#define OS_HEAP_SIZE                   (1024 * 1024)                              //堆空间大小
+#define OS_HEAP_SIZE                   (64 * 1024 * 1024)                         //堆空间大小
 #ifdef __cplusplus
 }
 #endif

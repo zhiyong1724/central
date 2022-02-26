@@ -497,7 +497,8 @@ int osTaskManagerDetach(OsTaskManager *taskManager, os_tid_t tid)
     osAssert(task != NULL && task->tid > 1);
     if (task != NULL && task->tid > 1)
     {
-        if (task->parent != taskManager->initTask)
+        osAssert(task->parent != taskManager->initTask && task->parent->taskControlBlock.taskState != OS_TASK_STATE_BLOCKED && task->parent->waitTid != task->tid);
+        if (task->parent != taskManager->initTask && task->parent->taskControlBlock.taskState != OS_TASK_STATE_BLOCKED && task->parent->waitTid != task->tid)
         {
             osRemoveFromList((OsListNode **)&task->parent->children, &task->node);
             task->parent->childrenCount--;

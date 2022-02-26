@@ -47,123 +47,126 @@ int onCompare(void *key1, void *key2, void *arg)
     
 }
 
-void searchTree(OsTreeNode *root, int *nodeNum)
+static void searchTree(OsTreeNode *root, int *nodeNum, int *minDeep, int *maxDeep, int *deep)
 {
     if (root != NULL)
     {
-        if (root != &gLeafNode)
+        (*deep)++;
+        (*nodeNum)++;
+        if (root->leftTree != &gLeafNode)
         {
-            (*nodeNum)++;
+            searchTree(root->leftTree, nodeNum, minDeep, maxDeep, deep);
         }
-        if (root->leftTree != NULL)
+        else
         {
-            searchTree(root->leftTree, nodeNum);
+            if (*minDeep > *deep)
+            {
+                *minDeep = *deep;
+            }
+            if (*maxDeep < *deep)
+            {
+                *maxDeep = *deep;
+            }
         }
-        if (root->rightTree != NULL)
+        if (root->rightTree != &gLeafNode)
         {
-            searchTree(root->rightTree, nodeNum);
+            searchTree(root->rightTree, nodeNum, minDeep, maxDeep, deep);
         }
+        else
+        {
+            if (*minDeep > *deep)
+            {
+                *minDeep = *deep;
+            }
+            if (*maxDeep < *deep)
+            {
+                *maxDeep = *deep;
+            }
+        }
+        (*deep)--;
     }
 }
 
 void testTree()
 {
     static OsTreeNode *handle = NULL;
-    static struct Test nodes[4000];
-    for (int i = 0; i < 4000; i++)
+    static struct Test nodes[30000];
+    for (int i = 0; i < 30000; i++)
     {
         nodes[i].value = i;
     }
     //正插入
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         osInsertNode(&handle, &nodes[i].node, onCompare, NULL);
     }
     printf("handle = %ld\n", (unsigned long)handle);
     int nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
+    int minDeep = 10000; 
+    int maxDeep = 0;
+    int deep = 0;
+    searchTree(handle, &nodeNum, &minDeep, &maxDeep, &deep);
+    printf("nodeNum = %d, minDeep = %d, maxDeep = %d\n", nodeNum, minDeep, maxDeep);
     //倒插入
-    for (int i = 1999; i >= 1000; i--)
+    for (int i = 19999; i >= 10000; i--)
     {
         osInsertNode(&handle, &nodes[i].node, onCompare, NULL);
     }
     printf("handle = %ld\n", (unsigned long)handle);
     nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //正移除
-    for (int i = 0; i < 1000; i++)
-    {
-        osDeleteNode(&handle, &nodes[i].node);
-    }
-    printf("handle = %ld\n", (unsigned long)handle);
-    nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //倒插入
-    for (int i = 2999; i >= 2000; i--)
-    {
-        osInsertNode(&handle, &nodes[i].node, onCompare, NULL);
-    }
-    printf("handle = %ld\n", (unsigned long)handle);
-    nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
+    minDeep = 10000; 
+    maxDeep = 0;
+    deep = 0;
+    searchTree(handle, &nodeNum, &minDeep, &maxDeep, &deep);
+    printf("nodeNum = %d, minDeep = %d, maxDeep = %d\n", nodeNum, minDeep, maxDeep);
     //正插入
-    for (int i = 3000; i < 4000; i++)
+    for (int i = 20000; i < 30000; i++)
     {
         osInsertNode(&handle, &nodes[i].node, onCompare, NULL);
     }
     printf("handle = %ld\n", (unsigned long)handle);
     nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //倒移除
-    for (int i = 2999; i >= 2000; i--)
+    minDeep = 100000; 
+    maxDeep = 0;
+    deep = 0;
+    searchTree(handle, &nodeNum, &minDeep, &maxDeep, &deep);
+    printf("nodeNum = %d, minDeep = %d, maxDeep = %d\n", nodeNum, minDeep, maxDeep);
+    //倒删除
+    for (int i = 19999; i >= 10000; i--)
     {
         osDeleteNode(&handle, &nodes[i].node);
     }
     printf("handle = %ld\n", (unsigned long)handle);
     nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //正插入
-    for (int i = 0; i < 1000; i++)
-    {
-        osInsertNode(&handle, &nodes[i].node, onCompare, NULL);
-    }
-    printf("handle = %ld\n", (unsigned long)handle);
-    nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //倒移除
-    for (int i = 3999; i >= 3000; i--)
+    minDeep = 10000; 
+    maxDeep = 0;
+    deep = 0;
+    searchTree(handle, &nodeNum, &minDeep, &maxDeep, &deep);
+    printf("nodeNum = %d, minDeep = %d, maxDeep = %d\n", nodeNum, minDeep, maxDeep);
+    //正删除
+    for (int i = 20000; i < 30000; i++)
     {
         osDeleteNode(&handle, &nodes[i].node);
     }
     printf("handle = %ld\n", (unsigned long)handle);
     nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //正移除
-    for (int i = 1000; i < 2000; i++)
+    minDeep = 10000; 
+    maxDeep = 0;
+    deep = 0;
+    searchTree(handle, &nodeNum, &minDeep, &maxDeep, &deep);
+    printf("nodeNum = %d, minDeep = %d, maxDeep = %d\n", nodeNum, minDeep, maxDeep);
+    //正删除
+    for (int i = 0; i < 10000; i++)
     {
         osDeleteNode(&handle, &nodes[i].node);
     }
     printf("handle = %ld\n", (unsigned long)handle);
     nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
-    //倒移除
-    for (int i = 999; i >= 0; i--)
-    {
-        osDeleteNode(&handle, &nodes[i].node);
-    }
-    printf("handle = %ld\n", (unsigned long)handle);
-    nodeNum = 0;
-    searchTree(handle, &nodeNum);
-    printf("nodeNum = %d\n", nodeNum);
+    minDeep = 10000; 
+    maxDeep = 0;
+    deep = 0;
+    searchTree(handle, &nodeNum, &minDeep, &maxDeep, &deep);
+    printf("nodeNum = %d, minDeep = %d, maxDeep = %d\n", nodeNum, minDeep, maxDeep);
 }
 
 void testBuddy()
@@ -315,6 +318,7 @@ void testMem()
     for (int i = 1; i < 1024; i++)
     {
         buff[i] = osMalloc(i);
+        memset(buff[i], 1, i);
         printf("address = 0x%p\n", buff[i]);
         printf("free mem = %ld\n", osFreeMem());
         printf("free page = %ld\n", osFreePage());
@@ -329,6 +333,7 @@ void testMem()
     for (int i = 1; i < 21463; i++)
     {
         buff[i] = osMalloc(30);
+        memset(buff[i], 1, 30);
         printf("i = %d\n", i);
         printf("address = 0x%p\n", buff[i]);
         printf("free mem = %ld\n", osFreeMem());
@@ -1031,7 +1036,7 @@ int main()
     //     }
     // }
     // printf("offset = %lf, ia = %lf, ib = %lf, ic = %lf\n", offset, ia, ib, ic);
-    // testTree();
+    //testTree();
     //testBuddy();
     //testMemPool();
     //testMem();

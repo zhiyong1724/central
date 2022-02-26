@@ -66,14 +66,16 @@ void enterNormalMode()
     MX_DMA_Init();
     MX_SAI1_Init();
     nandFlashInit();
-    sdcardInit();
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
     HAL_NVIC_SetPriority(PendSV_IRQn, 0, 0);
     registerLFS();
     registerFatfs();
     osFMount("/", "nand");
-    osFMkDir("sd");
-    osFMount("sd", "0:");
+    if (sdcardInit() == 0)
+    {
+        osFMkDir("sd");
+        osFMount("sd", "0:");
+    }
     volumeManagerInit();
     keyManagerInit();
     KeyManagerCallBack keyManagerCallBack;

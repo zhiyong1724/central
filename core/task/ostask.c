@@ -16,7 +16,9 @@ int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sTaskManager = taskManager;
+    os_size_t state = portDisableInterrupts();
     int ret = osTaskManagerInit(sTaskManager, clockPeriod);
+    portRecoveryInterrupts(state);
     return ret;
 }
 
@@ -147,9 +149,12 @@ int osTaskJoin(void **retval, os_size_t tid)
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
     os_size_t state = portDisableInterrupts();
-    OsTask *nextTask;
+    OsTask *nextTask = NULL;
     ret = osTaskManagerJoin(sTaskManager, &nextTask, retval, tid);
-    portYield(&nextTask->stackTop);
+    if (nextTask != NULL)
+    {
+        portYield(&nextTask->stackTop);
+    }
     portRecoveryInterrupts(state);
     return ret;
 }

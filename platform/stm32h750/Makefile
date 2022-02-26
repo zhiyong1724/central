@@ -35,6 +35,7 @@ INCLUDES := -I. \
 	-Icmsis/Device/ST/STM32H7xx/Include \
 	-Icmsis/Include \
 	-Idrivers \
+	-Iffmpeg/include \
 	-I../../core \
 	-I../../core/base \
 	-I../../core/mem \
@@ -47,9 +48,9 @@ INCLUDES := -I. \
 	-I../../third/utilities \
 	-I../../apps/audioplayer
 
-LIBS_DIR := 
+LIBS_DIR := -L./ffmpeg/lib
 
-LIBS := -lc -lm
+LIBS := -lavformat -lavcodec -lswresample -lswscale -lavutil -lc -lm
 
 CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE) -ffunction-sections -fdata-sections -Wl,--gc-sections
 

@@ -16,215 +16,6 @@ OsTreeNode gLeafNode =
 		BLACK, //color
 };
 
-static OsTreeNode *getGrandparent(OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (NULL == node->parent)
-	{
-		return NULL;
-	}
-	return node->parent->parent;
-}
-
-static OsTreeNode *getUncle(OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	OsTreeNode *grandparent = getGrandparent(node);
-	if (NULL == grandparent)
-	{
-		return NULL;
-	}
-	if (node->parent == grandparent->rightTree)
-		return grandparent->leftTree;
-	else
-		return grandparent->rightTree;
-}
-
-static OsTreeNode *getSibling(OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (NULL == node->parent)
-	{
-		return NULL;
-	}
-	if (node == node->parent->leftTree)
-		return node->parent->rightTree;
-	else
-		return node->parent->leftTree;
-}
-
-static void rotateRight(OsTreeNode **handle, OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	OsTreeNode *grandparent = getGrandparent(node);
-	OsTreeNode *parent = node->parent;
-	OsTreeNode *rightTree = node->rightTree;
-
-	parent->leftTree = rightTree;
-
-	if (rightTree != &gLeafNode)
-		rightTree->parent = parent;
-	node->rightTree = parent;
-	parent->parent = node;
-
-	if (*handle == parent)
-		*handle = node;
-	node->parent = grandparent;
-
-	if (grandparent != NULL)
-	{
-		if (grandparent->leftTree == parent)
-			grandparent->leftTree = node;
-		else
-			grandparent->rightTree = node;
-	}
-}
-
-static void rotateLeft(OsTreeNode **handle, OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	OsTreeNode *grandparent = getGrandparent(node);
-	OsTreeNode *parent = node->parent;
-	OsTreeNode *leftTree = node->leftTree;
-
-	parent->rightTree = leftTree;
-
-	if (leftTree != &gLeafNode)
-		leftTree->parent = parent;
-	node->leftTree = parent;
-	parent->parent = node;
-
-	if (*handle == parent)
-		*handle = node;
-	node->parent = grandparent;
-
-	if (grandparent != NULL)
-	{
-		if (grandparent->leftTree == parent)
-			grandparent->leftTree = node;
-		else
-			grandparent->rightTree = node;
-	}
-}
-
-static void deleteCase(OsTreeNode **handle, OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (NULL == node->parent)
-	{
-		node->color = BLACK;
-		return;
-	}
-	OsTreeNode *sibling = getSibling(node);
-	if (RED == sibling->color)
-	{
-		node->parent->color = RED;
-		sibling->color = BLACK;
-		if (node == node->parent->leftTree)
-			rotateLeft(handle, sibling);
-		else
-			rotateRight(handle, sibling);
-		sibling = getSibling(node);
-	}
-	if (BLACK == node->parent->color && BLACK == sibling->color && BLACK == sibling->leftTree->color && BLACK == sibling->rightTree->color)
-	{
-		sibling->color = RED;
-		deleteCase(handle, node->parent);
-	}
-	else if (RED == node->parent->color && BLACK == sibling->color && BLACK == sibling->leftTree->color && BLACK == sibling->rightTree->color)
-	{
-		sibling->color = RED;
-		node->parent->color = BLACK;
-	}
-	else
-	{
-		if (BLACK == sibling->color)
-		{
-			if (node == node->parent->leftTree && RED == sibling->leftTree->color && BLACK == sibling->rightTree->color)
-			{
-				sibling->color = RED;
-				sibling->leftTree->color = BLACK;
-				rotateRight(handle, sibling->leftTree);
-				sibling = getSibling(node);
-			}
-			else if (node == node->parent->rightTree && BLACK == sibling->leftTree->color && RED == sibling->rightTree->color)
-			{
-				sibling->color = RED;
-				sibling->rightTree->color = BLACK;
-				rotateLeft(handle, sibling->rightTree);
-				sibling = getSibling(node);
-			}
-		}
-		sibling->color = node->parent->color;
-		node->parent->color = BLACK;
-		if (node == node->parent->leftTree)
-		{
-			sibling->rightTree->color = BLACK;
-			rotateLeft(handle, sibling);
-		}
-		else
-		{
-			sibling->leftTree->color = BLACK;
-			rotateRight(handle, sibling);
-		}
-	}
-}
-
-static void insertCase(OsTreeNode **handle, OsTreeNode *node)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (NULL == node->parent)
-	{
-		*handle = node;
-		node->color = BLACK;
-		return;
-	}
-
-	if (RED == node->parent->color)
-	{
-		OsTreeNode *grandparent = getGrandparent(node);
-		OsTreeNode *uncle = getUncle(node);
-		if (RED == uncle->color)
-		{
-			node->parent->color = BLACK;
-			uncle->color = BLACK;
-			grandparent->color = RED;
-			insertCase(handle, grandparent);
-		}
-		else
-		{
-			if (node->parent->rightTree == node && grandparent->leftTree == node->parent)
-			{
-				rotateLeft(handle, node);
-				rotateRight(handle, node);
-				node->color = BLACK;
-				node->leftTree->color = RED;
-				node->rightTree->color = RED;
-			}
-			else if (node->parent->leftTree == node && grandparent->rightTree == node->parent)
-			{
-				rotateRight(handle, node);
-				rotateLeft(handle, node);
-				node->color = BLACK;
-				node->leftTree->color = RED;
-				node->rightTree->color = RED;
-			}
-			else if (node->parent->leftTree == node && grandparent->leftTree == node->parent)
-			{
-				node->parent->color = BLACK;
-				grandparent->color = RED;
-				rotateRight(handle, node->parent);
-			}
-			else if (node->parent->rightTree == node && grandparent->rightTree == node->parent)
-			{
-				node->parent->color = BLACK;
-				grandparent->color = RED;
-				rotateLeft(handle, node->parent);
-			}
-		}
-	}
-}
-
 static void initNode(OsTreeNode *node)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
@@ -234,164 +25,130 @@ static void initNode(OsTreeNode *node)
 	node->rightTree = &gLeafNode;
 }
 
-static void swapNode(OsTreeNode **handle, OsTreeNode *node1, OsTreeNode *node2)
+static OsTreeNode *getUncle(OsTreeNode *node)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	OsTreeNode tempNode;
-	tempNode.color = node2->color;
-	tempNode.parent = node2->parent;
-	tempNode.leftTree = node2->leftTree;
-	tempNode.rightTree = node2->rightTree;
-	if (node2 == node1->rightTree)
-	{
-		node2->color = node1->color;
-		node2->parent = node1->parent;
-		node2->leftTree = node1->leftTree;
-		node2->rightTree = node1;
-		if (node1->parent != NULL)
-		{
-			if (node1 == node1->parent->leftTree)
-			{
-				node1->parent->leftTree = node2;
-			}
-			else
-			{
-				node1->parent->rightTree = node2;
-			}
-		}
-		else
-		{
-			*handle = node2;
-		}
-		node1->leftTree->parent = node2;
+	OsTreeNode *parent = node->parent;
+	OsTreeNode *grandparent = parent->parent;
+	if (parent == grandparent->rightTree)
+		return grandparent->leftTree;
+	else
+		return grandparent->rightTree;
+}
 
-		node1->color = tempNode.color;
-		node1->parent = node2;
-		node1->leftTree = tempNode.leftTree;
-		node1->rightTree = tempNode.rightTree;
-		if (tempNode.leftTree != &gLeafNode)
-		{
-			tempNode.leftTree->parent = node1;
-		}
-		if (tempNode.rightTree != &gLeafNode)
-		{
-			tempNode.rightTree->parent = node1;
-		}
+static OsTreeNode *getSibling(OsTreeNode *node)
+{
+	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	OsTreeNode *parent = node->parent;
+	if (node == parent->leftTree)
+		return parent->rightTree;
+	else
+		return parent->leftTree;
+}
+
+static void rotateLeft(OsTreeNode **handle, OsTreeNode *node)
+{
+	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	OsTreeNode *parent = node->parent;
+	OsTreeNode *rightTree = node->rightTree;
+	if (parent != NULL)
+	{
+		if (parent->leftTree == node)
+			parent->leftTree = rightTree;
+		else
+			parent->rightTree = rightTree;
 	}
 	else
 	{
-		node2->color = node1->color;
-		node2->parent = node1->parent;
-		node2->leftTree = node1->leftTree;
-		node2->rightTree = node1->rightTree;
-		if (node1->parent != NULL)
-		{
-			if (node1 == node1->parent->leftTree)
-			{
-				node1->parent->leftTree = node2;
-			}
-			else
-			{
-				node1->parent->rightTree = node2;
-			}
-		}
-		else
-		{
-			*handle = node2;
-		}
-		if (node1->leftTree != &gLeafNode)
-		{
-			node1->leftTree->parent = node2;
-		}
-		if (node1->rightTree != &gLeafNode)
-		{
-			node1->rightTree->parent = node2;
-		}
-		node1->color = tempNode.color;
-		node1->parent = tempNode.parent;
-		node1->leftTree = tempNode.leftTree;
-		node1->rightTree = tempNode.rightTree;
-		tempNode.parent->leftTree = node1;
-		if (tempNode.leftTree != &gLeafNode)
-		{
-			tempNode.leftTree->parent = node1;
-		}
-		if (tempNode.rightTree != &gLeafNode)
-		{
-			tempNode.rightTree->parent = node1;
-		}
+		*handle = rightTree;
 	}
+	rightTree->parent = parent;
+
+	node->rightTree = rightTree->leftTree;
+	rightTree->leftTree->parent = node;
+	
+	rightTree->leftTree = node;
+	node->parent = rightTree;
 }
 
-static void doDeleteNode(OsTreeNode **handle, OsTreeNode *node)
+static void rotateRight(OsTreeNode **handle, OsTreeNode *node)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	OsTreeNode *child = node->leftTree == &gLeafNode ? node->rightTree : node->leftTree;
-	if (node->parent == NULL && node->leftTree == &gLeafNode && node->rightTree == &gLeafNode)
+	OsTreeNode *parent = node->parent;
+	OsTreeNode *leftTree = node->leftTree;
+	if (parent != NULL)
 	{
-		*handle = NULL;
-		return;
-	}
-
-	if (node->parent == NULL)
-	{
-		child->parent = NULL;
-		*handle = child;
-		(*handle)->color = BLACK;
-		return;
-	}
-
-	if (node->parent->leftTree == node)
-	{
-		node->parent->leftTree = child;
+		if (parent->leftTree == node)
+			parent->leftTree = leftTree;
+		else
+			parent->rightTree = leftTree;
 	}
 	else
 	{
-		node->parent->rightTree = child;
+		*handle = leftTree;
 	}
-	child->parent = node->parent;
+	leftTree->parent = parent;
 
-	if (node->color == BLACK)
-	{
-		if (child->color == RED)
-		{
-			child->color = BLACK;
-		}
-		else
-			deleteCase(handle, child);
-	}
+	node->leftTree = leftTree->rightTree;
+	leftTree->rightTree->parent = node;
+
+	leftTree->rightTree = node;
+	node->parent = leftTree;
 }
 
-void osDeleteNode(OsTreeNode **handle, OsTreeNode *node)
+static void insertCase(OsTreeNode **handle, OsTreeNode *node)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (node->rightTree == &gLeafNode)
+	OsTreeNode *parent = node->parent;
+	if (NULL == parent)
 	{
-		doDeleteNode(handle, node);
+		node->color = BLACK;
 		return;
 	}
-	OsTreeNode *curNode = node->rightTree;
-	while (curNode->leftTree != &gLeafNode)
-	{
-		curNode = curNode->leftTree;
-	}
-	swapNode(handle, node, curNode);
-	doDeleteNode(handle, node);
-}
 
-OsTreeNode *osGetLeftmostNode(OsTreeNode *handle)
-{
-	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	OsTreeNode *curNode = NULL;
-	if (handle != NULL && handle != &gLeafNode)
+	if (RED == parent->color)
 	{
-		curNode = handle;
-		while (curNode->leftTree != &gLeafNode)
+		OsTreeNode *grandparent = parent->parent;
+		OsTreeNode *uncle = getUncle(node);
+		if (RED == uncle->color)
 		{
-			curNode = curNode->leftTree;
+			parent->color = BLACK;
+			uncle->color = BLACK;
+			grandparent->color = RED;
+			insertCase(handle, grandparent);
+		}
+		else
+		{
+			if (parent == grandparent->leftTree)
+			{
+				if (parent->rightTree == node)
+				{
+					rotateLeft(handle, parent);
+					insertCase(handle, parent);
+				}
+				else
+				{
+					parent->color = BLACK;
+					grandparent->color = RED;
+					rotateRight(handle, grandparent);
+				}
+			}
+			else
+			{
+				if (parent->leftTree == node)
+				{
+					rotateRight(handle, parent);
+					insertCase(handle, parent);
+				}
+				else
+				{
+					parent->color = BLACK;
+					grandparent->color = RED;
+					rotateLeft(handle, grandparent);
+				}
+			}
 		}
 	}
-	return curNode;
 }
 
 int osInsertNode(OsTreeNode **handle, OsTreeNode *node, OsOnCompare callback, void *arg)
@@ -400,7 +157,6 @@ int osInsertNode(OsTreeNode **handle, OsTreeNode *node, OsOnCompare callback, vo
 	initNode(node);
 	if (NULL == *handle)
 	{
-		node->color = BLACK;
 		*handle = node;
 	}
 	else
@@ -436,15 +192,202 @@ int osInsertNode(OsTreeNode **handle, OsTreeNode *node, OsOnCompare callback, vo
 			curNode->leftTree = node;
 		else if (cmp > 0)
 			curNode->rightTree = node;
-		insertCase(handle, node);
 	}
+	insertCase(handle, node);
 	return 0;
+}
+
+static void deleteCase(OsTreeNode **handle, OsTreeNode *node)
+{
+	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	OsTreeNode *parent = node->parent;
+	if (parent != NULL && BLACK == node->color)
+	{
+		OsTreeNode *sibling = getSibling(node);
+		if (parent->leftTree == node)
+		{
+			if (RED == sibling->color)
+			{
+				parent->color = RED;
+				sibling->color = BLACK;
+				rotateLeft(handle, parent);
+				deleteCase(handle, node);
+			}
+			else
+			{
+				if (RED == sibling->rightTree->color)
+				{
+					sibling->color = parent->color;
+					parent->color = BLACK;
+					sibling->rightTree->color = BLACK;
+					rotateLeft(handle, parent);
+				}
+				else if (RED == sibling->leftTree->color)
+				{
+					sibling->color = RED;
+					sibling->leftTree->color = BLACK;
+					rotateRight(handle, sibling);
+					deleteCase(handle, node);
+				}
+				else
+				{
+					sibling->color = RED;
+					deleteCase(handle, parent);
+				}
+			}
+		}
+		else
+		{
+			if (RED == sibling->color)
+			{
+				parent->color = RED;
+				sibling->color = BLACK;
+				rotateRight(handle, parent);
+				deleteCase(handle, node);
+			}
+			else
+			{
+				if (RED == sibling->leftTree->color)
+				{
+					sibling->color = parent->color;
+					parent->color = BLACK;
+					sibling->leftTree->color = BLACK;
+					rotateRight(handle, parent);
+				}
+				else if (RED == sibling->rightTree->color)
+				{
+					sibling->color = RED;
+					sibling->rightTree->color = BLACK;
+					rotateLeft(handle, sibling);
+					deleteCase(handle, node);
+				}
+				else
+				{
+					sibling->color = RED;
+					deleteCase(handle, parent);
+				}
+			}
+		}
+	}
+	else
+	{
+		node->color = BLACK;
+	}
+}
+
+void osDeleteNode(OsTreeNode **handle, OsTreeNode *node)
+{
+	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	OsTreeNode *leftTree = node->leftTree;
+	OsTreeNode *rightTree = node->rightTree;
+	if (leftTree != &gLeafNode)
+	{
+		if (rightTree != &gLeafNode)
+		{
+			OsTreeNode *afterNode = osGetLeftmostNode(rightTree);
+			osDeleteNode(handle, afterNode);
+			afterNode->color = node->color;
+			OsTreeNode *parent = node->parent;
+			OsTreeNode *leftTree = node->leftTree;
+			OsTreeNode *rightTree = node->rightTree;
+			if (parent != NULL)
+			{
+				if (parent->leftTree == node)
+					parent->leftTree = afterNode;
+				else
+					parent->rightTree = afterNode;
+			}
+			else
+			{
+				*handle = afterNode;
+			}
+			afterNode->parent = parent;
+
+			afterNode->leftTree = leftTree;
+			leftTree->parent = afterNode;
+
+			afterNode->rightTree = rightTree;
+			rightTree->parent = afterNode;
+		}
+		else
+		{
+			deleteCase(handle, node);
+			OsTreeNode *parent = node->parent;
+			if (parent != NULL)
+			{
+				if (parent->leftTree == node)
+					parent->leftTree = leftTree;
+				else
+					parent->rightTree = leftTree;
+			}
+			else
+			{
+				*handle = leftTree;
+			}
+			leftTree->parent = parent;
+		}
+	}
+	else
+	{
+		if (rightTree != &gLeafNode)
+		{
+			deleteCase(handle, node);
+			OsTreeNode *parent = node->parent;
+			if (parent != NULL)
+			{
+				if (parent->leftTree == node)
+					parent->leftTree = rightTree;
+				else
+					parent->rightTree = rightTree;
+			}
+			else
+			{
+				*handle = rightTree;
+			}
+			rightTree->parent = parent;
+		}
+		else
+		{
+			deleteCase(handle, node);
+			OsTreeNode *parent = node->parent;
+			if (parent != NULL)
+			{
+				if (parent->leftTree == node)
+					parent->leftTree = &gLeafNode;
+				else
+					parent->rightTree = &gLeafNode;
+			}
+			else
+			{
+				*handle = NULL;
+			}
+		}
+	}
+	if (*handle != NULL && NULL == (*handle)->parent)
+	{
+		(*handle)->color = BLACK;
+	}
+}
+
+OsTreeNode *osGetLeftmostNode(OsTreeNode *handle)
+{
+	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	OsTreeNode *curNode = NULL;
+	if (handle != NULL)
+	{
+		curNode = handle;
+		while (curNode->leftTree != &gLeafNode)
+		{
+			curNode = curNode->leftTree;
+		}
+	}
+	return curNode;
 }
 
 OsTreeNode *osFindNode(OsTreeNode *handle, void *key, OsOnCompare callback, void *arg)
 {
 	treeLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	if (handle != NULL && handle != &gLeafNode)
+	if (handle != NULL)
 	{
 		for (;;)
 		{

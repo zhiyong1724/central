@@ -1,7 +1,7 @@
 #ifndef __SDCARD_H__
 #define __SDCARD_H__
 #include <stdint.h>
-void sdcardInit();
+int sdcardInit();
 uint32_t sdcardGetBlockSize();
 uint32_t sdcardGetBlockNumber();
 int sdcardWriteBlock(uint32_t block, uint32_t num, const void *buffer);

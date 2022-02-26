@@ -3,17 +3,22 @@
 #include <stdio.h>
 #include "osmutex.h"
 static OsMutex sMutex;
-void sdcardInit()
+int sdcardInit()
 {
+  int ret = -1;
   printf("Init SD card...\n");
-  MX_SDMMC1_SD_Init();
   HAL_SD_CardInfoTypeDef sdcardInfo;
-  if (HAL_SD_GetCardInfo(&hsd1, &sdcardInfo) != HAL_OK)
+  if (MX_SDMMC1_SD_Init() == HAL_OK && HAL_SD_GetCardInfo(&hsd1, &sdcardInfo) == HAL_OK)
   {
-    Error_Handler();
+    osMutexCreate(&sMutex);
+    printf("Init SD card succeed, block size %ld, block number %ld, type %ld.\n", sdcardInfo.LogBlockSize, sdcardInfo.LogBlockNbr, sdcardInfo.CardType);
+    ret = 0;
   }
-  osMutexCreate(&sMutex);
-  printf("Init SD card succeed, block size %ld, block number %ld, type %ld.\n", sdcardInfo.LogBlockSize, sdcardInfo.LogBlockNbr, sdcardInfo.CardType);
+  else
+  {
+    printf("Init SD card fail.\n");
+  }
+  return ret;
 }
 
 uint32_t sdcardGetBlockSize()

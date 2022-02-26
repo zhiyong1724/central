@@ -76,7 +76,6 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setstack(&attr, stackStart, stackSize - sizeof(thread_t));
-    pthread_sigmask(SIG_BLOCK, &sSignals, NULL);
     if (pthread_create(&thread->thread, &attr, taskEnter, thread) != 0)
     {
         printf("Create thread fail.");

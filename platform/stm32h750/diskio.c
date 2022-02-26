@@ -223,13 +223,13 @@ static DRESULT mmcIoctl(BYTE cmd, void *buff)
     case CTRL_SYNC:
         break;
     case GET_SECTOR_COUNT:
-        *((unsigned int *)buff) = (unsigned int)sdcardGetBlockNumber();
+        *((uint16_t *)buff) = (uint16_t)sdcardGetBlockNumber();
         break;
     case GET_SECTOR_SIZE:
-        *((unsigned int *)buff) = (unsigned int)sdcardGetBlockSize();
+        *((uint16_t *)buff) = (uint16_t)sdcardGetBlockSize();
         break;
     case GET_BLOCK_SIZE:
-        *((unsigned int *)buff) = 1;
+        *((uint16_t *)buff) = 1;
         break;
     case CTRL_TRIM:
         break;

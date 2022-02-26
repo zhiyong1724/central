@@ -9,7 +9,7 @@ typedef struct OsTreeNode
 	struct OsTreeNode *parent;
 	struct OsTreeNode *leftTree;
 	struct OsTreeNode *rightTree;
-	unsigned char color;
+	int color;
 } OsTreeNode;
 
 typedef int (*OsOnCompare)(void *key1, void *key2, void *arg);

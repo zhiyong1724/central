@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "ostask.h"
+#include "led.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -85,6 +87,7 @@ extern UART_HandleTypeDef huart1;
 void NMI_Handler(void)
 {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
+  led0ON();
   printf("NMI_Handler\n");
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
@@ -96,6 +99,7 @@ void NMI_Handler(void)
 
 void printRegisters(Registers *registers)
 {
+  led0ON();
   printf("HardFault_Handler\n");
   printf("sp: 0x%08lx\n", (uint32_t)registers);
   printf("r0: 0x%08lx\n", registers->r0);
@@ -106,6 +110,9 @@ void printRegisters(Registers *registers)
   printf("lr: 0x%08lx\n", registers->lr);
   printf("pc: 0x%08lx\n", registers->pc);
   printf("psr: 0x%08lx\n", registers->psr);
+  char name[32];
+  osTaskGetTaskName(name, 32, osTaskGetTid());
+  printf("task: %s\n", name);
 }
 /**
   * @brief This function handles Hard fault interrupt.
@@ -132,6 +139,7 @@ void HardFault_Handler(void)
   */
 void MemManage_Handler(void)
 {
+  led0ON();
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
   printf("MemManage_Handler\n");
   /* USER CODE END MemoryManagement_IRQn 0 */
@@ -147,6 +155,7 @@ void MemManage_Handler(void)
   */
 void BusFault_Handler(void)
 {
+  led0ON();
   /* USER CODE BEGIN BusFault_IRQn 0 */
   printf("BusFault_Handler\n");
   /* USER CODE END BusFault_IRQn 0 */
@@ -162,6 +171,7 @@ void BusFault_Handler(void)
   */
 void UsageFault_Handler(void)
 {
+  led0ON();
   /* USER CODE BEGIN UsageFault_IRQn 0 */
   printf("UsageFault_Handler\n");
   /* USER CODE END UsageFault_IRQn 0 */

@@ -527,6 +527,32 @@ void shellFree(int argc, char *argv[])
 static int sAudioPlayerRunning = 0;
 static void onPrepared(void *object, const StreamInfo *streamInfo)
 {
+    char audioType[32];
+    switch (streamInfo->audioInfo.audioType)
+    {
+    case AUDIO_TYPE_PCM_U8:
+    strcpy(audioType, "PCM_U8");
+    break;
+    case AUDIO_TYPE_PCM_S16:
+    strcpy(audioType, "PCM_S16");
+    break;
+    case AUDIO_TYPE_PCM_S32:
+    strcpy(audioType, "PCM_S32");
+    break;
+    case AUDIO_TYPE_PCM_S64:
+    strcpy(audioType, "PCM_S64");
+    break;
+    case AUDIO_TYPE_PCM_FLOAT:
+    strcpy(audioType, "PCM_FLOAT");
+    break;
+    case AUDIO_TYPE_PCM_DOUBLE:
+    strcpy(audioType, "PCM_DOUBLE");
+    break;
+    default:
+        break;
+    }
+    shellPrint(&sShell, "duration: %d  codec: %s  bitrate: %d\n", streamInfo->duration, streamInfo->codecName, streamInfo->bitRate);
+    shellPrint(&sShell, "type: %s  channels: %d  samples: %d  bits: %d\n", audioType, streamInfo->audioInfo.numChannels, streamInfo->audioInfo.samplesPerSec, streamInfo->audioInfo.bitsPerSample);
 }
 
 static void onPlaying(void *object)
@@ -555,7 +581,14 @@ static void *audioPlayerTask(void *arg)
     audioPlayerCallback.onPositionChanged = onPositionChanged;
     audioPlayerSetCallback(&audioPlayer, &audioPlayerCallback);
     audioPlayerSetInput(&audioPlayer, (const char *)arg);
-    audioPlayerPlay(&audioPlayer);
+    if (audioPlayerPrepare(&audioPlayer) == 0)
+    {
+        audioPlayerPlay(&audioPlayer);
+    }
+    else
+    {
+        sAudioPlayerRunning = 0;
+    }
     while (sAudioPlayerRunning > 0)
     {
         osTaskSleep(50);
@@ -580,7 +613,7 @@ void shellPlay(int argc, char *argv[])
             {
                 sAudioPlayerRunning = 1;
                 os_tid_t tid;
-                osTaskCreate(&tid, audioPlayerTask, argv[1], "audio player", 20, OS_DEFAULT_TASK_STACK_SIZE);
+                osTaskCreate(&tid, audioPlayerTask, argv[1], "audio player", 20, 1024 * 1024);
                 osTaskDetach(tid);
             }
         }
