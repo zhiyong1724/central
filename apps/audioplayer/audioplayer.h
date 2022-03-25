@@ -6,7 +6,7 @@
 #include "osmutex.h"
 typedef struct AudioPlayerCallback
 {
-    void (*onPrepared)(void *object, const StreamInfo *streamInfo);
+    void (*onPrepared)(void *object, const AudioInfo *audioInfo);
     void (*onPlaying)(void *object);
     void (*onStopped)(void *object);
     void (*onPositionChanged)(void *object, int ms);

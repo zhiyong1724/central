@@ -29,7 +29,7 @@ static int prepare(void *audioDecoder)
             }
             for (ffmpegAudioDecoder->audioStreamIndex = 0; ffmpegAudioDecoder->audioStreamIndex < ffmpegAudioDecoder->formatContext->nb_streams; ffmpegAudioDecoder->audioStreamIndex++)
             {
-                ffmpegAudioDecoder->codec = avcodec_find_decoder(ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->codec_id);
+                ffmpegAudioDecoder->codec = (AVCodec *)avcodec_find_decoder(ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->codec_id);
                 if (NULL == ffmpegAudioDecoder->codec)
                 {
                     continue;
@@ -47,55 +47,55 @@ static int prepare(void *audioDecoder)
             
             if (ffmpegAudioDecoder->audioStreamIndex < ffmpegAudioDecoder->formatContext->nb_streams)
             {
-                StreamInfo streamInfo;
-                streamInfo.duration = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->duration * ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->time_base.num / ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->time_base.den;
-                strcpy(streamInfo.codecName, ffmpegAudioDecoder->codec->name);
-                streamInfo.bitRate = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->bit_rate;
+                AudioInfo audioInfo;
+                audioInfo.duration = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->duration * ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->time_base.num / ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->time_base.den;
+                strcpy(audioInfo.codecName, ffmpegAudioDecoder->codec->name);
+                audioInfo.bitRate = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->bit_rate;
                 switch ((enum AVSampleFormat)ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->format)
                 {
                 case AV_SAMPLE_FMT_U8:
                 case AV_SAMPLE_FMT_U8P:
                 {
-                    streamInfo.audioInfo.audioType = AUDIO_TYPE_PCM_U8;
+                    audioInfo.audioStreamInfo.audioType = AUDIO_TYPE_PCM_U8;
                     break;
                 }
                 case AV_SAMPLE_FMT_S16:
                 case AV_SAMPLE_FMT_S16P:
                 {
-                    streamInfo.audioInfo.audioType = AUDIO_TYPE_PCM_S16;
+                    audioInfo.audioStreamInfo.audioType = AUDIO_TYPE_PCM_S16;
                     break;
                 }
                 case AV_SAMPLE_FMT_S32:
                 case AV_SAMPLE_FMT_S32P:
                 {
-                    streamInfo.audioInfo.audioType = AUDIO_TYPE_PCM_S32;
+                    audioInfo.audioStreamInfo.audioType = AUDIO_TYPE_PCM_S32;
                     break;
                 }
                 case AV_SAMPLE_FMT_S64:
                 case AV_SAMPLE_FMT_S64P:
                 {
-                    streamInfo.audioInfo.audioType = AUDIO_TYPE_PCM_S64;
+                    audioInfo.audioStreamInfo.audioType = AUDIO_TYPE_PCM_S64;
                     break;
                 }
                 case AV_SAMPLE_FMT_FLT:
                 case AV_SAMPLE_FMT_FLTP:
                 {
-                    streamInfo.audioInfo.audioType = AUDIO_TYPE_PCM_FLOAT;
+                    audioInfo.audioStreamInfo.audioType = AUDIO_TYPE_PCM_FLOAT;
                     break;
                 }
                 case AV_SAMPLE_FMT_DBL:
                 case AV_SAMPLE_FMT_DBLP:
                 {
-                    streamInfo.audioInfo.audioType = AUDIO_TYPE_PCM_DOUBLE;
+                    audioInfo.audioStreamInfo.audioType = AUDIO_TYPE_PCM_DOUBLE;
                     break;
                 }
                 default:
                 break;
                 }
-                streamInfo.audioInfo.numChannels = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->channels;
-                streamInfo.audioInfo.samplesPerSec = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->sample_rate;
-                streamInfo.audioInfo.bitsPerSample = av_get_bytes_per_sample((enum AVSampleFormat)ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->format) * 8;
-                ffmpegAudioDecoder->audioDecoder.callback.onPrepared(ffmpegAudioDecoder->audioDecoder.callback.object, &streamInfo);
+                audioInfo.audioStreamInfo.numChannels = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->channels;
+                audioInfo.audioStreamInfo.samplesPerSec = ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->sample_rate;
+                audioInfo.audioStreamInfo.bitsPerSample = av_get_bytes_per_sample((enum AVSampleFormat)ffmpegAudioDecoder->formatContext->streams[ffmpegAudioDecoder->audioStreamIndex]->codecpar->format) * 8;
+                ffmpegAudioDecoder->audioDecoder.callback.onPrepared(ffmpegAudioDecoder->audioDecoder.callback.object, &audioInfo);
             }
         } while (0);
     }
@@ -232,7 +232,7 @@ static int stop(void *audioDecoder)
     return ret;
 }
 
-int ffmpegAudioDecoderInit(FFMPEGAudioDecoder *ffmpegAudioDecoder, const AudioInfo *outputInfo)
+int ffmpegAudioDecoderInit(FFMPEGAudioDecoder *ffmpegAudioDecoder, const AudioStreamInfo *outputInfo)
 {
     AudioDecoderInterface audioDecoderInterface;
     audioDecoderInterface.prepare = prepare;

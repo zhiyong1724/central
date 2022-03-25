@@ -11,25 +11,25 @@ typedef enum AudioType
     AUDIO_TYPE_PCM_DOUBLE,
 } AudioType;
 
-typedef struct AudioInfo
+typedef struct AudioStreamInfo
 {
     AudioType audioType;
     int numChannels;
     int samplesPerSec;
     int bitsPerSample;
-} AudioInfo;
+} AudioStreamInfo;
 
-typedef struct StreamInfo
+typedef struct AudioInfo
 {
     int duration;
     char codecName[256];
     int bitRate;
-    AudioInfo audioInfo;
-} StreamInfo;
+    AudioStreamInfo audioStreamInfo;
+} AudioInfo;
 
 typedef struct AudioDecoderCallback
 {
-    void (*onPrepared)(void *object, const StreamInfo *streamInfo);
+    void (*onPrepared)(void *object, const AudioInfo *audioInfo);
     void (*onDecoded)(void *object, uint8_t *data, int dataSize);
     void (*onDecodeStarting)(void *object);
     void (*onDecodeStopped)(void *object);
@@ -46,12 +46,12 @@ typedef struct AudioDecoderInterface
 typedef struct AudioDecoder
 {
     char *src;
-    AudioInfo outputInfo;
+    AudioStreamInfo outputInfo;
     AudioDecoderInterface interface;
     AudioDecoderCallback callback;
 } AudioDecoder;
 
-int audioDecoderInit(AudioDecoder *audioDecoder, const AudioDecoderInterface *audioDecoderInterface, const AudioInfo *outputInfo);
+int audioDecoderInit(AudioDecoder *audioDecoder, const AudioDecoderInterface *audioDecoderInterface, const AudioStreamInfo *outputInfo);
 int audioDecoderUninit(AudioDecoder *audioDecoder);
 int audioDecoderSetInput(AudioDecoder *audioDecoder, const char *src);
 int audioDecoderSetCallback(AudioDecoder *audioDecoder, AudioDecoderCallback *callback);

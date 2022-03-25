@@ -525,14 +525,11 @@ void shellFree(int argc, char *argv[])
 }
 
 static int sAudioPlayerRunning = 0;
-static void onPrepared(void *object, const StreamInfo *streamInfo)
+static void onPrepared(void *object, const AudioInfo *audioInfo)
 {
     char audioType[32];
-    switch (streamInfo->audioInfo.audioType)
+    switch (audioInfo->audioStreamInfo.audioType)
     {
-    case AUDIO_TYPE_PCM_U8:
-    strcpy(audioType, "PCM_U8");
-    break;
     case AUDIO_TYPE_PCM_S16:
     strcpy(audioType, "PCM_S16");
     break;
@@ -551,8 +548,8 @@ static void onPrepared(void *object, const StreamInfo *streamInfo)
     default:
         break;
     }
-    shellPrint(&sShell, "duration: %d  codec: %s  bitrate: %d\n", streamInfo->duration, streamInfo->codecName, streamInfo->bitRate);
-    shellPrint(&sShell, "type: %s  channels: %d  samples: %d  bits: %d\n", audioType, streamInfo->audioInfo.numChannels, streamInfo->audioInfo.samplesPerSec, streamInfo->audioInfo.bitsPerSample);
+    shellPrint(&sShell, "duration: %d  codec: %s  bitrate: %d\n", audioInfo->duration, audioInfo->codecName, audioInfo->bitRate);
+    shellPrint(&sShell, "type: %s  channels: %d  samples: %d  bits: %d\n", audioType, audioInfo->audioStreamInfo.numChannels, audioInfo->audioStreamInfo.samplesPerSec, audioInfo->audioStreamInfo.bitsPerSample);
 }
 
 static void onPlaying(void *object)

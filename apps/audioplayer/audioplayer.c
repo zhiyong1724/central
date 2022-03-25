@@ -2,12 +2,12 @@
 #include "ffmpegaudiodecoder.h"
 #include "osmem.h"
 #include <string.h>
-static void onPrepared(void *object, const StreamInfo *streamInfo)
+static void onPrepared(void *object, const AudioInfo *audioInfo)
 {
     AudioPlayer *audioPlayer = (AudioPlayer *)object;
     if (object != NULL)
     {
-        audioPlayer->callBack.onPrepared(audioPlayer->callBack.object, streamInfo);
+        audioPlayer->callBack.onPrepared(audioPlayer->callBack.object, audioInfo);
     }
 }
 
@@ -119,12 +119,12 @@ int audioPlayerInit(AudioPlayer *audioPlayer, const AudioOutput *audioOutput)
     audioOutputSetCallback(audioPlayer->audioOutput, &audioOutputCallback);
 
     audioPlayer->audioDecoder = (AudioDecoder *)osMalloc(sizeof(FFMPEGAudioDecoder));
-    AudioInfo audioInfo;
-    audioInfo.audioType = AUDIO_TYPE_PCM_S16;
-    audioInfo.bitsPerSample = 16;
-    audioInfo.numChannels = 2;
-    audioInfo.samplesPerSec = 48000;
-    ffmpegAudioDecoderInit((FFMPEGAudioDecoder *)audioPlayer->audioDecoder, &audioInfo);
+    AudioStreamInfo audioStreamInfo;
+    audioStreamInfo.audioType = AUDIO_TYPE_PCM_S16;
+    audioStreamInfo.bitsPerSample = 16;
+    audioStreamInfo.numChannels = 2;
+    audioStreamInfo.samplesPerSec = 48000;
+    ffmpegAudioDecoderInit((FFMPEGAudioDecoder *)audioPlayer->audioDecoder, &audioStreamInfo);
     AudioDecoderCallback audioDecoderCallback;
     audioDecoderCallback.object = audioPlayer;
     audioDecoderCallback.onPrepared = onPrepared;
@@ -133,7 +133,7 @@ int audioPlayerInit(AudioPlayer *audioPlayer, const AudioOutput *audioOutput)
     audioDecoderCallback.onDecodeStopped = onDecodeStopped;
     audioDecoderSetCallback(audioPlayer->audioDecoder, &audioDecoderCallback);
 
-    osQueueInit(&audioPlayer->buffer, audioInfo.bitsPerSample / 8 * audioInfo.numChannels);
+    osQueueInit(&audioPlayer->buffer, audioStreamInfo.bitsPerSample / 8 * audioStreamInfo.numChannels);
     osMutexCreate(&audioPlayer->mutex);
     return 0;
 }

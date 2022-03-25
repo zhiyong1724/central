@@ -1,7 +1,7 @@
 #include "audiodecoder.h"
 #include <string.h>
 #include "osmem.h"
-int audioDecoderInit(AudioDecoder *audioDecoder, const AudioDecoderInterface *audioDecoderInterface, const AudioInfo *outputInfo)
+int audioDecoderInit(AudioDecoder *audioDecoder, const AudioDecoderInterface *audioDecoderInterface, const AudioStreamInfo *outputInfo)
 {
     audioDecoder->src = NULL;
     audioDecoder->interface = *audioDecoderInterface;

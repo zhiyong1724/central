@@ -15,6 +15,6 @@ typedef struct FFMPEGAudioDecoder
     unsigned int audioStreamIndex;
 } FFMPEGAudioDecoder;
 
-int ffmpegAudioDecoderInit(FFMPEGAudioDecoder *ffmpegAudioDecoder, const AudioInfo *outputInfo);
+int ffmpegAudioDecoderInit(FFMPEGAudioDecoder *ffmpegAudioDecoder, const AudioStreamInfo *outputInfo);
 int ffmpegAudioDecoderUninit(FFMPEGAudioDecoder *ffmpegAudioDecoder);
 #endif

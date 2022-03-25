@@ -6,12 +6,18 @@
 static SaiAudioOutput *sSaiAudioOutput = NULL;
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 {
-    osSemaphorePost(&sSaiAudioOutput->semaphore);
+    if (sSaiAudioOutput > 0)
+    {
+        osSemaphorePost(&sSaiAudioOutput->semaphore);
+    }
 }
 
 void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai)
 {
-    osSemaphorePost(&sSaiAudioOutput->semaphore);
+    if (sSaiAudioOutput > 0)
+    {
+        osSemaphorePost(&sSaiAudioOutput->semaphore);
+    }
 }
 
 static void *audioPlayTask(void *arg)
