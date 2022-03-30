@@ -111,6 +111,7 @@ SRCS := ostree.c \
 	stm32h7xx_hal_qspi.c \
 	stm32h7xx_hal_nand.c \
 	stm32h7xx_hal_sd.c \
+	stm32h7xx_hal_ltdc.c \
 	stm32h7xx_ll_fmc.c \
 	stm32h7xx_ll_sdmmc.c \
 	system_stm32h7xx.c \
@@ -123,6 +124,8 @@ SRCS := ostree.c \
 	key.c \
 	led.c \
 	sai.c \
+	ltdc.c \
+	gt9147.c \
 	crc16.c \
 	xmodem.c \
 	downloadmode.c \
