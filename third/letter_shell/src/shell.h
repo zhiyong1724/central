@@ -116,7 +116,7 @@
  * @param ... 代理参数
  */
 #define     SHELL_AGENCY_FUNC(_func, ...) \
-            void SHELL_AGENCY_FUNC_NAME(_func)(int p1, int p2, int p3, int p4, int p5, int p6, int p7) \
+            void SHELL_AGENCY_FUNC_NAME(_func)(long p1, long p2, long p3, long p4, long p5, long p6, long p7) \
             { _func(__VA_ARGS__); }
 
 #if SHELL_USING_CMD_EXPORT == 1
@@ -137,7 +137,7 @@
             { \
                 .attr.value = _attr, \
                 .data.cmd.name = shellCmd##_name, \
-                .data.cmd.function = (int (*)())_func, \
+                .data.cmd.function = (long (*)())_func, \
                 .data.cmd.desc = shellDesc##_name \
             }
 
@@ -239,7 +239,7 @@
             { \
                 .attr.value = _attr, \
                 .data.cmd.name = #_name, \
-                .data.cmd.function = (int (*)())_func, \
+                .data.cmd.function = (long (*)())_func, \
                 .data.cmd.desc = #_desc \
             }
 
@@ -325,7 +325,7 @@ typedef struct shell_def
     struct
     {
         const struct shell_command *user;                       /**< 当前用户 */
-        int activeTime;                                         /**< shell激活时间 */
+        long activeTime;                                         /**< shell激活时间 */
         char *path;                                             /**< 当前shell路径 */
     #if SHELL_USING_COMPANION == 1
         struct shell_companion_object *companions;              /**< 伴生对象 */
@@ -339,7 +339,7 @@ typedef struct shell_def
         char *param[SHELL_PARAMETER_MAX_NUMBER];                /**< 参数 */
         unsigned short bufferSize;                              /**< 输入缓冲大小 */
         unsigned short paramCount;                              /**< 参数数量 */
-        int keyValue;                                           /**< 输入按键键值 */
+        long keyValue;                                           /**< 输入按键键值 */
     } parser;
 #if SHELL_HISTORY_MAX_NUMBER > 0
     struct
@@ -364,8 +364,8 @@ typedef struct shell_def
     signed short (*read)(char *, unsigned short);               /**< shell读函数 */
     signed short (*write)(char *, unsigned short);              /**< shell写函数 */
 #if SHELL_USING_LOCK == 1
-    int (*lock)(struct shell_def *);                              /**< shell 加锁 */
-    int (*unlock)(struct shell_def *);                            /**< shell 解锁 */
+    long (*lock)(struct shell_def *);                              /**< shell 加锁 */
+    long (*unlock)(struct shell_def *);                            /**< shell 解锁 */
 #endif
 } Shell;
 
@@ -387,14 +387,14 @@ typedef struct shell_command
             unsigned char reserve : 1;                          /**< 保留 */
             unsigned char paramNum : 4;                         /**< 参数数量 */
         } attrs;
-        int value;
+        long value;
     } attr;                                                     /**< 属性 */
     union
     {
         struct
         {
             const char *name;                                   /**< 命令名 */
-            int (*function)();                                  /**< 命令执行函数 */
+            long (*function)();                                  /**< 命令执行函数 */
             const char *desc;                                   /**< 命令描述 */
         } cmd;                                                  /**< 命令定义 */
         struct
@@ -411,7 +411,7 @@ typedef struct shell_command
         } user;                                                 /**< 用户定义 */
         struct
         {
-            int value;                                          /**< 按键键值 */
+            long value;                                          /**< 按键键值 */
             void (*function)(Shell *);                          /**< 按键执行函数 */
             const char *desc;                                   /**< 按键描述 */
         } key;                                                  /**< 按键定义 */
@@ -424,8 +424,8 @@ typedef struct shell_command
 typedef struct
 {
     void *var;                                                  /**< 变量引用 */
-    int (*get)();                                               /**< 变量get方法 */
-    int (*set)();                                               /**< 变量set方法 */
+    long (*get)();                                               /**< 变量get方法 */
+    long (*set)();                                               /**< 变量set方法 */
 } ShellNodeVarAttr;
 
 
@@ -438,9 +438,9 @@ void shellPrint(Shell *shell, char *fmt, ...);
 void shellScan(Shell *shell, char *fmt, ...);
 Shell* shellGetCurrent(void);
 void shellHandler(Shell *shell, char data);
-void shellWriteEndLine(Shell *shell, char *buffer, int len);
+void shellWriteEndLine(Shell *shell, char *buffer, long len);
 void shellTask(void *param);
-int shellRun(Shell *shell, const char *cmd);
+long shellRun(Shell *shell, const char *cmd);
 
 
 
@@ -450,15 +450,15 @@ int shellRun(Shell *shell, const char *cmd);
  */
 typedef struct shell_companion_object
 {
-    int id;                                                     /**< 伴生对象ID */
+    long id;                                                     /**< 伴生对象ID */
     void *obj;                                                  /**< 伴生对象 */
     struct shell_companion_object *next;                        /**< 下一个伴生对象 */
 } ShellCompanionObj;
 
 
-signed char shellCompanionAdd(Shell *shell, int id, void *object);
-signed char shellCompanionDel(Shell *shell, int id);
-void *shellCompanionGet(Shell *shell, int id);
+signed char shellCompanionAdd(Shell *shell, long id, void *object);
+signed char shellCompanionDel(Shell *shell, long id);
+void *shellCompanionGet(Shell *shell, long id);
 #endif
 
 #endif

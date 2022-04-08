@@ -27,7 +27,7 @@ typedef enum
     NUM_TYPE_FLOAT                                          /**< 浮点型 */
 } ShellNumType;
 
-unsigned int shellExtParsePara(Shell *shell, char *string);
-int shellExtRun(Shell *shell, ShellCommand *command, int argc, char *argv[]);
+unsigned long shellExtParsePara(Shell *shell, char *string);
+long shellExtRun(Shell *shell, ShellCommand *command, long argc, char *argv[]);
 
 #endif

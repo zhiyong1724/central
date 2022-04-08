@@ -36,9 +36,9 @@ INCLUDES := -I. \
 
 LIBS_DIR := -L.
 
-LIBS := -lpthread -lX11 -llvgl
+LIBS := -lpthread -lSDL2 -llvgl
 
-CFLAGS := -Wall -Werror -g -m32 -Wl,-Map=$(MAP_FILE)
+CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 
 SRCS := $(SRCS) \
 	ostree.c \

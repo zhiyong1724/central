@@ -917,8 +917,8 @@ void *taskA(void *arg)
     for (;;)
     {
         printf("This is task A\n");
-        printf("时钟周期：%lld\n", osTaskGetClockPeriod());
-        printf("系统滴答：%lld\n", osTaskGetTickCount());
+        printf("时钟周期：%ld\n", osTaskGetClockPeriod());
+        printf("系统滴答：%ld\n", osTaskGetTickCount());
         printf("任务个数：%ld\n", osTaskGetTaskCount());
 
         os_tid_t tid = osTaskGetTid();
@@ -1059,6 +1059,7 @@ int main()
     f_mkfs("0:", NULL, NULL, FF_MAX_SS);
     osFMount("/", "RAM");
     shellIOInit();
+    lvglIOInit();
     osTaskStart();
     return 0;
 }

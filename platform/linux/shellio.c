@@ -144,7 +144,7 @@ static void printFSError(OsFileError error)
     }
 }
 
-void shellMount(int argc, char *argv[])
+void shellMount(long argc, char *argv[])
 {
     if (argc >= 3)
     {
@@ -157,7 +157,7 @@ void shellMount(int argc, char *argv[])
     }
 }
 
-void shellUnmount(int argc, char *argv[])
+void shellUnmount(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -170,14 +170,14 @@ void shellUnmount(int argc, char *argv[])
     }
 }
 
-void shellPWD(int argc, char *argv[])
+void shellPWD(long argc, char *argv[])
 {
     char buffer[OS_MAX_FILE_PATH_LENGTH];
     osFGetCWD(buffer, OS_MAX_FILE_PATH_LENGTH);
     shellWriteString(&sShell, buffer);
 }
 
-void shellCD(int argc, char *argv[])
+void shellCD(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -280,7 +280,7 @@ static void showFileInfo(OsFileInfo *fileInfo)
         strcat(buff, "-");
     }
     char temp[64];
-    sprintf(temp, " %lld %d %d %d", fileInfo->fileSize, fileInfo->changeTime.year, fileInfo->changeTime.month, fileInfo->changeTime.day);
+    sprintf(temp, " %ld %d %d %d", fileInfo->fileSize, fileInfo->changeTime.year, fileInfo->changeTime.month, fileInfo->changeTime.day);
     strcat(buff, temp);
     sprintf(temp, " %d:%d ", fileInfo->changeTime.hour, fileInfo->changeTime.minute);
     strcat(buff, temp);
@@ -289,7 +289,7 @@ static void showFileInfo(OsFileInfo *fileInfo)
     shellWriteString(&sShell, "\n");
 }
 
-void shellLS(int argc, char *argv[])
+void shellLS(long argc, char *argv[])
 {
     char *path = "";
     if (argc >= 2)
@@ -310,7 +310,7 @@ void shellLS(int argc, char *argv[])
     }
 }
 
-void shellFind(int argc, char *argv[])
+void shellFind(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -347,7 +347,7 @@ static void showFSInfo(const OsFS *fs)
     shellPrint(&sShell, "所有页：%lld  ", fs->totalPages);
 }
 
-void shellStatFS(int argc, char *argv[])
+void shellStatFS(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -372,7 +372,7 @@ static void showMountInfo(const OsMountInfo *mountInfo)
     shellPrint(&sShell, "挂载点：%s  ", mountInfo->path);
 }
 
-void shellDF(int argc, char *argv[])
+void shellDF(long argc, char *argv[])
 {
     const OsMountInfo *mountInfo = NULL;
     while (1)
@@ -397,7 +397,7 @@ void shellDF(int argc, char *argv[])
     }
 }
 
-void shellMkDir(int argc, char *argv[])
+void shellMkDir(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -410,7 +410,7 @@ void shellMkDir(int argc, char *argv[])
     }
 }
 
-void shellTouch(int argc, char *argv[])
+void shellTouch(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -428,7 +428,7 @@ void shellTouch(int argc, char *argv[])
     }
 }
 
-void shellChMod(int argc, char *argv[])
+void shellChMod(long argc, char *argv[])
 {
     if (argc >= 3)
     {
@@ -454,7 +454,7 @@ void shellChMod(int argc, char *argv[])
     }
 }
 
-void shellStat(int argc, char *argv[])
+void shellStat(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -472,7 +472,7 @@ void shellStat(int argc, char *argv[])
     }
 }
 
-void shellMV(int argc, char *argv[])
+void shellMV(long argc, char *argv[])
 {
     if (argc >= 3)
     {
@@ -485,7 +485,7 @@ void shellMV(int argc, char *argv[])
     }
 }
 
-void shellRM(int argc, char *argv[])
+void shellRM(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -498,7 +498,7 @@ void shellRM(int argc, char *argv[])
     }
 }
 
-void shellCP(int argc, char *argv[])
+void shellCP(long argc, char *argv[])
 {
     if (argc >= 3)
     {
@@ -511,7 +511,7 @@ void shellCP(int argc, char *argv[])
     }
 }
 
-void shellFree(int argc, char *argv[])
+void shellFree(long argc, char *argv[])
 {
     shellPrint(&sShell, "所有内存：%ld\n", osTotalMem());
     shellPrint(&sShell, "可用内存：%ld\n", osFreeMem());
@@ -519,7 +519,7 @@ void shellFree(int argc, char *argv[])
     shellPrint(&sShell, "可用页：%ld\n", osFreePage());
 }
 
-void shellPlay(int argc, char *argv[])
+void shellPlay(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -536,7 +536,7 @@ void shellPlay(int argc, char *argv[])
     }
 }
 
-void shellPS(int argc, char *argv[])
+void shellPS(long argc, char *argv[])
 {
     os_task_ptr ptr;
     OsTaskInfo taskInfo;

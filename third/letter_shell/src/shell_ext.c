@@ -18,7 +18,7 @@ extern ShellCommand* shellSeekCommand(Shell *shell,
                                       const char *cmd,
                                       ShellCommand *base,
                                       unsigned short compareLength);
-extern int shellGetVarValue(Shell *shell, ShellCommand *command);
+extern long shellGetVarValue(Shell *shell, ShellCommand *command);
 
 /**
  * @brief 判断数字进制
@@ -170,18 +170,18 @@ static char* shellExtParseString(char *string)
  * @brief 解析数字参数
  * 
  * @param string 字符串参数
- * @return unsigned int 解析出的数字
+ * @return unsigned long 解析出的数字
  */
-static unsigned int shellExtParseNumber(char *string)
+static unsigned long shellExtParseNumber(char *string)
 {
     ShellNumType type = NUM_TYPE_DEC;
     char radix = 10;
     char *p = string;
     char offset = 0;
     signed char sign = 1;
-    unsigned int valueInt = 0;
+    unsigned long valuelong = 0;
     float valueFloat = 0.0;
-    unsigned int devide = 0;
+    unsigned long devide = 0;
 
     if (*string == '-')
     {
@@ -221,18 +221,18 @@ static unsigned int shellExtParseNumber(char *string)
             p++;
             continue;
         }
-        valueInt = valueInt * radix + shellExtToNum(*p);
+        valuelong = valuelong * radix + shellExtToNum(*p);
         devide *= 10;
         p++;
     }
     if (type == NUM_TYPE_FLOAT && devide != 0)
     {
-        valueFloat = (float)valueInt / devide * sign;
-        return *(unsigned int *)(&valueFloat);
+        valueFloat = (float)valuelong / devide * sign;
+        return *(unsigned long *)(&valueFloat);
     }
     else
     {
-        return valueInt * sign;
+        return valuelong * sign;
     }
 }
 
@@ -242,9 +242,9 @@ static unsigned int shellExtParseNumber(char *string)
  * 
  * @param shell shell对象
  * @param var 变量
- * @return unsigned int 变量值
+ * @return unsigned long 变量值
  */
-static unsigned int shellExtParseVar(Shell *shell, char *var)
+static unsigned long shellExtParseVar(Shell *shell, char *var)
 {
     ShellCommand *command = shellSeekCommand(shell,
                                              var + 1,
@@ -266,17 +266,17 @@ static unsigned int shellExtParseVar(Shell *shell, char *var)
  * 
  * @param shell shell对象
  * @param string 参数
- * @return unsigned int 解析结果
+ * @return unsigned long 解析结果
  */
-unsigned int shellExtParsePara(Shell *shell, char *string)
+unsigned long shellExtParsePara(Shell *shell, char *string)
 {
     if (*string == '\'' && *(string + 1))
     {
-        return (unsigned int)shellExtParseChar(string);
+        return (unsigned long)shellExtParseChar(string);
     }
     else if (*string == '-' || (*string >= '0' && *string <= '9'))
     {
-        return (unsigned int)shellExtParseNumber(string);
+        return (unsigned long)shellExtParseNumber(string);
     }
     else if (*string == '$' && *(string + 1))
     {
@@ -284,7 +284,7 @@ unsigned int shellExtParsePara(Shell *shell, char *string)
     }
     else if (*string)
     {
-        return (unsigned int)shellExtParseString(string);
+        return (unsigned long)shellExtParseString(string);
     }
     return 0;
 }
@@ -297,14 +297,14 @@ unsigned int shellExtParsePara(Shell *shell, char *string)
  * @param command 命令
  * @param argc 参数个数
  * @param argv 参数
- * @return int 返回值
+ * @return long 返回值
  */
-int shellExtRun(Shell *shell, ShellCommand *command, int argc, char *argv[])
+long shellExtRun(Shell *shell, ShellCommand *command, long argc, char *argv[])
 {
-    unsigned int params[SHELL_PARAMETER_MAX_NUMBER] = {0};
-    int paramNum = command->attr.attrs.paramNum > (argc - 1) ? 
+    unsigned long params[SHELL_PARAMETER_MAX_NUMBER] = {0};
+    long paramNum = command->attr.attrs.paramNum > (argc - 1) ? 
         command->attr.attrs.paramNum : (argc - 1);
-    for (int i = 0; i < argc - 1; i++)
+    for (long i = 0; i < argc - 1; i++)
     {
         params[i] = shellExtParsePara(shell, argv[i + 1]);
     }

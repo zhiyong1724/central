@@ -13,7 +13,7 @@
 
 #if SHELL_USING_CMD_EXPORT != 1
 
-extern int shellSetVar(char *name, int value);
+extern long shellSetVar(char *name, long value);
 extern void shellUp(Shell *shell);
 extern void shellDown(Shell *shell);
 extern void shellRight(Shell *shell);
@@ -22,33 +22,33 @@ extern void shellTab(Shell *shell);
 extern void shellBackspace(Shell *shell);
 extern void shellDelete(Shell *shell);
 extern void shellEnter(Shell *shell);
-extern void shellHelp(int argc, char *argv[]);
+extern void shellHelp(long argc, char *argv[]);
 extern void shellUsers(void);
 extern void shellCmds(void);
 extern void shellVars(void);
 extern void shellKeys(void);
 extern void shellClear(void);
 #if SHELL_EXEC_UNDEF_FUNC == 1
-extern int shellExecute(int argc, char *argv[]);
+extern long shellExecute(long argc, char *argv[]);
 #endif
-void shellMount(int argc, char *argv[]);
-void shellUnmount(int argc, char *argv[]);
-void shellPWD(int argc, char *argv[]);
-void shellCD(int argc, char *argv[]);
-void shellLS(int argc, char *argv[]);
-void shellStatFS(int argc, char *argv[]);
-void shellDF(int argc, char *argv[]);
-void shellFind(int argc, char *argv[]);
-void shellMkDir(int argc, char *argv[]);
-void shellTouch(int argc, char *argv[]);
-void shellChMod(int argc, char *argv[]);
-void shellStat(int argc, char *argv[]);
-void shellMV(int argc, char *argv[]);
-void shellRM(int argc, char *argv[]);
-void shellCP(int argc, char *argv[]);
-void shellFree(int argc, char *argv[]);
-void shellPlay(int argc, char *argv[]);
-void shellPS(int argc, char *argv[]);
+void shellMount(long argc, char *argv[]);
+void shellUnmount(long argc, char *argv[]);
+void shellPWD(long argc, char *argv[]);
+void shellCD(long argc, char *argv[]);
+void shellLS(long argc, char *argv[]);
+void shellStatFS(long argc, char *argv[]);
+void shellDF(long argc, char *argv[]);
+void shellFind(long argc, char *argv[]);
+void shellMkDir(long argc, char *argv[]);
+void shellTouch(long argc, char *argv[]);
+void shellChMod(long argc, char *argv[]);
+void shellStat(long argc, char *argv[]);
+void shellMV(long argc, char *argv[]);
+void shellRM(long argc, char *argv[]);
+void shellCP(long argc, char *argv[]);
+void shellFree(long argc, char *argv[]);
+void shellPlay(long argc, char *argv[]);
+void shellPS(long argc, char *argv[]);
 SHELL_AGENCY_FUNC(shellRun, shellGetCurrent(), (const char *)p1);
 
 

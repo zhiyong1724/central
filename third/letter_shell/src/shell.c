@@ -33,13 +33,13 @@ SHELL_USED const ShellCommand shellUserDefault SHELL_SECTION("shellCommand") =
 
 #if SHELL_USING_CMD_EXPORT == 1
     #if defined(__CC_ARM) || (defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 6000000)
-        extern const unsigned int shellCommand$$Base;
-        extern const unsigned int shellCommand$$Limit;
+        extern const unsigned long shellCommand$$Base;
+        extern const unsigned long shellCommand$$Limit;
     #elif defined(__ICCARM__) || defined(__ICCRX__)
         #pragma section="shellCommand"
     #elif defined(__GNUC__)
-        extern const unsigned int _shell_command_start;
-        extern const unsigned int _shell_command_end;
+        extern const unsigned long _shell_command_start;
+        extern const unsigned long _shell_command_end;
     #endif
 #else
     extern const ShellCommand shellCommandList[];
@@ -151,8 +151,8 @@ static Shell *shellList[SHELL_MAX_NUMBER] = {NULL};
 
 static void shellAdd(Shell *shell);
 static void shellWritePrompt(Shell *shell, unsigned char newline);
-static void shellWriteReturnValue(Shell *shell, int value);
-static int shellShowVar(Shell *shell, ShellCommand *command);
+static void shellWriteReturnValue(Shell *shell, long value);
+static long shellShowVar(Shell *shell, ShellCommand *command);
 static void shellSetUser(Shell *shell, const ShellCommand *user);
 ShellCommand* shellSeekCommand(Shell *shell,
                                const char *cmd,
@@ -437,7 +437,7 @@ signed char shellCheckPermission(Shell *shell, ShellCommand *command)
  * 
  * @return signed char 转换后有效数据长度
  */
-signed char shellToHex(unsigned int value, char *buffer)
+signed char shellToHex(unsigned long value, char *buffer)
 {
     char byte;
     unsigned char i = 8;
@@ -460,10 +460,10 @@ signed char shellToHex(unsigned int value, char *buffer)
  * 
  * @return signed char 转换后有效数据长度
  */
-signed char shellToDec(int value, char *buffer)
+signed char shellToDec(long value, char *buffer)
 {
     unsigned char i = 11;
-    int v = value;
+    long v = value;
     if (value < 0)
     {
         v = -value;
@@ -955,7 +955,7 @@ ShellCommand* shellSeekCommand(Shell *shell,
 {
     const char *name;
     unsigned short count = shell->commandList.count -
-        ((int)base - (int)shell->commandList.base) / sizeof(ShellCommand);
+        ((long)base - (long)shell->commandList.base) / sizeof(ShellCommand);
     for (unsigned short i = 0; i < count; i++)
     {
         if (base[i].attr.attrs.type == SHELL_TYPE_KEY
@@ -988,15 +988,15 @@ ShellCommand* shellSeekCommand(Shell *shell,
  * 
  * @param shell shell对象
  * @param command 命令
- * @return int 变量值
+ * @return long 变量值
  */
-int shellGetVarValue(Shell *shell, ShellCommand *command)
+long shellGetVarValue(Shell *shell, ShellCommand *command)
 {
-    int value = 0;
+    long value = 0;
     switch (command->attr.attrs.type)
     {
     case SHELL_TYPE_VAR_INT:
-        value = *((int *)(command->data.var.value));
+        value = *((long *)(command->data.var.value));
         break;
     case SHELL_TYPE_VAR_SHORT:
         value = *((short *)(command->data.var.value));
@@ -1006,7 +1006,7 @@ int shellGetVarValue(Shell *shell, ShellCommand *command)
         break;
     case SHELL_TYPE_VAR_STRING:
     case SHELL_TYPE_VAR_POINT:
-        value = (int)(command->data.var.value);
+        value = (long)(command->data.var.value);
         break;
     case SHELL_TYPE_VAR_NODE:
         value = ((ShellNodeVarAttr *)command->data.var.value)->get ?
@@ -1026,9 +1026,9 @@ int shellGetVarValue(Shell *shell, ShellCommand *command)
  * @param shell shell对象
  * @param command 命令
  * @param value 值
- * @return int 返回变量值
+ * @return long 返回变量值
  */
-int shellSetVarValue(Shell *shell, ShellCommand *command, int value)
+long shellSetVarValue(Shell *shell, ShellCommand *command, long value)
 {
     if (command->attr.attrs.readOnly)
     {
@@ -1039,7 +1039,7 @@ int shellSetVarValue(Shell *shell, ShellCommand *command, int value)
         switch (command->attr.attrs.type)
         {
         case SHELL_TYPE_VAR_INT:
-            *((int *)(command->data.var.value)) = value;
+            *((long *)(command->data.var.value)) = value;
             break;
         case SHELL_TYPE_VAR_SHORT:
             *((short *)(command->data.var.value)) = value;
@@ -1080,12 +1080,12 @@ int shellSetVarValue(Shell *shell, ShellCommand *command, int value)
  * 
  * @param shell shell对象
  * @param command 命令
- * @return int 返回变量值
+ * @return long 返回变量值
  */
-static int shellShowVar(Shell *shell, ShellCommand *command)
+static long shellShowVar(Shell *shell, ShellCommand *command)
 {
     char buffer[12] = "00000000000";
-    int value = shellGetVarValue(shell, command);
+    long value = shellGetVarValue(shell, command);
     
     shellWriteString(shell, command->data.var.name);
     shellWriteString(shell, " = ");
@@ -1123,9 +1123,9 @@ static int shellShowVar(Shell *shell, ShellCommand *command)
  * 
  * @param name 变量名
  * @param value 变量值
- * @return int 返回变量值
+ * @return long 返回变量值
  */
-int shellSetVar(char *name, int value)
+long shellSetVar(char *name, long value)
 {
     Shell *shell = shellGetCurrent();
     if (shell == NULL)
@@ -1161,11 +1161,11 @@ setVar, shellSetVar, set var);
  * @param shell shell对象
  * @param command 命令
  * 
- * @return unsigned int 命令返回值
+ * @return unsigned long 命令返回值
  */
-unsigned int shellRunCommand(Shell *shell, ShellCommand *command)
+unsigned long shellRunCommand(Shell *shell, ShellCommand *command)
 {
-    int returnValue = 0;
+    long returnValue = 0;
     shell->status.isActive = 1;
     if (command->attr.attrs.type == SHELL_TYPE_CMD_MAIN)
     {
@@ -1259,7 +1259,7 @@ static void shellSetUser(Shell *shell, const ShellCommand *user)
  * @param shell shell对象
  * @param value 返回值
  */
-static void shellWriteReturnValue(Shell *shell, int value)
+static void shellWriteReturnValue(Shell *shell, long value)
 {
     char buffer[12] = "00000000000";
     shellWriteString(shell, "Return: ");
@@ -1663,7 +1663,7 @@ static void shellWriteCommandHelp(Shell *shell, char *cmd)
  * @param argc 参数个数
  * @param argv 参数
  */
-void shellHelp(int argc, char *argv[])
+void shellHelp(long argc, char *argv[])
 {
     Shell *shell = shellGetCurrent();
     SHELL_ASSERT(shell, return);
@@ -1705,7 +1705,7 @@ void shellHandler(Shell *shell, char data)
 
     /* 根据记录的按键键值计算当前字节在按键键值中的偏移 */
     char keyByteOffset = 24;
-    int keyFilter = 0x00000000;
+    long keyFilter = 0x00000000;
     if ((shell->parser.keyValue & 0x0000FF00) != 0x00000000)
     {
         keyByteOffset = 0;
@@ -1767,7 +1767,7 @@ void shellHandler(Shell *shell, char data)
 
 
 #if SHELL_SUPPORT_END_LINE == 1
-void shellWriteEndLine(Shell *shell, char *buffer, int len)
+void shellWriteEndLine(Shell *shell, char *buffer, long len)
 {
     SHELL_LOCK(shell);
     if (!shell->status.isActive)
@@ -1902,9 +1902,9 @@ clear, shellClear, clear console);
  * 
  * @param shell shell对象
  * @param cmd 命令字符串
- * @return int 返回值
+ * @return long 返回值
  */
-int shellRun(Shell *shell, const char *cmd)
+long shellRun(Shell *shell, const char *cmd)
 {
     SHELL_ASSERT(shell && cmd, return -1);
     char active = shell->status.isActive;
@@ -1929,14 +1929,14 @@ int shellRun(Shell *shell, const char *cmd)
  * 
  * @param argc 参数个数
  * @param argv 参数
- * @return int 返回值
+ * @return long 返回值
  */
-int shellExecute(int argc, char *argv[])
+long shellExecute(long argc, char *argv[])
 {
     Shell *shell = shellGetCurrent();
     if (shell && argc >= 2)
     {
-        int (*func)() = (int (*)())shellExtParsePara(shell, argv[1]);
+        long (*func)() = (long (*)())shellExtParsePara(shell, argv[1]);
         ShellCommand command = {
             .attr.value = SHELL_CMD_PERMISSION(0)|SHELL_CMD_TYPE(SHELL_TYPE_CMD_FUNC)
                           |SHELL_CMD_DISABLE_RETURN,

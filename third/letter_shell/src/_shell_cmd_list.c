@@ -13,7 +13,7 @@
 
 #if SHELL_USING_CMD_EXPORT != 1
 
-extern int shellSetVar(char *name, int value);
+extern long shellSetVar(char *name, long value);
 extern void shellUp(Shell *shell);
 extern void shellDown(Shell *shell);
 extern void shellRight(Shell *shell);
@@ -22,14 +22,14 @@ extern void shellTab(Shell *shell);
 extern void shellBackspace(Shell *shell);
 extern void shellDelete(Shell *shell);
 extern void shellEnter(Shell *shell);
-extern void shellHelp(int argc, char *argv[]);
+extern void shellHelp(long argc, char *argv[]);
 extern void shellUsers(void);
 extern void shellCmds(void);
 extern void shellVars(void);
 extern void shellKeys(void);
 extern void shellClear(void);
 #if SHELL_EXEC_UNDEF_FUNC == 1
-extern int shellExecute(int argc, char *argv[]);
+extern long shellExecute(long argc, char *argv[]);
 #endif
 
 SHELL_AGENCY_FUNC(shellRun, shellGetCurrent(), (const char *)p1);
