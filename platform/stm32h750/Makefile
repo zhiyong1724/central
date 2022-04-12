@@ -41,16 +41,18 @@ INCLUDES := -I. \
 	-I../../core/mem \
 	-I../../core/task \
 	-I../../core/vfs \
+	-I../../third \
 	-I../../third/fatfs \
 	-I../../third/fatfs/source \
 	-I../../third/letter_shell/src \
 	-I../../third/littlefs \
 	-I../../third/utilities \
-	-I../../apps/audioplayer
+	-I../../third/lvgl/ \
+	-I../../apps/audioplayer 
 
-LIBS_DIR := -L./ffmpeg/lib
+LIBS_DIR := -L. -L./ffmpeg/lib
 
-LIBS := -lavformat -lavcodec -lswresample -lswscale -lavutil -lc -lm
+LIBS := -lavformat -lavcodec -lswresample -lswscale -lavutil -llvgl -lc -lm
 
 CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE) -ffunction-sections -fdata-sections -Wl,--gc-sections
 
@@ -153,6 +155,7 @@ SRCS := ostree.c \
 	es8388.c \
 	keymanager.c \
 	volumemanager.c \
+	lvglio.c \
 	audiooutput.c \
 	saiaudiooutput.c \
 	audiodecoder.c \

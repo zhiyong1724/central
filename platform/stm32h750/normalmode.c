@@ -20,8 +20,7 @@
 #include "sai.h"
 #include "keymanager.h"
 #include "volumemanager.h"
-#include "ltdc.h"
-#include "gt9147.h"
+#include "lvglio.h"
 static int onPressed(void *object, KeyType type)
 {
     return 0;
@@ -60,9 +59,6 @@ void enterNormalMode()
 {
     printf("Start normal mode...\n");
     osInit();
-    MX_LTDC_Init();
-    lcdOn();
-    GT9147_Init();
     PCF8574_Init();
     ES8388_Init();
     ES8388_ADDA_Cfg(1, 0); //开启DAC
@@ -89,5 +85,6 @@ void enterNormalMode()
     keyManagerCallBack.onReleased = onReleased;
     keyManagerRegisterCallback(&keyManagerCallBack);
     shellIOInit();
+    lvglIOInit();
     osTaskStart();
 }

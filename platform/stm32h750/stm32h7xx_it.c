@@ -26,6 +26,7 @@
 #include <string.h>
 #include "ostask.h"
 #include "led.h"
+#include "lvgl.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -231,6 +232,7 @@ void SysTick_Handler(void)
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
+  lv_tick_inc(1);
   osTaskTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 

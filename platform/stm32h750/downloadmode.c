@@ -37,8 +37,8 @@ void enterDownloadMode()
     {
       led0OFF();
       led1OFF();
-      unsigned char *data = (unsigned char *)0x63800000;
-      int len = xmodemReceive(data, 0x800000);
+      unsigned char *data = (unsigned char *)0x63000000;
+      int len = xmodemReceive(data, 0x1000000);
       HAL_Delay(100);
       printf("Received %d bytes.\n", len);
       if (len > 0)
@@ -68,8 +68,8 @@ void enterDownloadMode()
     {
       led0OFF();
       led1OFF();
-      unsigned char *data = (unsigned char *)0x63800000;
-      int len = xmodemReceive(data, 0x800000);
+      unsigned char *data = (unsigned char *)0x63000000;
+      int len = xmodemReceive(data, 0x1000000);
       HAL_Delay(100);
       printf("Received %d bytes.\n", len);
       break;

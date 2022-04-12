@@ -71,34 +71,31 @@ static void *lvglIORun(void *arg)
 {
     while (1)
     {
-        while (1)
+        SDL_Event event;
+        SDL_WaitEvent(&event);
+        switch (event.type)
         {
-            SDL_Event event;
-            SDL_WaitEvent(&event);
-            switch (event.type)
+        case SDL_MOUSEMOTION:
+            if (SDL_PRESSED == event.motion.state)
             {
-            case SDL_MOUSEMOTION:
-                if (SDL_PRESSED == event.motion.state)
-                {
-                    sX = event.motion.x + event.motion.xrel;
-                    sY = event.motion.y + event.motion.yrel;
-                }
-                break;
-            case SDL_MOUSEBUTTONDOWN:
-                sPressed = 1;
-                sX = event.button.x;
-                sY = event.button.y;
-                break;
-            case SDL_MOUSEBUTTONUP:
-                sPressed = 0;
-                sX = event.button.x;
-                sY = event.button.y;
-                break;
-            default:
-                break;
+                sX = event.motion.x + event.motion.xrel;
+                sY = event.motion.y + event.motion.yrel;
             }
-            lv_timer_handler();
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            sPressed = 1;
+            sX = event.button.x;
+            sY = event.button.y;
+            break;
+        case SDL_MOUSEBUTTONUP:
+            sPressed = 0;
+            sX = event.button.x;
+            sY = event.button.y;
+            break;
+        default:
+            break;
         }
+        lv_timer_handler();
     }
     return NULL;
 }
@@ -115,7 +112,7 @@ int lvglIOInit()
     sTexture = SDL_CreateTexture(sRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
     initLvgl();
     os_tid_t tid;
-    osTaskCreate(&tid, lvglIORun, NULL, "lvglIORun", 0, 0);
+    osTaskCreate(&tid, lvglIORun, NULL, "ui", 0, 0);
     return 0;
 }
 

@@ -247,14 +247,14 @@ void boot()
   printf("boot\n");
   nandFlashInit();
   SDRAM_Initialization_Sequence();
-  memset((void *)0x63800000, 0, 0x800000);
+  memset((void *)0x63000000, 0, 0x1000000);
   printf("Start reading...\n");
   lfs_mount(&gLFS, &gLfsConfig);
   lfs_file_t file;
   int ret = lfs_file_open(&gLFS, &file, "/system.bin", LFS_O_RDONLY);
   if (LFS_ERR_OK == ret)
   {
-    lfs_ssize_t size = lfs_file_read(&gLFS, &file, (void *)0x63800000, 0x800000);
+    lfs_ssize_t size = lfs_file_read(&gLFS, &file, (void *)0x63000000, 0x1000000);
     lfs_file_close(&gLFS, &file);
     printf("Read %ld byte.\n", size);
   }
@@ -263,9 +263,9 @@ void boot()
     printf("Read fail.\n");
   }
   SCB_CleanInvalidateDCache();
-  void **enter = (void **)0x63800298;
+  void **enter = (void **)0x63000298;
   printf("enter = 0x%02x\n", (unsigned int)*enter);
-  SCB->VTOR = 0x63800000;
+  SCB->VTOR = 0x63000000;
   ((void (*)())*enter)();
 }
 /* USER CODE END 0 */
@@ -310,12 +310,12 @@ int main(void)
   {
     nandFlashInit();
     SDRAM_Initialization_Sequence();
-    memset((void *)0x63800000, 0, 0x800000);
+    memset((void *)0x63000000, 0, 0x1000000);
     enterDownloadMode();
     SCB_CleanInvalidateDCache();
-    void **enter = (void **)0x63800298;
+    void **enter = (void **)0x63000298;
     printf("enter = 0x%02x\n", (unsigned int)*enter);
-    SCB->VTOR = 0x63800000;
+    SCB->VTOR = 0x63000000;
     ((void (*)()) * enter)();
   }
   else
