@@ -1,3 +1,4 @@
+WORKSPACE_DIR := $(shell pwd)/../..
 BUILD_DIR := build
 OBJ_DIR	:= $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
@@ -28,6 +29,7 @@ INCLUDES := -I. \
 	-I../../core/mem \
 	-I../../core/task \
 	-I../../core/vfs \
+	-I../../third \
 	-I../../third/fatfs \
 	-I../../third/fatfs/source \
 	-I../../third/letter_shell/src \
@@ -83,6 +85,8 @@ SRCS := $(SRCS) \
 	lfsadapter.c \
 	lvglio.c \
 	main.c
+
+include $(WORKSPACE_DIR)/apps/test/Makefile
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))
 OBJS := $(addprefix $(OBJ_DIR)/,$(BASE_OBJS))

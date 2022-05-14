@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include "dma.h"
 #include "ossemaphore.h"
+#include <string.h>
 /* USER CODE BEGIN 0 */
 static OsSemaphore sSemaphore;
 static uint32_t sLcdBuffer[LCD_WIDTH * LCD_HEIGH];
@@ -50,14 +51,14 @@ void MX_LTDC_Init(void)
   hltdc.Init.VSPolarity = LTDC_VSPOLARITY_AL;
   hltdc.Init.DEPolarity = LTDC_DEPOLARITY_AL;
   hltdc.Init.PCPolarity = LTDC_PCPOLARITY_IPC;
-  hltdc.Init.HorizontalSync = 0;
-  hltdc.Init.VerticalSync = 0;
-  hltdc.Init.AccumulatedHBP = 1;
-  hltdc.Init.AccumulatedVBP = 1;
-  hltdc.Init.AccumulatedActiveW = LCD_WIDTH + 1;
-  hltdc.Init.AccumulatedActiveH = LCD_HEIGH + 1;
-  hltdc.Init.TotalWidth = LCD_WIDTH + 2;
-  hltdc.Init.TotalHeigh = LCD_HEIGH + 2;
+  hltdc.Init.HorizontalSync = 15;
+  hltdc.Init.VerticalSync = 7;
+  hltdc.Init.AccumulatedHBP = 29;
+  hltdc.Init.AccumulatedVBP = 11;
+  hltdc.Init.AccumulatedActiveW = LCD_WIDTH + 29;
+  hltdc.Init.AccumulatedActiveH = LCD_HEIGH + 11;
+  hltdc.Init.TotalWidth = LCD_WIDTH + 41;
+  hltdc.Init.TotalHeigh = LCD_HEIGH + 15;
   hltdc.Init.Backcolor.Blue = 0;
   hltdc.Init.Backcolor.Green = 0;
   hltdc.Init.Backcolor.Red = 0;
@@ -103,13 +104,15 @@ void lcdOff()
 
 void lcdCopy(const uint32_t *data)
 {
-  uint32_t len = 0;
-  for (size_t i = 0; i < LCD_WIDTH * LCD_HEIGH; i += len)
-  {
-    len = LCD_WIDTH * LCD_HEIGH - i <= 0xffff ? LCD_WIDTH * LCD_HEIGH - i : 0xffff;
-    HAL_DMA_Start_IT(&hdma_memtomem_dma1_stream1, (uint32_t)&data[i], (uint32_t)&sLcdBuffer[i], len);
-    osSemaphoreWait(&sSemaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
-  }
+  memcpy(sLcdBuffer, data, LCD_WIDTH * LCD_HEIGH * sizeof(uint32_t));
+  //SCB_CleanInvalidateDCache();
+  // uint32_t len = 0;
+  // for (size_t i = 0; i < LCD_WIDTH * LCD_HEIGH; i += len)
+  // {
+  //   len = LCD_WIDTH * LCD_HEIGH - i <= 0xffff ? LCD_WIDTH * LCD_HEIGH - i : 0xffff;
+  //   HAL_DMA_Start_IT(&hdma_memtomem_dma1_stream1, (uint32_t)&data[i], (uint32_t)&sLcdBuffer[i], len);
+  //   osSemaphoreWait(&sSemaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
+  // }
 }
 
 void HAL_LTDC_MspInit(LTDC_HandleTypeDef* ltdcHandle)

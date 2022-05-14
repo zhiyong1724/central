@@ -1,3 +1,4 @@
+WORKSPACE_DIR := $(shell pwd)/../..
 BUILD_DIR := build
 OBJ_DIR	:= $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
@@ -163,6 +164,8 @@ SRCS := ostree.c \
 	audioplayer.c
 
 ASM_SRCS := startup_stm32h750xx.s
+
+include $(WORKSPACE_DIR)/apps/test/Makefile
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))
 OBJS := $(addprefix $(OBJ_DIR)/,$(BASE_OBJS))

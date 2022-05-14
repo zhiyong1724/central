@@ -28,8 +28,8 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#define LCD_WIDTH 480
-#define LCD_HEIGH 272
+#define LCD_WIDTH 800
+#define LCD_HEIGH 480
 /* USER CODE END Includes */
 
 extern LTDC_HandleTypeDef hltdc;

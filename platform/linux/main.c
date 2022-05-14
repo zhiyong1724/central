@@ -20,6 +20,7 @@
 #include "lfsadapter.h"
 #include "lfs.h"
 #include "lvglio.h"
+#include "ui.h"
 extern const struct lfs_config gLfsConfig;
 extern lfs_t gLFS;
 struct Test
@@ -1060,6 +1061,7 @@ int main()
     osFMount("/", "RAM");
     shellIOInit();
     lvglIOInit();
+    ui_init();
     osTaskStart();
     return 0;
 }

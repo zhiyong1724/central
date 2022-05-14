@@ -21,6 +21,7 @@
 #include "keymanager.h"
 #include "volumemanager.h"
 #include "lvglio.h"
+#include "ui.h"
 static int onPressed(void *object, KeyType type)
 {
     return 0;
@@ -86,5 +87,6 @@ void enterNormalMode()
     keyManagerRegisterCallback(&keyManagerCallBack);
     shellIOInit();
     lvglIOInit();
+    ui_init();
     osTaskStart();
 }

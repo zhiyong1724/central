@@ -5,7 +5,7 @@
 #include "ostask.h"
 #include "ltdc.h"
 #include "gt9147.h"
-
+#include "stm32h7xx.h"
 static lv_disp_draw_buf_t sDispBuffer;
 static lv_disp_drv_t sDispDriver;
 static lv_indev_drv_t sInputDriver;
@@ -19,6 +19,11 @@ static void flush(struct _lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_col
     lcdCopy((const uint32_t *)color_p);
     lv_disp_flush_ready(disp_drv);
 }
+
+// static void cleanCache(struct _lv_disp_drv_t * disp_drv)
+// {
+//     SCB_CleanInvalidateDCache();
+// }
 
 static void input(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 {
@@ -42,6 +47,7 @@ static void initLvgl()
     lv_disp_drv_init(&sDispDriver);
     sDispDriver.draw_buf = &sDispBuffer;
     sDispDriver.flush_cb = flush;
+    //sDispDriver.clean_dcache_cb = cleanCache;
     sDispDriver.hor_res = LCD_WIDTH;
     sDispDriver.ver_res = LCD_HEIGH;
     sDispDriver.full_refresh = 1;
