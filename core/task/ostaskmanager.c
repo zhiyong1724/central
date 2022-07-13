@@ -586,15 +586,7 @@ int osTaskManagerGetTaskState(OsTaskManager *taskManager, OsTaskState *state, os
     osAssert(task != NULL && task->tid > 1);
     if (task != NULL && task->tid > 1)
     {
-        OsTask *runningTask = osTaskManagerGetRunningTask(taskManager);
-        if (task == runningTask)
-        {
-            *state = OS_TASK_STATE_RUNNING;
-        }
-        else
-        {
-            *state = task->taskControlBlock.taskState;
-        }
+        *state = task->taskControlBlock.taskState;
         ret = 0;
     }
     return ret;
