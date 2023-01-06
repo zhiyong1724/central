@@ -1,4 +1,3 @@
-WORKSPACE_DIR := $(shell pwd)/../..
 BUILD_DIR := build
 OBJ_DIR	:= $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
@@ -10,17 +9,6 @@ DUMP_FILE := $(BIN_DIR)/main.dump
 
 vpath %.c ./hal/Src
 vpath %.c ./drivers
-vpath %.c ../../apps/audioplayer
-vpath %.c ../../core
-vpath %.c ../../core/base
-vpath %.c ../../core/mem
-vpath %.c ../../core/task
-vpath %.c ../../core/vfs
-vpath %.c ../../third/fatfs
-vpath %.c ../../third/fatfs/source
-vpath %.c ../../third/letter_shell/src
-vpath %.c ../../third/littlefs
-vpath %.c ../../third/utilities
 vpath %.o $(OBJ_DIR)
 
 CC := arm-none-eabi-gcc
@@ -37,19 +25,7 @@ INCLUDES := -I. \
 	-Icmsis/Include \
 	-Idrivers \
 	-Iffmpeg/include \
-	-I../../core \
-	-I../../core/base \
-	-I../../core/mem \
-	-I../../core/task \
-	-I../../core/vfs \
-	-I../../third \
-	-I../../third/fatfs \
-	-I../../third/fatfs/source \
-	-I../../third/letter_shell/src \
-	-I../../third/littlefs \
-	-I../../third/utilities \
-	-I../../third/lvgl/ \
-	-I../../apps/audioplayer 
+	-I../../third/lvgl
 
 LIBS_DIR := -L. -L./ffmpeg/lib
 
@@ -57,34 +33,7 @@ LIBS := -lavformat -lavcodec -lswresample -lswscale -lavutil -llvgl -lc -lm
 
 CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE) -ffunction-sections -fdata-sections -Wl,--gc-sections
 
-SRCS := ostree.c \
-	osstring.c \
-	oslist.c \
-	osbuddy.c \
-	osmempool.c \
-	osmemmanager.c \
-	osmem.c \
-	osvector.c \
-	osqueue.c \
-	osdtscheduler.c \
-	osrtscheduler.c \
-	osidlescheduler.c \
-	osbitmapindex.c \
-	ostidmanager.c \
-	osvscheduler.c \
-	ostaskmanager.c \
-	ostask.c \
-	ossemaphoremanager.c \
-	ossemaphore.c \
-	osmutex.c \
-	osqueuemanager.c \
-	osmsgqueue.c \
-	oscentral.c \
-	osport.c \
-	osvfs.c \
-	osf.c \
-	main.c \
-	stm32h7xx_it.c \
+SRCS := stm32h7xx_it.c \
 	stm32h7xx_hal_msp.c \
 	stm32h7xx_hal_cortex.c \
 	stm32h7xx_hal_tim.c \
@@ -118,54 +67,45 @@ SRCS := ostree.c \
 	stm32h7xx_ll_fmc.c \
 	stm32h7xx_ll_sdmmc.c \
 	system_stm32h7xx.c \
-	newlibio.c \
-	gpio.c \
-	usart.c \
 	dma.c \
+	es8388.c \
 	fmc.c \
-	sdram.c \
-	key.c \
-	led.c \
-	sai.c \
-	ltdc.c \
+	gpio.c \
 	gt9147.c \
-	crc16.c \
-	xmodem.c \
-	downloadmode.c \
-	normalmode.c \
+	key.c \
+	keymanager.c \
+	led.c \
+	ltdc.c \
 	nandflash.c \
-	sdmmc.c \
+	pcf8574.c \
+	sai.c \
 	sdcard.c \
-	bch_codec.c \
-	shell.c \
-	shell_cmd_list.c \
-	shell_companion.c \
-	shell_ext.c \
-	shellio.c \
-	lfs_util.c \
-	lfs.c \
+	sdmmc.c \
+	sdram.c \
+	softiic.c \
+	usart.c \
+	volumemanager.c \
+	diskio.c \
+	downloadmode.c \
+	fatfsadapter.c \
+	ffsystem.c \
 	lfsadapter.c \
 	lfsio.c \
-	ff.c \
-	ffsystem.c \
-	ffunicode.c \
-	diskio.c \
-	fatfsadapter.c \
-	softiic.c \
-	pcf8574.c \
-	es8388.c \
-	keymanager.c \
-	volumemanager.c \
 	lvglio.c \
-	audiooutput.c \
+	main.c \
+	newlibio.c \
+	normalmode.c \
+	osport.c \
 	saiaudiooutput.c \
-	audiodecoder.c \
-	ffmpegaudiodecoder.c \
-	audioplayer.c
+	shell_cmd_list.c \
+	shellio.c \
+	xmodem.c 
 
 ASM_SRCS := startup_stm32h750xx.s
 
-include $(WORKSPACE_DIR)/apps/test/Makefile
+include ../../apps/Makefile
+include ../../core/Makefile
+include ../../third/Makefile
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))
 OBJS := $(addprefix $(OBJ_DIR)/,$(BASE_OBJS))

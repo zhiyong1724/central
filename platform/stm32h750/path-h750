@@ -1,3 +1,6 @@
 #!/bin/bash
+export PLATFORM=H750
+echo "PLATFORM = "$PLATFORM
+
 export PATH=$PATH:/home/chenzhiyong/gcc-arm-none-eabi-10.3-2021.07/bin
 echo "PATH=$PATH"

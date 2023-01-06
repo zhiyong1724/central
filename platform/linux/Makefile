@@ -1,4 +1,3 @@
-WORKSPACE_DIR := $(shell pwd)/../..
 BUILD_DIR := build
 OBJ_DIR	:= $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
@@ -6,15 +5,6 @@ ELF_FILE := $(BIN_DIR)/main.elf
 MAP_FILE := $(BIN_DIR)/main.map
 DUMP_FILE := $(BIN_DIR)/main.dump
 
-vpath %.c ../../core
-vpath %.c ../../core/base
-vpath %.c ../../core/mem
-vpath %.c ../../core/task
-vpath %.c ../../core/vfs
-vpath %.c ../../third/fatfs
-vpath %.c ../../third/fatfs/source
-vpath %.c ../../third/letter_shell/src
-vpath %.c ../../third/littlefs
 vpath %.o $(OBJ_DIR)
 
 CC := gcc
@@ -24,17 +14,7 @@ LD := ld
 DUMP := objdump
 
 INCLUDES := -I. \
-	-I../../core \
-	-I../../core/base \
-	-I../../core/mem \
-	-I../../core/task \
-	-I../../core/vfs \
-	-I../../third \
-	-I../../third/fatfs \
-	-I../../third/fatfs/source \
-	-I../../third/letter_shell/src \
-	-I../../third/littlefs \
-	-I../../third/lvgl/
+	-I../../third/lvgl
 
 LIBS_DIR := -L.
 
@@ -42,51 +22,20 @@ LIBS := -lpthread -lSDL2 -llvgl
 
 CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 
-SRCS := $(SRCS) \
-	ostree.c \
-	osstring.c \
-	oslist.c \
-	osbuddy.c \
-	osmempool.c \
-	osmemmanager.c \
-	osmem.c \
-	osvector.c \
-	osqueue.c \
-	osdtscheduler.c \
-	osrtscheduler.c \
-	osidlescheduler.c \
-	osbitmapindex.c \
-	ostidmanager.c \
-	osvscheduler.c \
-	ostaskmanager.c \
-	ostask.c \
-	ossemaphoremanager.c \
-	ossemaphore.c \
-	osmutex.c \
-	osqueuemanager.c \
-	osmsgqueue.c \
-	oscentral.c \
-	osport.c \
-	osvfs.c \
-	osf.c \
-	ff.c \
-	ffsystem.c \
-	ffunicode.c \
-	diskio.c \
-	ramio.c \
+SRCS := diskio.c \
 	fatfsadapter.c \
-	shell.c \
-	shell_cmd_list.c \
-	shell_companion.c \
-	shell_ext.c \
-	shellio.c \
-	lfs_util.c \
-	lfs.c \
+	ffsystem.c \
 	lfsadapter.c \
 	lvglio.c \
-	main.c
+	main.c \
+	osport.c \
+	ramio.c \
+	shell_cmd_list.c \
+	shellio.c 
 
-include $(WORKSPACE_DIR)/apps/test/Makefile
+include ../../apps/Makefile
+include ../../core/Makefile
+include ../../third/Makefile
 
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))
 OBJS := $(addprefix $(OBJ_DIR)/,$(BASE_OBJS))

@@ -1,4 +1,5 @@
-vpath %.c $(WORKSPACE_DIR)/apps/test
-INCLUDES += -I$(WORKSPACE_DIR)/apps/test
-APPS_TEST_SRCS := $(wildcard $(WORKSPACE_DIR)/apps/test/*.c)
-SRCS += $(notdir $(APPS_TEST_SRCS))
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(patsubst %/, %, $(dir $(MAKEFILE_PATH)))
+INCLUDES += -I$(CURRENT_DIR)
+vpath %.c $(CURRENT_DIR)
+SRCS += $(notdir $(wildcard $(CURRENT_DIR)/*.c))

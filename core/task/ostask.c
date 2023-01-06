@@ -63,7 +63,7 @@ int osTaskTick()
     return ret;
 }
 
-int osTasModifyPriority(os_tid_t tid, os_size_t priority)
+int osTaskModifyPriority(os_tid_t tid, os_size_t priority)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t state = portDisableInterrupts();
