@@ -6,13 +6,12 @@ static unsigned int sLookaheadBuffer[NAND_FLASH_PLANE_NUMBER * NAND_FLASH_PLANE_
 static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
     int ret = LFS_ERR_OK;
-    uint8_t *data = (uint8_t *)buffer;
+    uint8_t *data = &((uint8_t *)buffer)[off % c->cache_size];
     for (lfs_size_t i = 0; i < size; i += NAND_FLASH_PAGE_SIZE)
     {
         if (nandFlashReadPage(block, (off + i) / NAND_FLASH_PAGE_SIZE, data + i) != 0)
         {
             ret = LFS_ERR_CORRUPT;
-            break;
         }
     }
     return ret;
@@ -21,7 +20,7 @@ static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, vo
 static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
     int ret = LFS_ERR_OK;
-    uint8_t *data = (uint8_t *)buffer;
+    uint8_t *data = &((uint8_t *)buffer)[off % c->cache_size];
     for (lfs_size_t i = 0; i < size; i += NAND_FLASH_PAGE_SIZE)
     {
         if (nandFlashWritePage(block, (off + i) / NAND_FLASH_PAGE_SIZE, data + i) != 0)

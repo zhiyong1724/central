@@ -63,42 +63,54 @@ static OsFileError lfsOpen(OsFile *file, const char *path, uint32_t mode)
     if (file->obj != NULL)
     {
         memset(file->obj, 0, sizeof(lfs_file_t));
-        int flags = 0;
-        if ((mode & OS_FILE_MODE_READ) > 0 && 0 == (mode & OS_FILE_MODE_WRITE))
+        static struct lfs_file_config cfg;
+        memset(&cfg, 0, sizeof(struct lfs_file_config));
+        cfg.buffer = osMalloc(gLFS.cfg->cache_size);
+        if (cfg.buffer != NULL)
         {
-            flags |= LFS_O_RDONLY;
-        }
-        else if (0 == (mode & OS_FILE_MODE_READ) && (mode & OS_FILE_MODE_WRITE) > 0)
-        {
-            flags |= LFS_O_WRONLY;
-        }
-        else if ((mode & OS_FILE_MODE_READ) > 0 && (mode & OS_FILE_MODE_WRITE) > 0)
-        {
-            flags |= LFS_O_RDWR;
-        }
+            int flags = 0;
+            if ((mode & OS_FILE_MODE_READ) > 0 && 0 == (mode & OS_FILE_MODE_WRITE))
+            {
+                flags |= LFS_O_RDONLY;
+            }
+            else if (0 == (mode & OS_FILE_MODE_READ) && (mode & OS_FILE_MODE_WRITE) > 0)
+            {
+                flags |= LFS_O_WRONLY;
+            }
+            else if ((mode & OS_FILE_MODE_READ) > 0 && (mode & OS_FILE_MODE_WRITE) > 0)
+            {
+                flags |= LFS_O_RDWR;
+            }
 
-        if ((mode & OS_FILE_MODE_OPEN_EXISTING) > 0)
-        {
+            if ((mode & OS_FILE_MODE_OPEN_EXISTING) > 0)
+            {
+            }
+            if ((mode & OS_FILE_MODE_CREATE_NEW) > 0)
+            {
+                flags |= LFS_O_CREAT | LFS_O_EXCL;
+            }
+            if ((mode & OS_FILE_MODE_CREATE_ALWAYS) > 0)
+            {
+                flags |= LFS_O_CREAT | LFS_O_TRUNC;
+            }
+            if ((mode & OS_FILE_MODE_OPEN_ALWAYS) > 0)
+            {
+                flags |= LFS_O_CREAT;
+            }
+            if ((mode & OS_FILE_MODE_OPEN_APPEND) > 0)
+            {
+                flags |= LFS_O_APPEND;
+            }
+            int result = lfs_file_opencfg(&gLFS, (lfs_file_t *)file->obj, path, flags, &cfg);
+            ret = parseResult(result);
+            if (ret != OS_FILE_ERROR_OK)
+            {
+                osFree(((lfs_file_t *)file->obj)->cache.buffer);
+                osFree(file->obj);
+                file->obj = NULL;
+            }
         }
-        if ((mode & OS_FILE_MODE_CREATE_NEW) > 0)
-        {
-            flags |= LFS_O_CREAT | LFS_O_EXCL;
-        }
-        if ((mode & OS_FILE_MODE_CREATE_ALWAYS) > 0)
-        {
-            flags |= LFS_O_CREAT | LFS_O_TRUNC;
-        }
-        if ((mode & OS_FILE_MODE_OPEN_ALWAYS) > 0)
-        {
-            flags |= LFS_O_CREAT;
-        }
-        if ((mode & OS_FILE_MODE_OPEN_APPEND) > 0)
-        {
-            flags |= LFS_O_APPEND;
-        }
-        int result = lfs_file_open(&gLFS, (lfs_file_t *)file->obj, path, flags);
-        ret = parseResult(result);
-        if (ret != OS_FILE_ERROR_OK)
+        else
         {
             osFree(file->obj);
             file->obj = NULL;
@@ -116,6 +128,7 @@ static OsFileError lfsClose(OsFile *file)
         ret = parseResult(result);
         if (OS_FILE_ERROR_OK == ret)
         {
+            osFree(((lfs_file_t *)file->obj)->cache.buffer);
             osFree(file->obj);
             file->obj = NULL;
         }

@@ -117,18 +117,18 @@ DWORD get_fattime()
 #define PAGE_SIZE 512
 #define BLOCK_COUNT 256
 static unsigned int sLfsBuffer[BLOCK_COUNT * BLOCK_SIZE / sizeof(unsigned int)];
-static unsigned int sReadBuffer[PAGE_SIZE / sizeof(unsigned int)];
-static unsigned int sProgBuffer[PAGE_SIZE / sizeof(unsigned int)];
-static unsigned int sLookaheadBuffer[PAGE_SIZE / sizeof(unsigned int)];
+static unsigned int sReadBuffer[BLOCK_SIZE / sizeof(unsigned int)];
+static unsigned int sProgBuffer[BLOCK_SIZE / sizeof(unsigned int)];
+static unsigned int sLookaheadBuffer[BLOCK_COUNT / 8 / sizeof(unsigned int)];
 static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
-    memcpy(buffer, &sLfsBuffer[block * BLOCK_SIZE + off], size);
+    memcpy(&((uint8_t *)buffer)[off % c->cache_size], &sLfsBuffer[block * BLOCK_SIZE + off], size);
     return LFS_ERR_OK;
 }
 
 static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
-    memcpy(&sLfsBuffer[block * BLOCK_SIZE + off], buffer, size);
+    memcpy(&sLfsBuffer[block * BLOCK_SIZE + off], &((uint8_t *)buffer)[off % c->cache_size], size);
     return LFS_ERR_OK;
 }
 
@@ -153,8 +153,8 @@ const struct lfs_config gLfsConfig =
     .block_size = BLOCK_SIZE,
     .block_count = BLOCK_COUNT,
     .block_cycles = 100,
-    .cache_size = PAGE_SIZE,
-    .lookahead_size = PAGE_SIZE,
+    .cache_size = BLOCK_SIZE,
+    .lookahead_size = BLOCK_COUNT / 8,
     .read_buffer = sReadBuffer,
     .prog_buffer = sProgBuffer,
     .lookahead_buffer = sLookaheadBuffer,

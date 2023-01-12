@@ -40,7 +40,7 @@ void nandFlashInit()
     }
     sBchHandle = init_bch(15, MAX_CORRECT_BITS, 0);
     osMutexCreate(&sMutex);
-    printf("Init nandflash succeed, size 64M byte, block size 128K byte, page size 2K byte\n");
+    printf("Init nandflash succeed, size 512M bytes, block size 128K bytes, page size 2K bytes\n");
 }
 
 void nandFlashEraseBlock(uint32_t block)
@@ -128,7 +128,7 @@ static void write(uint32_t block, uint32_t page, uint32_t column, const void *bu
     __DSB();
     *(__IO uint8_t *)((uint32_t)(NAND_DEVICE | ADDR_AREA)) = (uint8_t)(pageAddress >> 16);
     __DSB();
-    delay(50);
+    delay(200);
     const uint8_t *data = (const uint8_t *)buffer;
     for (uint32_t i = 0; i < size; i++)
     {
