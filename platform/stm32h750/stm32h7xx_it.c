@@ -226,6 +226,7 @@ void DebugMon_Handler(void)
   * @brief This function handles System tick timer.
   */
 int osTaskTick();
+static uint64_t sCurCount = 0;
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
@@ -233,7 +234,14 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   lv_tick_inc(1);
-  osTaskTick();
+  sCurCount += 1000 * 1000;
+  static uint64_t ns = 1000 * 1000;
+  if (sCurCount >= ns)
+  {
+    ns = sCurCount;
+    sCurCount = 0;
+    osTaskTick(&ns);
+  }
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */

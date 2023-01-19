@@ -1,5 +1,6 @@
 #include "osport.h"
 #include <sys/time.h>
+#include <time.h>
 #include <stdio.h>
 #include <signal.h>
 #include <pthread.h>
@@ -32,10 +33,12 @@ static void eventWait(thread_t *thread)
     }
     thread->eventTriggered = 0;
     pthread_mutex_unlock(&thread->mutex);
+    pthread_sigmask(SIG_UNBLOCK, &sSignals, NULL);
 }
 
 void eventSignal(thread_t *thread)
 {
+    pthread_sigmask(SIG_BLOCK, &sSignals, NULL);
     pthread_mutex_lock(&thread->mutex);
     thread->eventTriggered = 1;
     pthread_cond_signal(&thread->cond);
@@ -46,7 +49,6 @@ static void *taskEnter(void *arg)
 {
     thread_t *thread = (thread_t *)arg;
     eventWait(thread);
-    pthread_sigmask(SIG_UNBLOCK, &sSignals, NULL);
     void *ret = thread->taskFunction(thread->arg);
     thread->exit = 0;
     osTaskExit(ret);
@@ -84,10 +86,21 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
     return 0;
 }
 
+static timer_t sTimer;
+
 static void handleTimerTick(int arg)
 {
-    osTaskTick();
-    lv_tick_inc(10);
+    static uint64_t ns = 1000 * 1000;
+    os_size_t state = portDisableInterrupts();
+    lv_tick_inc(ns / 1000 / 1000);
+    osTaskTick(&ns);
+    struct itimerspec timerSpec;
+    timerSpec.it_interval.tv_sec = 0;
+    timerSpec.it_interval.tv_nsec = 0;
+    timerSpec.it_value.tv_sec = 0;
+    timerSpec.it_value.tv_nsec = ns;
+    timer_settime(&sTimer, 0, &timerSpec, NULL);
+    portRecoveryInterrupts(state);
 }
 
 static void handleTaskYield(int arg)
@@ -110,17 +123,14 @@ int portStartScheduler(void **stackTop)
     sigaction(SIGALRM, &action, NULL);
     action.sa_handler = handleTaskYield;
     sigaction(SIGUSR1, &action, NULL);
-    struct itimerval tv;
-    tv.it_interval.tv_sec = 0;
-    tv.it_interval.tv_usec = 10000;
-    tv.it_value.tv_sec = 0;
-    tv.it_value.tv_usec = 10000;
-    if (setitimer(ITIMER_REAL, &tv, NULL) != 0)
-    {
-        printf("Create timer fail.\n");
-        return -1;
-    }
 
+    timer_create(ITIMER_REAL, NULL, &sTimer);
+    struct itimerspec timerSpec;
+    timerSpec.it_interval.tv_sec = 0;
+    timerSpec.it_interval.tv_nsec = 0;
+    timerSpec.it_value.tv_sec = 0;
+    timerSpec.it_value.tv_nsec = 1000 * 1000;
+    timer_settime(&sTimer, 0, &timerSpec, NULL);
     sPreTask = sRunningTask;
     sRunningTask = stackTop;
     sInterruptFlag = 1;

@@ -7,20 +7,18 @@
 #else
 #define rtSchedulerLog(format, ...) (void)0
 #endif
-int osRtSchedulerInit(OsRtScheduler *rtScheduler, uint64_t clockPeriod)
+int osRtSchedulerInit(OsRtScheduler *rtScheduler)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMemSet(rtScheduler->readyTaskTable, 0xff, OS_RTSCHED_MAX_PRIORITY / 8);
     rtScheduler->readyGroupTable = 0xff;
-    rtScheduler->interval = 0;
     for (os_size_t i = 0; i < OS_RTSCHED_MAX_PRIORITY; i++)
     {
         rtScheduler->taskListArray[i] = NULL;
     }
     rtScheduler->taskCount = 0;
     rtScheduler->runningTask = NULL;
-    rtScheduler->skipTick = 0;
-    rtScheduler->clockPeriod = clockPeriod;
+    rtScheduler->interval = 0;
     return 0;
 }
 
@@ -68,27 +66,28 @@ static void setBitmap(OsRtScheduler *rtScheduler, os_size_t priority, os_size_t 
     }
 }
 
-OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler)
+OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler, uint64_t *ns)
 {
     //rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (rtScheduler->taskCount > 0)
     {
-        rtScheduler->interval += rtScheduler->clockPeriod;
+        rtScheduler->interval += *ns;
         if (rtScheduler->interval >= OS_RTSCHED_MIN_SWITCH_INTERVAL_NS)
         {
-            if (0 == rtScheduler->skipTick)
-            {
-                osRemoveFromList(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
-                osInsertToBack(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
-                os_size_t priority = getMinimunPriority(rtScheduler);
-                rtScheduler->runningTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
-            }
-            else
-            {
-                rtScheduler->skipTick = 0;
-            }
-            rtScheduler->interval = 0;
+            osRemoveFromList(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
+            osInsertToBack(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
+            os_size_t priority = getMinimunPriority(rtScheduler);
+            rtScheduler->runningTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
+            *ns = OS_RTSCHED_MIN_SWITCH_INTERVAL_NS;
         }
+        else
+        {
+            *ns = OS_RTSCHED_MIN_SWITCH_INTERVAL_NS - rtScheduler->interval;
+        }
+    }
+    else
+    {
+        *ns = -1;
     }
     return rtScheduler->runningTask;
 }
@@ -134,7 +133,6 @@ OsRtTaskControlBlock *osRtSchedulerRemoveTask(OsRtScheduler *rtScheduler, OsRtTa
             {
                 os_size_t priority = getMinimunPriority(rtScheduler);
                 rtScheduler->runningTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
-                rtScheduler->skipTick = 1;
             }
         }
     }
@@ -179,7 +177,6 @@ OsRtTaskControlBlock *osRtSchedulerYield(OsRtScheduler *rtScheduler)
         if (nextTask != rtScheduler->runningTask)
         {
             rtScheduler->runningTask = nextTask;
-            rtScheduler->skipTick = 1;
         }
     }
     return rtScheduler->runningTask;

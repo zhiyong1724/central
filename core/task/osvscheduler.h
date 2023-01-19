@@ -7,7 +7,7 @@
 extern "C"
 {
 #endif
-typedef void *(*Tick)(void *scheduler);
+typedef void *(*Tick)(void *scheduler, uint64_t *ns);
 typedef int (*AddTask)(void *scheduler, void *task);
 typedef void *(*RemoveTask)(void *scheduler, void *task);
 typedef int (*ModifyPriority)(void *scheduler, void *task, os_size_t priority);
@@ -40,20 +40,18 @@ typedef struct OsVScheduler
     void *schedulers[OS_MAX_SCHEDULER_COUNT];
     OsSchedulerInterfaces schedulerInterfaces[OS_MAX_SCHEDULER_COUNT];
     os_size_t schedulerCount;
-    uint64_t clockPeriod;
+    uint64_t clock;
     OsListNode *suspendedList;
     OsTreeNode *sleepTree;
     OsTaskControlBlock *runningTask;
-    uint64_t minSleepTime;
     OsTaskControlBlock *minSleepTask;
 } OsVScheduler;
 /*********************************************************************************************************************
 * OsVScheduler初始化
 * vScheduler：OsVScheduler对象
-* clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osVSchedulerInit(OsVScheduler *vScheduler, uint64_t clockPeriod);
+int osVSchedulerInit(OsVScheduler *vScheduler);
 /*********************************************************************************************************************
 * OsTaskControlBlock初始化
 * vScheduler：OsVScheduler对象
@@ -88,9 +86,10 @@ int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *tas
 * 时钟滴答
 * osVScheduler：OsVScheduler对象
 * schedulerId：指定使用哪个调度器，如果为OS_MAX_SCHEDULER_COUNT则表示按照顺序调用
+* ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId);
+OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId, uint64_t *ns);
 /*********************************************************************************************************************
 * 挂起一个任务
 * vScheduler：OsVScheduler对象

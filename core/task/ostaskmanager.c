@@ -109,29 +109,29 @@ static OsTask *getTaskByTid(OsTaskManager *taskManager, os_tid_t tid)
     return NULL;
 }
 
-int osTaskManagerInit(OsTaskManager *taskManager, uint64_t clockPeriod)
+int osTaskManagerInit(OsTaskManager *taskManager)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     os_size_t ret = -1;
-    ret = osVSchedulerInit(&taskManager->vScheduler, clockPeriod);
+    ret = osVSchedulerInit(&taskManager->vScheduler);
     osAssert(0 == ret);
     if (ret != 0)
     {
         return ret;
     }
-    ret = osRtSchedulerInit(&taskManager->rtScheduler, clockPeriod);
+    ret = osRtSchedulerInit(&taskManager->rtScheduler);
     osAssert(0 == ret);
     if (ret != 0)
     {
         return ret;
     }
-    ret = osDtSchedulerInit(&taskManager->dtScheduler, clockPeriod);
+    ret = osDtSchedulerInit(&taskManager->dtScheduler);
     osAssert(0 == ret);
     if (ret != 0)
     {
         return ret;
     }
-    ret = osIdleSchedulerInit(&taskManager->idleScheduler, clockPeriod);
+    ret = osIdleSchedulerInit(&taskManager->idleScheduler);
     osAssert(0 == ret);
     if (ret != 0)
     {
@@ -160,6 +160,7 @@ int osTaskManagerInit(OsTaskManager *taskManager, uint64_t clockPeriod)
     taskManager->tickCount = 0;
     taskManager->cpuUsage = 0;
     taskManager->idleTaskTickCount = 0;
+    taskManager->idleTickCount = 0;
     os_tid_t tid;
     ret = osTaskManagerCreateTask(taskManager, &tid, initTask, taskManager, "init", OS_TASK_TYPE_DT, 0, OS_DEFAULT_TASK_STACK_SIZE);
     taskManager->initTask = osTaskManagerGetRunningTask(taskManager);
@@ -245,29 +246,27 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
     return ret;
 }
 
-int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask)
+int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask, uint64_t *ns)
 {
     //taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    taskManager->tickCount++;
-    uint64_t reTick = taskManager->tickCount & 0x03ff;
-    if (0 == reTick)
+    taskManager->tickCount += *ns;
+    taskManager->idleTickCount += *ns;
+    OsTask *runningTask = osTaskManagerGetRunningTask(taskManager);
+    if (1 == runningTask->tid)
     {
-        taskManager->cpuUsage = (os_size_t)((taskManager->tickCount - taskManager->idleTaskTickCount) * 100 >> 10);
-        if (taskManager->cpuUsage > 100)
-        {
-            taskManager->cpuUsage = 100;
-        }
-        taskManager->idleTaskTickCount = taskManager->tickCount;
+        taskManager->idleTaskTickCount += *ns;
     }
-    *nextTask = (OsTask *)osVSchedulerTick(&taskManager->vScheduler, OS_MAX_SCHEDULER_COUNT);
+    if (taskManager->idleTickCount >= 1000000000ll)
+    {
+        taskManager->cpuUsage = 100 - taskManager->idleTaskTickCount * 100 / taskManager->idleTickCount;
+        taskManager->idleTaskTickCount = 0;
+        taskManager->idleTickCount = 0;
+    }
+    *nextTask = (OsTask *)osVSchedulerTick(&taskManager->vScheduler, OS_MAX_SCHEDULER_COUNT, ns);
     *nextTask = (OsTask *)((os_byte_t *)*nextTask - sizeof(OsListNode));
     osAssert(OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic);
     if (OS_TASK_STACK_MAGIC == *(*nextTask)->taskStackMagic)
     {
-        if (1 == (*nextTask)->tid)
-        {
-            taskManager->idleTaskTickCount++;
-        }
         return 0;
     }
     else
@@ -516,12 +515,6 @@ uint64_t osTaskManagerGetTickCount(OsTaskManager *taskManager)
 {
     taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return taskManager->tickCount;
-}
-
-uint64_t osTaskManagerGetClockPeriod(OsTaskManager *taskManager)
-{
-    taskManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    return taskManager->vScheduler.clockPeriod;
 }
 
 os_size_t osTaskManagerGetTaskCount(OsTaskManager *taskManager)

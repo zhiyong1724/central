@@ -18,7 +18,7 @@ INCLUDES := -I. \
 
 LIBS_DIR := -L.
 
-LIBS := -lpthread -lSDL2 -llvgl
+LIBS := -lpthread -lSDL2 -llvgl -lrt
 
 CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 

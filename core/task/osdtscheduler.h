@@ -15,22 +15,19 @@ typedef struct OsDtTaskControlBlock
 
 typedef struct OsDtScheduler
 {
-    uint64_t interval;
     OsTreeNode *taskTree;
     os_size_t taskCount;
     uint64_t minVRunTime;
     OsDtTaskControlBlock *runningTask;
-    os_size_t skipTick;
-    uint64_t clockPeriod;
     uint64_t switchInterval;
+    uint64_t interval;
 } OsDtScheduler;
 /*********************************************************************************************************************
 * OsDtScheduler初始化
 * dtScheduler：OsDtScheduler对象
-* clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osDtSchedulerInit(OsDtScheduler *dtScheduler, uint64_t clockPeriod);
+int osDtSchedulerInit(OsDtScheduler *dtScheduler);
 /*********************************************************************************************************************
 * OsDtTaskControlBlock初始化
 * dtTaskControlBlock：OsDtTaskControlBlock对象
@@ -41,9 +38,10 @@ int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *d
 /*********************************************************************************************************************
 * 时钟滴答
 * dtScheduler：OsDtScheduler对象
+* ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsDtTaskControlBlock *osDtSchedulerTick(OsDtScheduler *dtScheduler);
+OsDtTaskControlBlock *osDtSchedulerTick(OsDtScheduler *dtScheduler, uint64_t *ns);
 /*********************************************************************************************************************
 * 增加任务
 * dtScheduler：OsDtScheduler对象

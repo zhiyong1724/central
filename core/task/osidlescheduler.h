@@ -17,10 +17,9 @@ typedef struct OsIdleScheduler
 /*********************************************************************************************************************
 * OsIdleScheduler初始化
 * idleScheduler：OsIdleScheduler对象
-* clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osIdleSchedulerInit(OsIdleScheduler *idleScheduler, uint64_t clockPeriod);
+int osIdleSchedulerInit(OsIdleScheduler *idleScheduler);
 /*********************************************************************************************************************
 * OsIdleTaskControlBlock初始化
 * idleTaskControlBlock：OsIdleTaskControlBlock对象
@@ -31,9 +30,10 @@ int osIdleTaskControlBlockInit(OsIdleScheduler *idleScheduler, OsIdleTaskControl
 /*********************************************************************************************************************
 * 时钟滴答
 * idleScheduler：OsIdleScheduler对象
+* ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsIdleTaskControlBlock *osIdleSchedulerTick(OsIdleScheduler *idleScheduler);
+OsIdleTaskControlBlock *osIdleSchedulerTick(OsIdleScheduler *idleScheduler, uint64_t *ns);
 /*********************************************************************************************************************
 * 增加任务
 * idleScheduler：OsIdleScheduler对象

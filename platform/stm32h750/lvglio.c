@@ -68,8 +68,8 @@ static void *lvglIORun(void *arg)
         sPressed = lcdTouchInfo[0].touch;
         sX = lcdTouchInfo[0].x;
         sY = lcdTouchInfo[0].y;
-        lv_timer_handler();
-        osTaskSleep(20);
+        uint32_t ms = lv_timer_handler();
+        osTaskSleep(ms);
     }
     return NULL;
 }

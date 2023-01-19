@@ -12,12 +12,12 @@ int portStartScheduler(void **stackTop);
 int portYield(void **stackTop);
 os_size_t portDisableInterrupts();
 int portRecoveryInterrupts(os_size_t state);
-int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod)
+int osTaskInit(OsTaskManager *taskManager)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sTaskManager = taskManager;
     os_size_t state = portDisableInterrupts();
-    int ret = osTaskManagerInit(sTaskManager, clockPeriod);
+    int ret = osTaskManagerInit(sTaskManager);
     portRecoveryInterrupts(state);
     return ret;
 }
@@ -48,7 +48,7 @@ int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const ch
     return ret;
 }
 
-int osTaskTick()
+int osTaskTick(uint64_t *ns)
 {
     //taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -56,7 +56,7 @@ int osTaskTick()
     {
         os_size_t state = portDisableInterrupts();
         OsTask *nextTask;
-        ret = osTaskManagerTick(sTaskManager, &nextTask);
+        ret = osTaskManagerTick(sTaskManager, &nextTask, ns);
         portYield(&nextTask->stackTop);
         portRecoveryInterrupts(state);
     }
@@ -173,12 +173,6 @@ uint64_t osTaskGetTickCount()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osTaskManagerGetTickCount(sTaskManager);
-}
-
-uint64_t osTaskGetClockPeriod()
-{
-    taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    return osTaskManagerGetClockPeriod(sTaskManager);
 }
 
 os_size_t osTaskGetTaskCount()

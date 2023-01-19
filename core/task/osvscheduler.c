@@ -5,7 +5,7 @@
 #else
 #define vSchedulerLog(format, ...) (void)0
 #endif
-int osVSchedulerInit(OsVScheduler *vScheduler, uint64_t clockPeriod)
+int osVSchedulerInit(OsVScheduler *vScheduler)
 {
     vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     for (os_size_t i = 0; i < OS_MAX_SCHEDULER_COUNT; i++)
@@ -13,11 +13,10 @@ int osVSchedulerInit(OsVScheduler *vScheduler, uint64_t clockPeriod)
         vScheduler->schedulers[i] = NULL;
     }
     vScheduler->schedulerCount = 0;
-    vScheduler->clockPeriod = clockPeriod;
+    vScheduler->clock = 0;
     vScheduler->suspendedList = NULL;
     vScheduler->sleepTree = NULL;
     vScheduler->runningTask = NULL;
-    vScheduler->minSleepTime = 0;
     vScheduler->minSleepTask = NULL;
     return 0;
 }
@@ -72,15 +71,14 @@ int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *tas
     return -1;
 }
 
-static void sleepTreeTick(OsVScheduler *vScheduler)
+static void sleepTreeTick(OsVScheduler *vScheduler, uint64_t *ns)
 {
     //vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (vScheduler->minSleepTask != NULL)
     {
-        vScheduler->minSleepTime += vScheduler->clockPeriod;
         for (;;)
         {
-            if (vScheduler->minSleepTask != NULL && vScheduler->minSleepTask->sleepTime == vScheduler->minSleepTime)
+            if (vScheduler->minSleepTask != NULL && vScheduler->minSleepTask->sleepTime - vScheduler->clock <= *ns)
             {
                 osDeleteNode(&vScheduler->sleepTree, &vScheduler->minSleepTask->node.treeNode);
                 vScheduler->minSleepTask->taskState = OS_TASK_STATE_READY;
@@ -92,28 +90,41 @@ static void sleepTreeTick(OsVScheduler *vScheduler)
                 break;
             }
         }
+        vScheduler->clock += *ns;
+        *ns = -1;
+        if (vScheduler->minSleepTask != NULL)
+        {
+            *ns = vScheduler->minSleepTask->sleepTime - vScheduler->clock;
+        }
+    }
+    else
+    {
+        *ns = -1;
     }
 }
 
-OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId)
+OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId, uint64_t *ns)
 {
     //vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    sleepTreeTick(vScheduler);
+    uint64_t nextSleepTickInterval = *ns;
+    sleepTreeTick(vScheduler, &nextSleepTickInterval);
+    uint64_t nextTickInterval = *ns;
     if (schedulerId < OS_MAX_SCHEDULER_COUNT)
     {
-        vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[schedulerId].tick(vScheduler->schedulers[schedulerId]);
+        vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[schedulerId].tick(vScheduler->schedulers[schedulerId], &nextTickInterval);
     }
     else
     {
         for (os_size_t i = 0; i < vScheduler->schedulerCount; i++)
         {
-            vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[i].tick(vScheduler->schedulers[i]);
+            vScheduler->runningTask = (OsTaskControlBlock *)vScheduler->schedulerInterfaces[i].tick(vScheduler->schedulers[i], &nextTickInterval);
             if (vScheduler->runningTask != NULL)
             {
                 break;
             }
         }
     }
+    *ns = nextSleepTickInterval < nextTickInterval ? nextSleepTickInterval : nextTickInterval;
     if (vScheduler->runningTask != NULL)
     {
         vScheduler->runningTask--;
@@ -189,7 +200,7 @@ static int onCompare(void *key1, void *key2, void *arg)
     OsVScheduler *taskManager = (OsVScheduler *)arg;
     OsTaskControlBlock *task1 = (OsTaskControlBlock *)key1;
     OsTaskControlBlock *task2 = (OsTaskControlBlock *)key2;
-    if (task1->sleepTime - taskManager->minSleepTime < task2->sleepTime - taskManager->minSleepTime)
+    if (task1->sleepTime - taskManager->clock < task2->sleepTime - taskManager->clock)
     {
         return -1;
     }
@@ -206,10 +217,10 @@ OsTaskControlBlock *osVSchedulerSleep(OsVScheduler *vScheduler, uint64_t ns)
     if (vScheduler->runningTask != NULL)
     {
         vScheduler->schedulerInterfaces[vScheduler->runningTask->schedulerId].removeTask(vScheduler->schedulers[vScheduler->runningTask->schedulerId], vScheduler->runningTask + 1);
-        vScheduler->runningTask->sleepTime = vScheduler->minSleepTime + ns / vScheduler->clockPeriod * vScheduler->clockPeriod + vScheduler->clockPeriod;
+        vScheduler->runningTask->sleepTime = vScheduler->clock + ns;
         osInsertNode(&vScheduler->sleepTree, &vScheduler->runningTask->node.treeNode, onCompare, vScheduler);
         vScheduler->runningTask->taskState = OS_TASK_STATE_SLEEP;
-        if (NULL == vScheduler->minSleepTask || vScheduler->runningTask->sleepTime - vScheduler->minSleepTime < vScheduler->minSleepTask->sleepTime - vScheduler->minSleepTime)
+        if (NULL == vScheduler->minSleepTask || vScheduler->runningTask->sleepTime - vScheduler->clock < vScheduler->minSleepTask->sleepTime - vScheduler->clock)
         {
             vScheduler->minSleepTask = vScheduler->runningTask;
         }

@@ -6,6 +6,7 @@
 #include "ostask.h"
 #include "osf.h"
 #include "osmem.h"
+#include "resourcemonitor.h"
 static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
@@ -546,5 +547,17 @@ void shellPS(long argc, char *argv[])
         shellPrint(&sShell, "tid: %ld  ptid: %ld  stack: 0x%x  stack size: %ld  state: %d  type: %d  priority: %ld  name: %s\n",
                    taskInfo.tid, taskInfo.ptid, taskInfo.stack, taskInfo.stackSize, taskInfo.taskState, taskInfo.taskType, taskInfo.priority, taskInfo.name);
         result = osTaskFindNext(&ptr, &taskInfo);
+    }
+}
+
+void shellRS(long argc, char *argv[])
+{
+    if (argc >= 2 && strcmp(argv[1], "stop") == 0)
+    {
+        resourceMonitorStop();
+    }
+    else
+    {
+        resourceMonitorDump();
     }
 }

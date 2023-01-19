@@ -6,7 +6,9 @@ SRCS +=
 
 ifeq ($(PLATFORM),H750)
 include $(CURRENT_DIR)/audioplayer/Makefile \
-	$(CURRENT_DIR)/test/Makefile 
+	$(CURRENT_DIR)/test/Makefile \
+	$(CURRENT_DIR)/resourcemonitor/Makefile
 else
-include $(CURRENT_DIR)/test/Makefile
+include $(CURRENT_DIR)/test/Makefile \
+	$(CURRENT_DIR)/resourcemonitor/Makefile
 endif

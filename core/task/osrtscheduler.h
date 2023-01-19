@@ -17,20 +17,17 @@ typedef struct OsRtScheduler
 {
     os_byte_t readyTaskTable[OS_RTSCHED_MAX_PRIORITY / 8];
     os_byte_t readyGroupTable;
-    uint64_t interval;
     OsListNode *taskListArray[OS_RTSCHED_MAX_PRIORITY];
     os_size_t taskCount;
     OsRtTaskControlBlock *runningTask;
-    os_size_t skipTick;
-    uint64_t clockPeriod;
+    uint64_t interval;
 } OsRtScheduler;
 /*********************************************************************************************************************
 * OsRtScheduler初始化
 * rtScheduler：OsRtScheduler对象
-* clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osRtSchedulerInit(OsRtScheduler *rtScheduler, uint64_t clockPeriod);
+int osRtSchedulerInit(OsRtScheduler *rtScheduler);
 /*********************************************************************************************************************
 * OsRtTaskControlBlock初始化
 * rtScheduler：OsRtScheduler对象
@@ -42,9 +39,10 @@ int osRtTaskControlBlockInit(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *r
 /*********************************************************************************************************************
 * 时钟滴答
 * rtScheduler：OsRtScheduler对象
+* ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler);
+OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler, uint64_t *ns);
 /*********************************************************************************************************************
 * 增加任务
 * rtScheduler：OsRtScheduler对象

@@ -18,10 +18,6 @@
 #ifndef OS_BUDDY_PAGE_SIZE
 #define OS_BUDDY_PAGE_SIZE             4096                                      //伙伴算法页面大小
 #endif
-//时钟相关
-#ifndef OS_SYS_CLOCK_PERIOD_NS
-#define OS_SYS_CLOCK_PERIOD_NS         (1 * 1000 * 1000)                        //系统时钟周期ns
-#endif
 //调度器相关
 #ifndef OS_MAX_SCHEDULER_COUNT
 #define OS_MAX_SCHEDULER_COUNT 3                                                 //最大调度器数量

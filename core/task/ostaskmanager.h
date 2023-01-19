@@ -54,14 +54,14 @@ typedef struct OsTaskManager
     uint64_t tickCount;
     os_size_t cpuUsage;
     uint64_t idleTaskTickCount;
+    uint64_t idleTickCount;
 } OsTaskManager;
 /*********************************************************************************************************************
 * OsTaskManager初始化
 * taskManager：OsTaskManager对象
-* clockPeriod：时钟周期NS
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osTaskManagerInit(OsTaskManager *taskManager, uint64_t clockPeriod);
+int osTaskManagerInit(OsTaskManager *taskManager);
 /*********************************************************************************************************************
 * 创建任务
 * taskManager：OsTaskManager对象
@@ -79,9 +79,10 @@ int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunct
 * 时钟滴答
 * taskManager：OsTaskManager对象
 * nextTask：下一个任务
+* ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask);
+int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask, uint64_t *ns);
 /*********************************************************************************************************************
 * 修改优先级
 * taskManager：OsTaskManager对象
@@ -152,12 +153,6 @@ int osTaskManagerDetach(OsTaskManager *taskManager, os_tid_t tid);
 * return：系统ticks
 *********************************************************************************************************************/
 uint64_t osTaskManagerGetTickCount(OsTaskManager *taskManager);
-/*********************************************************************************************************************
-* 获取时钟周期 ns
-* taskManager：OsTaskManager对象
-* return：时钟周期
-*********************************************************************************************************************/
-uint64_t osTaskManagerGetClockPeriod(OsTaskManager *taskManager);
 /*********************************************************************************************************************
 * 获取任务个数
 * taskManager：OsTaskManager对象

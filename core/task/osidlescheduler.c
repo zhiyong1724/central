@@ -5,7 +5,7 @@
 #else
 #define idlechedulerLog(format, ...) (void)0
 #endif
-int osIdleSchedulerInit(OsIdleScheduler *idleScheduler, uint64_t clockPeriod)
+int osIdleSchedulerInit(OsIdleScheduler *idleScheduler)
 {
     idlechedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     idleScheduler->runningTask = NULL;
@@ -19,9 +19,10 @@ int osIdleTaskControlBlockInit(OsIdleScheduler *idleScheduler, OsIdleTaskControl
     return 0;
 }
 
-OsIdleTaskControlBlock *osIdleSchedulerTick(OsIdleScheduler *idleScheduler)
+OsIdleTaskControlBlock *osIdleSchedulerTick(OsIdleScheduler *idleScheduler, uint64_t *ns)
 {
     idlechedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    *ns = -1;
     return idleScheduler->runningTask;
 }
 

@@ -415,7 +415,7 @@ void testRtScheduler()
 {
     OsRtTaskControlBlock *runningTask = NULL;
     OsRtScheduler rtScheduler;
-    osRtSchedulerInit(&rtScheduler, 1000 * 1000);
+    osRtSchedulerInit(&rtScheduler);
 
     OsRtTaskControlBlock taskA;
     osRtTaskControlBlockInit(&rtScheduler, &taskA, 50);
@@ -431,9 +431,10 @@ void testRtScheduler()
 
     osRtSchedulerAddTask(&rtScheduler, &taskA);
     osRtSchedulerAddTask(&rtScheduler, &taskB);
+    uint64_t ns = 100;
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -455,7 +456,7 @@ void testRtScheduler()
     osRtSchedulerAddTask(&rtScheduler, &taskC);
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -476,7 +477,7 @@ void testRtScheduler()
     osRtSchedulerAddTask(&rtScheduler, &taskD);
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -497,7 +498,7 @@ void testRtScheduler()
     osRtSchedulerModifyPriority(&rtScheduler, &taskA, 0);
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -518,7 +519,7 @@ void testRtScheduler()
     osRtSchedulerRemoveTask(&rtScheduler, &taskC);
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -539,7 +540,7 @@ void testRtScheduler()
     osRtSchedulerRemoveTask(&rtScheduler, &taskD);
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -560,7 +561,7 @@ void testRtScheduler()
     osRtSchedulerModifyPriority(&rtScheduler, &taskB, 0);
     for (size_t i = 0; i < 100; i++)
     {
-        runningTask = osRtSchedulerTick(&rtScheduler);
+        runningTask = osRtSchedulerTick(&rtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -584,7 +585,7 @@ void testDtScheduler()
 {
     OsDtTaskControlBlock *runningTask = NULL;
     OsDtScheduler dtScheduler;
-    osDtSchedulerInit(&dtScheduler, 1000 * 1000);
+    osDtSchedulerInit(&dtScheduler);
 
     OsDtTaskControlBlock taskA;
     osDtTaskControlBlockInit(&dtScheduler, &taskA, 0);
@@ -605,10 +606,10 @@ void testDtScheduler()
     OsDtTaskControlBlock taskE;
     
     osDtSchedulerRemoveTask(&dtScheduler, &taskC);
-
+    uint64_t ns = 100;
     for (size_t i = 0; i < 1000; i++)
     {
-        runningTask = osDtSchedulerTick(&dtScheduler);
+        runningTask = osDtSchedulerTick(&dtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -632,11 +633,11 @@ void testDtScheduler()
     }
     
     osDtTaskControlBlockInit(&dtScheduler, &taskE, 0);
-    taskE.vRunTime += 100000;
+    taskE.vRunTime -= 1;
     osDtSchedulerAddTask(&dtScheduler, &taskE);
     for (size_t i = 0; i < 1000; i++)
     {
-        runningTask = osDtSchedulerTick(&dtScheduler);
+        runningTask = osDtSchedulerTick(&dtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -661,7 +662,7 @@ void testDtScheduler()
     osDtSchedulerModifyPriority(&dtScheduler, &taskD, 0);
     for (size_t i = 0; i < 1000; i++)
     {
-        runningTask = osDtSchedulerTick(&dtScheduler);
+        runningTask = osDtSchedulerTick(&dtScheduler, &ns);
         if (runningTask == &taskA)
         {
             printf("This is task A\n");
@@ -918,7 +919,6 @@ void *taskA(void *arg)
     for (;;)
     {
         printf("This is task A\n");
-        printf("时钟周期：%ld\n", osTaskGetClockPeriod());
         printf("系统滴答：%ld\n", osTaskGetTickCount());
         printf("任务个数：%ld\n", osTaskGetTaskCount());
 
@@ -1009,49 +1009,20 @@ void *taskG(void *arg)
 
 int main()
 {   
-    // double ia;
-    // double ib;
-    // double ic;
-    // double input = 25000000;
-    // double output = 6144000;
-    // double offset = output;
-    // for (double i = 0; i <= 63; i++)
-    // {
-    //     for (double j = 0; j <= 512; j++)
-    //     {
-    //         for (double k = 0; k < 128; k++)
-    //         {
-    //             double real = input / i * j / k - output;
-    //             if (real < 0)
-    //             {
-    //                 real = real * -1.0;
-    //             }
-    //             if (real < offset)
-    //             {
-    //                 offset = real;
-    //                 ia = i;
-    //                 ib = j;
-    //                 ic = k;
-    //             }
-    //         }
-    //     }
-    // }
-    // printf("offset = %lf, ia = %lf, ib = %lf, ic = %lf\n", offset, ia, ib, ic);
     //testTree();
     //testBuddy();
     //testMemPool();
     //testMem();
     // testVector();
-    // testDtScheduler();
+    //testDtScheduler();
     // testRtScheduler();
     // testTid();
     //testSemaphore();
     //testMutex();
     //testQueue();
     osInit();
-    //lvglIOInit();
-    // os_tid_t tid;
-    // osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
+    //os_tid_t tid;
+    //osTaskCreate(&tid, taskA, NULL, "task a", 20, 512);
     // osTaskCreate(&tid, taskC, NULL, "task c", 20, 512);
     // osTaskCreateRT(&tid, taskG, NULL, "task g", 20, 512);
     registerLFS();

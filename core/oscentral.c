@@ -18,7 +18,7 @@ static OsQueueManager sQueueManager;
 static OsVFS sVFS;
 #endif
 os_size_t osMemInit(void *startAddress, os_size_t size);
-int osTaskInit(OsTaskManager *taskManager, os_size_t clockPeriod);
+int osTaskInit(OsTaskManager *taskManager);
 int osSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *taskManager);
 int osMsgQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager);
 #if OS_USE_VFS
@@ -31,7 +31,7 @@ int osInit()
     {
         return -1;
     }
-    if (osTaskInit(&sTaskManager, OS_SYS_CLOCK_PERIOD_NS) != 0)
+    if (osTaskInit(&sTaskManager) != 0)
     {
         return -2;
     }
