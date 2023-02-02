@@ -43,6 +43,15 @@ int osFree(void *address)
     return ret;
 }
 
+os_size_t osMallocUsableSize(const void *address)
+{
+    memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    osMutexLock(&sMutex);
+    int ret = osMemManagerAllocUsableSize(&sMemManager, address);
+    osMutexUnlock(&sMutex);
+    return ret;
+}
+
 void *osAllocPages(os_size_t n)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);

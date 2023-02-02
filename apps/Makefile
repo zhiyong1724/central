@@ -3,12 +3,5 @@ CURRENT_DIR := $(patsubst %/, %, $(dir $(MAKEFILE_PATH)))
 INCLUDES += -I$(CURRENT_DIR)
 vpath %.c $(CURRENT_DIR)
 SRCS += 
-
-ifeq ($(PLATFORM),H750)
-include $(CURRENT_DIR)/audioplayer/Makefile \
-	$(CURRENT_DIR)/test/Makefile \
-	$(CURRENT_DIR)/resourcemonitor/Makefile
-else
-include $(CURRENT_DIR)/test/Makefile \
-	$(CURRENT_DIR)/resourcemonitor/Makefile
-endif
+include $(CURRENT_DIR)/resourcemonitor/Makefile \
+	$(CURRENT_DIR)/jsinterpreter/Makefile

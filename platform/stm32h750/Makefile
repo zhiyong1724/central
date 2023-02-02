@@ -29,7 +29,7 @@ INCLUDES := -I. \
 
 LIBS_DIR := -L. -L./ffmpeg/lib
 
-LIBS := -lavformat -lavcodec -lswresample -lswscale -lavutil -llvgl -lc -lm
+LIBS := -llvgl -lc -lm
 
 CFLAGS := -Wall -Werror -g -Og -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -Wl,-Map=$(MAP_FILE) -ffunction-sections -fdata-sections -Wl,--gc-sections
 
@@ -67,24 +67,6 @@ SRCS := stm32h7xx_it.c \
 	stm32h7xx_ll_fmc.c \
 	stm32h7xx_ll_sdmmc.c \
 	system_stm32h7xx.c \
-	dma.c \
-	es8388.c \
-	fmc.c \
-	gpio.c \
-	gt9147.c \
-	key.c \
-	keymanager.c \
-	led.c \
-	ltdc.c \
-	nandflash.c \
-	pcf8574.c \
-	sai.c \
-	sdcard.c \
-	sdmmc.c \
-	sdram.c \
-	softiic.c \
-	usart.c \
-	volumemanager.c \
 	diskio.c \
 	downloadmode.c \
 	fatfsadapter.c \
@@ -96,13 +78,13 @@ SRCS := stm32h7xx_it.c \
 	newlibio.c \
 	normalmode.c \
 	osport.c \
-	saiaudiooutput.c \
 	shell_cmd_list.c \
 	shellio.c \
 	xmodem.c 
 
 ASM_SRCS := startup_stm32h750xx.s
 
+include ./drivers/Makefile
 include ../../apps/Makefile
 include ../../core/Makefile
 include ../../third/Makefile

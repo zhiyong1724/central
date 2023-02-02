@@ -300,3 +300,18 @@ int rmdir(const char *__path)
 {
   return osFUnlink(__path);
 }
+
+int _gettimeofday(struct timeval *tp, void *tzvp)
+{
+  return 0;
+}
+
+FILE *popen (const char *program, const char *type)
+{
+	return NULL;
+}
+
+int pclose (FILE *iop)
+{
+	return 0;
+}

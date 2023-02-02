@@ -50,6 +50,7 @@ void shellFree(long argc, char *argv[]);
 void shellPlay(long argc, char *argv[]);
 void shellPS(long argc, char *argv[]);
 void shellRS(long argc, char *argv[]);
+void shellJS(long argc, char *argv[]);
 SHELL_AGENCY_FUNC(shellRun, shellGetCurrent(), (const char *)p1);
 
 
@@ -146,6 +147,8 @@ const ShellCommand shellCommandList[] =
                        ps, shellPS, ps),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        rs, shellRS, rs),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       js, shellJS, js),
 };
 
 /**

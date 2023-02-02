@@ -18,7 +18,7 @@ INCLUDES := -I. \
 
 LIBS_DIR := -L.
 
-LIBS := -lpthread -lSDL2 -llvgl -lrt
+LIBS := -lpthread -lrt -lSDL2 -llvgl
 
 CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 
@@ -40,7 +40,7 @@ include ../../third/Makefile
 BASE_OBJS := $(patsubst %.c, %.o, $(SRCS))
 OBJS := $(addprefix $(OBJ_DIR)/,$(BASE_OBJS))
 
-all : $(BUILD_DIR) $(OBJ_DIR) $(BIN_DIR) $(ELF_FILE) $(DUMP_FILE)
+all : $(BUILD_DIR) $(OBJ_DIR) $(BIN_DIR) $(ELF_FILE)
 
 $(DUMP_FILE) : $(ELF_FILE)
 	@echo DUMP $(DUMP_FILE)

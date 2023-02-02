@@ -7,6 +7,7 @@
 #include "osf.h"
 #include "osmem.h"
 #include "resourcemonitor.h"
+#include "jsinterpreter.h"
 static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
@@ -560,4 +561,9 @@ void shellRS(long argc, char *argv[])
     {
         resourceMonitorDump();
     }
+}
+
+void shellJS(long argc, char *argv[])
+{
+    jsInterpreterStart(argc, argv);
 }

@@ -8,9 +8,8 @@
 #include <string.h>
 #include "osmsgqueue.h"
 #include "led.h"
-#include "saiaudiooutput.h"
-#include "audioplayer.h"
 #include "resourcemonitor.h"
+#include "jsinterpreter.h"
 static Shell sShell;
 static char sShellBuffer[1024];
 static char sShellPathBuffer[OS_MAX_FILE_PATH_LENGTH];
@@ -525,95 +524,15 @@ void shellFree(long argc, char *argv[])
     shellPrint(&sShell, "可用页：%ld\n", osFreePage());
 }
 
-static int sAudioPlayerRunning = 0;
-static void onPrepared(void *object, const AudioInfo *audioInfo)
-{
-    char audioType[32];
-    switch (audioInfo->audioStreamInfo.audioType)
-    {
-    case AUDIO_TYPE_PCM_S16:
-    strcpy(audioType, "PCM_S16");
-    break;
-    case AUDIO_TYPE_PCM_S32:
-    strcpy(audioType, "PCM_S32");
-    break;
-    case AUDIO_TYPE_PCM_S64:
-    strcpy(audioType, "PCM_S64");
-    break;
-    case AUDIO_TYPE_PCM_FLOAT:
-    strcpy(audioType, "PCM_FLOAT");
-    break;
-    case AUDIO_TYPE_PCM_DOUBLE:
-    strcpy(audioType, "PCM_DOUBLE");
-    break;
-    default:
-        break;
-    }
-    shellPrint(&sShell, "duration: %d  codec: %s  bitrate: %d\n", audioInfo->duration, audioInfo->codecName, audioInfo->bitRate);
-    shellPrint(&sShell, "type: %s  channels: %d  samples: %d  bits: %d\n", audioType, audioInfo->audioStreamInfo.numChannels, audioInfo->audioStreamInfo.samplesPerSec, audioInfo->audioStreamInfo.bitsPerSample);
-}
-
-static void onPlaying(void *object)
-{
-}
-
-static void onStopped(void *object)
-{
-    sAudioPlayerRunning = 0;
-}
-
-static void onPositionChanged(void *object, int ms)
-{
-}
-
-static void *audioPlayerTask(void *arg)
-{
-    SaiAudioOutput saiAudioOutput;
-    saiAudioOutputInit(&saiAudioOutput);
-    AudioPlayer audioPlayer;
-    audioPlayerInit(&audioPlayer, (AudioOutput *)&saiAudioOutput);
-    AudioPlayerCallback audioPlayerCallback;
-    audioPlayerCallback.onPrepared = onPrepared;
-    audioPlayerCallback.onPlaying = onPlaying;
-    audioPlayerCallback.onStopped = onStopped;
-    audioPlayerCallback.onPositionChanged = onPositionChanged;
-    audioPlayerSetCallback(&audioPlayer, &audioPlayerCallback);
-    audioPlayerSetInput(&audioPlayer, (const char *)arg);
-    if (audioPlayerPrepare(&audioPlayer) == 0)
-    {
-        audioPlayerPlay(&audioPlayer);
-    }
-    else
-    {
-        sAudioPlayerRunning = 0;
-    }
-    while (sAudioPlayerRunning > 0)
-    {
-        osTaskSleep(50);
-    }
-    audioPlayerStop(&audioPlayer);
-    audioPlayerUninit(&audioPlayer);
-    saiAudioOutputUninit(&saiAudioOutput);
-    return NULL;
-}
-
 void shellPlay(long argc, char *argv[])
 {
     if (argc >= 2)
     {
         if (strcmp(argv[1], "stop") == 0)
         {
-            sAudioPlayerRunning = 0;
         }
         else
         {
-            if (0 == sAudioPlayerRunning)
-            {
-                sAudioPlayerRunning = 1;
-                os_tid_t tid;
-                osTaskCreate(&tid, audioPlayerTask, argv[1], "audio player", 20, 1024 * 1024);
-                osTaskDetach(tid);
-            }
         }
     }
     else
@@ -645,4 +564,9 @@ void shellRS(long argc, char *argv[])
     {
         resourceMonitorDump();
     }
+}
+
+void shellJS(long argc, char *argv[])
+{
+    jsInterpreterStart(argc, argv);
 }
