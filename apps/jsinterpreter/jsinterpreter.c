@@ -104,3 +104,8 @@ int jsInterpreterStart(long argc, char *argv[])
     }
     return 0;
 }
+
+void shellJS(long argc, char *argv[])
+{
+    jsInterpreterStart(argc, argv);
+}

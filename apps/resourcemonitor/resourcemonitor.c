@@ -1,6 +1,7 @@
 #include "resourcemonitor.h"
 #include "ostask.h"
 #include "osmem.h"
+#include <string.h>
 static int sRunning = 0;
 static os_tid_t sTid = 0;
 static void *monitorTask(void *arg)
@@ -32,5 +33,17 @@ void resourceMonitorStop()
         void *ret;
         osTaskJoin(&ret, sTid);
         sTid = 0;
+    }
+}
+
+void shellRS(long argc, char *argv[])
+{
+    if (argc >= 2 && strcmp(argv[1], "stop") == 0)
+    {
+        resourceMonitorStop();
+    }
+    else
+    {
+        resourceMonitorDump();
     }
 }

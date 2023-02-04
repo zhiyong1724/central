@@ -30,7 +30,6 @@ SRCS := diskio.c \
 	main.c \
 	osport.c \
 	ramio.c \
-	shell_cmd_list.c \
 	shellio.c 
 
 include ../../apps/Makefile

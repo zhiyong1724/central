@@ -47,7 +47,6 @@ void shellMV(long argc, char *argv[]);
 void shellRM(long argc, char *argv[]);
 void shellCP(long argc, char *argv[]);
 void shellFree(long argc, char *argv[]);
-void shellPlay(long argc, char *argv[]);
 void shellPS(long argc, char *argv[]);
 void shellRS(long argc, char *argv[]);
 void shellJS(long argc, char *argv[]);
@@ -74,7 +73,7 @@ const ShellCommand shellCommandList[] =
                        0x1B5B4400, shellLeft, left),
         SHELL_KEY_ITEM(SHELL_CMD_PERMISSION(0), 0x09000000, shellTab, tab),
         SHELL_KEY_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_ENABLE_UNCHECKED,
-                       0x08000000, shellBackspace, backspace),
+                       0x7F000000, shellBackspace, backspace),
         SHELL_KEY_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_ENABLE_UNCHECKED,
                        0x1B000000, shellDelete, delete),
         SHELL_KEY_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_ENABLE_UNCHECKED,
@@ -141,8 +140,6 @@ const ShellCommand shellCommandList[] =
                        cp, shellCP, cp),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        free, shellFree, free),
-        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
-                       play, shellPlay, play),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        ps, shellPS, ps),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,

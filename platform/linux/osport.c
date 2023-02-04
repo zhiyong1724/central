@@ -99,7 +99,7 @@ static void handleTimerTick(int arg)
     timerSpec.it_interval.tv_nsec = 0;
     timerSpec.it_value.tv_sec = 0;
     timerSpec.it_value.tv_nsec = ns;
-    timer_settime(&sTimer, 0, &timerSpec, NULL);
+    timer_settime(sTimer, 0, &timerSpec, NULL);
     portRecoveryInterrupts(state);
 }
 
@@ -124,13 +124,13 @@ int portStartScheduler(void **stackTop)
     action.sa_handler = handleTaskYield;
     sigaction(SIGUSR1, &action, NULL);
 
-    timer_create(ITIMER_REAL, NULL, &sTimer);
+    timer_create(CLOCK_REALTIME, NULL, &sTimer);
     struct itimerspec timerSpec;
     timerSpec.it_interval.tv_sec = 0;
     timerSpec.it_interval.tv_nsec = 0;
     timerSpec.it_value.tv_sec = 0;
     timerSpec.it_value.tv_nsec = 1000 * 1000;
-    timer_settime(&sTimer, 0, &timerSpec, NULL);
+    timer_settime(sTimer, 0, &timerSpec, NULL);
     sPreTask = sRunningTask;
     sRunningTask = stackTop;
     sInterruptFlag = 1;

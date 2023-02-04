@@ -78,7 +78,6 @@ SRCS := stm32h7xx_it.c \
 	newlibio.c \
 	normalmode.c \
 	osport.c \
-	shell_cmd_list.c \
 	shellio.c \
 	xmodem.c 
 

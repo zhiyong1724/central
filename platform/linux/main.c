@@ -1030,7 +1030,7 @@ int main()
     f_mkfs("0:", NULL, NULL, FF_MAX_SS);
     osFMount("/", "RAM");
     shellIOInit();
-    lvglIOInit();
+    //lvglIOInit();
     osTaskStart();
     return 0;
 }

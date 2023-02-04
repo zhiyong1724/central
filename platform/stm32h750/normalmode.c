@@ -85,6 +85,6 @@ void enterNormalMode()
     keyManagerCallBack.onReleased = onReleased;
     keyManagerRegisterCallback(&keyManagerCallBack);
     shellIOInit();
-    lvglIOInit();
+    //lvglIOInit();
     osTaskStart();
 }
