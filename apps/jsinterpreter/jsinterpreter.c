@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include "quickjs.h"
 #include "osmem.h"
-#include "quickjs-libc.h"
 #include <malloc.h>
+#include "jslibc.h"
+#include <assert.h>
+#include <stdlib.h>
 static size_t sMax = 0;
 static void *jsMalloc(JSMallocState *s, size_t size)
 {
@@ -65,6 +67,106 @@ static JSMallocFunctions sJSMallocFunctions =
     jsMallocUsableSize,
 };
 
+static int evalBuf(JSContext *ctx, const void *buf, int bufLen, const char *fileName, int evalFlags)
+{
+    JSValue val;
+    int ret;
+    if ((evalFlags & JS_EVAL_TYPE_MASK) == JS_EVAL_TYPE_MODULE)
+    {
+        val = JS_Eval(ctx, buf, bufLen, fileName,
+                      evalFlags | JS_EVAL_FLAG_COMPILE_ONLY);
+        if (!JS_IsException(val))
+        {
+            val = JS_EvalFunction(ctx, val);
+        }
+    }
+    else
+    {
+        val = JS_Eval(ctx, buf, bufLen, fileName, evalFlags);
+    }
+    if (JS_IsException(val))
+    {
+        jsDumpError(ctx);
+        ret = -1;
+    }
+    else
+    {
+        ret = 0;
+    }
+    JS_FreeValue(ctx, val);
+    return ret;
+}
+
+static uint8_t *loadFile(JSContext *context, size_t *len, const char *fileName)
+{
+    uint8_t *ret = NULL;
+    FILE *file = fopen(fileName, "rb");
+    if (file != NULL)
+    {
+        fseek(file, 0, SEEK_END);
+        *len = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        if (*len > 0)
+        {
+            ret = (uint8_t *)js_malloc(context, *len + 1);
+            if (ret != NULL)
+            {
+                fread(ret, 1, *len, file);
+                ret[*len] = 0;
+            }
+        }
+        fclose(file);
+    }
+    return ret;
+}
+
+static JSModuleDef *jsModuleLoader(JSContext *ctx, const char *moduleName, void *opaque)
+{
+    JSModuleDef *m = NULL;
+    size_t len = 0;
+    uint8_t *buff = loadFile(ctx, &len, moduleName);
+    if (buff != NULL)
+    {
+        JSValue val = JS_Eval(ctx, (const char *)buff, len, moduleName, JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+        if (!JS_IsException(val))
+        {
+            m = JS_VALUE_GET_PTR(val);
+        }
+        else
+        {
+            jsDumpError(ctx);
+        }
+        JS_FreeValue(ctx, val);
+        js_free(ctx, buff);
+    }
+    else
+    {
+        perror(moduleName);
+    }
+    return m;
+}
+
+static int evalFile(JSContext *ctx, const char *fileName)
+{
+    int ret = -1;
+    size_t len = 0;
+    uint8_t *buff = loadFile(ctx, &len, fileName);
+    if (!buff) {
+        perror(fileName);
+        return ret;
+    }
+    if (JS_DetectModule((const char *)buff, len))
+    {
+        ret = evalBuf(ctx, buff, len, fileName, JS_EVAL_TYPE_MODULE);
+    }
+    else
+    {
+        ret = evalBuf(ctx, buff, len, fileName, JS_EVAL_TYPE_GLOBAL);
+    }
+    js_free(ctx, buff);
+    return ret;
+}
+
 int jsInterpreterStart(long argc, char *argv[])
 {
     if (argc >= 2)
@@ -72,27 +174,13 @@ int jsInterpreterStart(long argc, char *argv[])
         JSRuntime *rt = JS_NewRuntime2(&sJSMallocFunctions, NULL);
         if (rt != NULL)
         {
+            JS_SetModuleLoaderFunc(rt, NULL, jsModuleLoader, NULL);
             JSContext *context = JS_NewContext(rt);
             if (context != NULL)
             {
-                js_std_add_helpers(context, argc, argv);
-                js_init_module_std(context, "std");
-                size_t len = 0;
-                uint8_t *buff = js_load_file(context, &len, argv[1]);
-                if (buff != NULL)
-                {
-                    JSValue val = JS_Eval(context, (const char *)buff, len, argv[1], JS_EVAL_TYPE_GLOBAL);
-                    if (JS_IsException(val))
-                    {
-                        js_std_dump_error(context);
-                    }
-                    JS_FreeValue(context, val);
-                    js_free(context, buff);
-                }
-                else
-                {
-                    perror(argv[1]);
-                }
+                jsInitGlobalObject(context);
+                jsInitStdModule(context);
+                evalFile(context, argv[1]);
                 JS_FreeContext(context);
             }
             JS_FreeRuntime(rt);
@@ -107,5 +195,7 @@ int jsInterpreterStart(long argc, char *argv[])
 
 void shellJS(long argc, char *argv[])
 {
+    system("stty echo");
     jsInterpreterStart(argc, argv);
+    system("stty -echo");
 }

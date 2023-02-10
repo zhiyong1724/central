@@ -9,6 +9,8 @@
 #include "led.h"
 #include "osmutex.h"
 #include <sys/times.h>
+#include <unistd.h>
+#include "osmsgqueue.h"
 static OsRecursiveMutex sMallocMutex;
 static int sMallocMutexInit = 0;
 static int sAddressMask = 0;
@@ -117,7 +119,7 @@ int _open(char *file, int flags, int mode)
 int _close(int fildes)
 {
   int ret = -1;
-  if (fildes > 3)
+  if (fildes > STDERR_FILENO)
   {
     OsFile *osFile = (OsFile *)shortToAddress((short)fildes);
     if (osFile != NULL)
@@ -133,10 +135,31 @@ int _close(int fildes)
   return ret;
 }
 
+static int sInBuffQueueInit = 0;
+static OsMsgQueue sInBuffQueue;
+static char sInBuff;
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  UNUSED(huart);
+  osMsgQueueSend(&sInBuffQueue, &sInBuff);
+  MX_USART1_UART_Receive(&sInBuff, 1);
+}
+
 int _read(int file, char *ptr, int len)
 {
   int ret = 0;
-  if (file > 3)
+  if (STDIN_FILENO == file)
+  {
+    if (0 == sInBuffQueueInit)
+    {
+      sInBuffQueueInit = 1;
+      osMsgQueueCreate(&sInBuffQueue, 256, 1);
+      MX_USART1_UART_Receive(&sInBuff, 1);
+    }
+    osMsgQueueReceive(&sInBuffQueue, ptr, OS_MESSAGE_MAX_WAIT_TIME);
+    ret = 1;
+  }
+  else if (file > STDERR_FILENO)
   {
     OsFile *osFile = (OsFile *)shortToAddress((short)file);
     if (osFile != NULL)
@@ -155,12 +178,19 @@ int _read(int file, char *ptr, int len)
 int _write(int file, char *ptr, int len)
 {
   int ret = 0;
-  if (file < 4)
+  if (STDOUT_FILENO == file)
   {
     MX_USART1_UART_Transmit(ptr, len);
     ret = len;
   }
-  else
+  else if (STDERR_FILENO == file)
+  {
+    MX_USART1_UART_Transmit("\033[1;31m", 7);
+    MX_USART1_UART_Transmit(ptr, len);
+    MX_USART1_UART_Transmit("\033[0m", 4);
+    ret = len;
+  }
+  else if (file > STDERR_FILENO)
   {
     OsFile *osFile = (OsFile *)shortToAddress((short)file);
     if (osFile != NULL)
@@ -179,7 +209,7 @@ int _write(int file, char *ptr, int len)
 int _lseek(int file, int ptr, int dir)
 {
   int ret = -1;
-  if (file > 3)
+  if (file > STDERR_FILENO)
   {
     OsSeekType seekType = OS_SEEK_TYPE_SET;
     switch (dir)
@@ -213,7 +243,7 @@ int _lseek(int file, int ptr, int dir)
 
 int _fstat(int file, struct stat *st)
 {
-  if (file < 4)
+  if (file <= STDERR_FILENO)
   {
     st->st_mode = S_IFCHR;
   }
@@ -237,7 +267,7 @@ int _fstat(int file, struct stat *st)
 
 int _isatty(int file)
 {
-  if (file < 4)
+  if (file <= STDERR_FILENO)
   {
     return 1;
   }
