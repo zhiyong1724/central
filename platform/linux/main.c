@@ -1005,9 +1005,13 @@ void *taskG(void *arg)
     osTaskJoin(&retval, tid);
     return NULL;
 }
-
+#include <errno.h>
 int main()
 {   
+    void *file = malloc(9223372036854775807);
+    (void)file;
+    perror("asd");
+    printf("%d\n", errno);
     //testTree();
     //testBuddy();
     //testMemPool();

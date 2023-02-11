@@ -6,11 +6,10 @@
 #include "jslibc.h"
 #include <assert.h>
 #include <stdlib.h>
-static size_t sMax = 0;
 static void *jsMalloc(JSMallocState *s, size_t size)
 {
     void *ret = NULL;
-    if (s->malloc_size + size <= s->malloc_limit)
+    if (size > 0 && s->malloc_size + size <= s->malloc_limit)
     {
         ret = osMalloc(size);
         if (ret != NULL)
@@ -19,7 +18,6 @@ static void *jsMalloc(JSMallocState *s, size_t size)
             s->malloc_size += osMallocUsableSize(ret);
         }
     }
-    sMax = sMax > s->malloc_count ? sMax : s->malloc_count;
     return ret;
 }
 
@@ -36,7 +34,7 @@ static void jsFree(JSMallocState *s, void *ptr)
 static void *jsRealloc(JSMallocState *s, void *ptr, size_t size)
 {
     void *ret = NULL;
-    if (s->malloc_size + size <= s->malloc_limit)
+    if (size > 0 && s->malloc_size + size <= s->malloc_limit)
     {
         if (ptr != NULL)
         {
@@ -50,7 +48,12 @@ static void *jsRealloc(JSMallocState *s, void *ptr, size_t size)
             s->malloc_size += osMallocUsableSize(ret);
         }
     }
-    sMax = sMax > s->malloc_count ? sMax : s->malloc_count;
+    else if (ptr != NULL)
+    {
+        s->malloc_count--;
+        s->malloc_size -= osMallocUsableSize(ptr);
+        osFree(ptr);
+    }
     return ret;
 }
 
@@ -151,7 +154,7 @@ static int evalFile(JSContext *ctx, const char *fileName)
     int ret = -1;
     size_t len = 0;
     uint8_t *buff = loadFile(ctx, &len, fileName);
-    if (!buff) {
+    if (NULL == buff) {
         perror(fileName);
         return ret;
     }

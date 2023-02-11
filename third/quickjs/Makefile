@@ -60,8 +60,8 @@ ifdef CONFIG_WIN32
   endif
   EXE=.exe
 else
-  CROSS_PREFIX=
-#  CROSS_PREFIX=arm-none-eabi-
+#  CROSS_PREFIX=
+  CROSS_PREFIX=arm-none-eabi-
   EXE=
 endif
 ifdef CONFIG_CLANG
@@ -108,7 +108,7 @@ ifdef CONFIG_WIN32
 DEFINES+=-D__USE_MINGW_ANSI_STDIO # for standard snprintf behavior
 endif
 
-#CFLAGS+=-mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DEMSCRIPTEN
+CFLAGS+=-mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DEMSCRIPTEN
 CFLAGS+=$(DEFINES)
 CFLAGS_DEBUG=$(CFLAGS) -O0
 CFLAGS_SMALL=$(CFLAGS) -Os

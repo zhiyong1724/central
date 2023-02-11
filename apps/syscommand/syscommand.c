@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "ostask.h"
 #include "osmem.h"
+#include "oscentral.h"
 void shellFree(long argc, char *argv[])
 {
     printf("所有内存：%ld\n", osTotalMem());
@@ -21,3 +22,8 @@ void shellPS(long argc, char *argv[])
         result = osTaskFindNext(&ptr, &taskInfo);
     }
 }
+
+void shellUName(long argc, char *argv[])
+{
+    printf("Central V%d %s %s\n", osVersion(), __DATE__, __TIME__);
+} 

@@ -105,7 +105,7 @@ static OsFileError lfsOpen(OsFile *file, const char *path, uint32_t mode)
             ret = parseResult(result);
             if (ret != OS_FILE_ERROR_OK)
             {
-                osFree(((lfs_file_t *)file->obj)->cache.buffer);
+                osFree(cfg.buffer);
                 osFree(file->obj);
                 file->obj = NULL;
             }

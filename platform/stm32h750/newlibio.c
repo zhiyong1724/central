@@ -107,11 +107,13 @@ int _open(char *file, int flags, int mode)
     else
     {
       osFree(osFile);
+      errno = ENOENT;
       return -1;
     }
   }
   else
   {
+    errno = ENOMEM;
     return -1;
   }
 }
@@ -129,6 +131,10 @@ int _close(int fildes)
       {
         osFree(osFile);
         ret = 0;
+      }
+      else
+      {
+        errno = ENXIO;
       }
     }
   }
@@ -170,6 +176,10 @@ int _read(int file, char *ptr, int len)
       {
         ret = (int)length;
       }
+      else
+      {
+        errno = ENXIO;
+      }
     }
   }
   return ret;
@@ -200,6 +210,10 @@ int _write(int file, char *ptr, int len)
       if (OS_FILE_ERROR_OK == result)
       {
         ret = (int)length;
+      }
+      else
+      {
+        errno = ENXIO;
       }
     }
   }
@@ -236,6 +250,10 @@ int _lseek(int file, int ptr, int dir)
         osFTell(osFile, &cur);
         ret = (int)cur;
       }
+      else
+      {
+        errno = ENXIO;
+      }
     }
   }
   return ret;
@@ -254,12 +272,16 @@ int _fstat(int file, struct stat *st)
     {
       st->st_mode = S_IFBLK;
       uint64_t cur = 0;
-      osFTell(osFile, &cur);
-      osFSeek(osFile, 0, OS_SEEK_TYPE_END);
+      int result = osFTell(osFile, &cur);
+      result = osFSeek(osFile, 0, OS_SEEK_TYPE_END);
       uint64_t size = 0;
-      osFTell(osFile, &size);
+      result = osFTell(osFile, &size);
       st->st_size = (__off_t)size;
-      osFSeek(osFile, cur, OS_SEEK_TYPE_SET);
+      result = osFSeek(osFile, cur, OS_SEEK_TYPE_SET);
+      if (OS_FILE_ERROR_OK == result)
+      {
+        errno = ENXIO;
+      }
     }
   }
   return 0;
@@ -316,6 +338,10 @@ int _stat(const char *path, struct stat *st)
 {
   OsFileInfo fileInfo;
   int ret = osFStat(path, &fileInfo);
+  if (OS_FILE_ERROR_OK == ret)
+  {
+    errno = ENXIO;
+  }
   st->st_mode = S_IFBLK;
   st->st_size = fileInfo.fileSize;
   return ret;

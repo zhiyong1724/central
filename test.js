@@ -70,21 +70,39 @@ function readFile(fileName)
     }
 }
 
+function writeFile(fileName, text)
+{
+    let file = std.fopen(fileName, "wb");
+    if(file != null)
+    {
+        if(typeof text === "string")
+        {
+            let size = text.length;
+            let buff = new ArrayBuffer(size);
+            let array = new Uint8Array(buff);
+            for(let i = 0; i < size; i++)
+            {
+                array[i] = text.charCodeAt(i);
+            }
+            std.fwrite(buff, 1, size, file);
+        }
+        std.fclose(file);
+    }
+    else
+    {
+        console.log("No such file or directory.");
+    }
+}
+
 function file(options) {
     let option = "";
-    for (const str of options) {
-        if (isOption(str)) {
-            switch (str) {
+    for (let i = 0; i < options.length; i++) {
+        if (isOption(options[i])) {
+            switch (options[i]) {
                 case "-s":
-                    {
-                        option = str;
-                        console.log("-s");
-                        break;
-                    }
                 case "-w":
                     {
-                        option = str;
-                        console.log("-w");
+                        option = options[i];
                         break;
                     }
                 default:
@@ -98,16 +116,17 @@ function file(options) {
             switch (option) {
                 case "-s":
                     {
-                        readFileSize(str);
+                        readFileSize(options[i]);
                         break;
                     }
                 case "-w":
                     {
+                        writeFile(options[i], options[i++]);
                         break;
                     }
                 default:
                     {
-                        readFile(str);
+                        readFile(options[i]);
                         break;
                     }
             }
