@@ -70,31 +70,23 @@ static JSMallocFunctions sJSMallocFunctions =
     jsMallocUsableSize,
 };
 
-static int evalBuf(JSContext *ctx, const void *buf, int bufLen, const char *fileName, int evalFlags)
+static int evalBuf(JSContext *ctx, const void *buf, int bufLen, const char *fileName)
 {
-    JSValue val;
     int ret;
-    if ((evalFlags & JS_EVAL_TYPE_MASK) == JS_EVAL_TYPE_MODULE)
+    JSValue val = JS_Eval(ctx, buf, bufLen, fileName, JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+    if (!JS_IsException(val))
     {
-        val = JS_Eval(ctx, buf, bufLen, fileName,
-                      evalFlags | JS_EVAL_FLAG_COMPILE_ONLY);
-        if (!JS_IsException(val))
+        val = JS_EvalFunction(ctx, val);
+        if (JS_IsException(val))
         {
-            val = JS_EvalFunction(ctx, val);
+            jsDumpError(ctx);
+            ret = -1;
         }
     }
     else
     {
-        val = JS_Eval(ctx, buf, bufLen, fileName, evalFlags);
-    }
-    if (JS_IsException(val))
-    {
         jsDumpError(ctx);
         ret = -1;
-    }
-    else
-    {
-        ret = 0;
     }
     JS_FreeValue(ctx, val);
     return ret;
@@ -158,14 +150,7 @@ static int evalFile(JSContext *ctx, const char *fileName)
         perror(fileName);
         return ret;
     }
-    if (JS_DetectModule((const char *)buff, len))
-    {
-        ret = evalBuf(ctx, buff, len, fileName, JS_EVAL_TYPE_MODULE);
-    }
-    else
-    {
-        ret = evalBuf(ctx, buff, len, fileName, JS_EVAL_TYPE_GLOBAL);
-    }
+    ret = evalBuf(ctx, buff, len, fileName);
     js_free(ctx, buff);
     return ret;
 }
