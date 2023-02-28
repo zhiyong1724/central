@@ -114,7 +114,7 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size)
 {
 	memManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	void *ret = NULL;
-	int newSize = sizeAlign(size);
+	os_size_t newSize = sizeAlign(size);
 	newSize += sizeof(OsMemBlockHeader);
 	if (newSize < sizeof(OsMemBlock))
 	{
