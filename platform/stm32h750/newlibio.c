@@ -147,8 +147,8 @@ static char sInBuff;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   UNUSED(huart);
-  osMsgQueueSend(&sInBuffQueue, &sInBuff);
   MX_USART1_UART_Receive(&sInBuff, 1);
+  osMsgQueueSend(&sInBuffQueue, &sInBuff);
 }
 
 int _read(int file, char *ptr, int len)

@@ -281,3 +281,9 @@ OsTaskControlBlock *osVSchedulerExit(OsVScheduler *vScheduler)
     }
     return vScheduler->runningTask;
 }
+
+OsTaskControlBlock *osVSchedulerGetRunningTask(OsVScheduler *vScheduler)
+{
+    vSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    return vScheduler->runningTask;
+}

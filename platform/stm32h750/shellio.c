@@ -44,7 +44,7 @@ int shellIOInit()
     shellInit(&sShell, sShellBuffer, 1024);
     shellSetPath(&sShell, gShellPathBuffer);
     os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell", 0, 4096 * 1024);
+    osTaskCreate(&tid, _shellTask, &sShell, "shell", OS_DEFAULT_TASK_PRIORITY, 4096 * 1024);
     system("stty -echo");
     system("stty -icanon");
     return 0;

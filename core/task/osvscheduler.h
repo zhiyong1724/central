@@ -119,11 +119,17 @@ OsTaskControlBlock *osVSchedulerSleep(OsVScheduler *vScheduler, uint64_t ns);
 *********************************************************************************************************************/
 OsTaskControlBlock *osVSchedulerWakeup(OsVScheduler *vScheduler, OsTaskControlBlock *taskControlBlock);
 /*********************************************************************************************************************
-* 推出当前任务
+* 退出当前任务
 * vScheduler：OsVScheduler对象
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
 OsTaskControlBlock *osVSchedulerExit(OsVScheduler *vScheduler);
+/*********************************************************************************************************************
+* 获取当前任务
+* vScheduler：OsVScheduler对象
+* return：当前任务
+*********************************************************************************************************************/
+OsTaskControlBlock *osVSchedulerGetRunningTask(OsVScheduler *vScheduler);
 #ifdef __cplusplus
 }
 #endif

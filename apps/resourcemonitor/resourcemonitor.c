@@ -8,10 +8,18 @@ static void *monitorTask(void *arg)
 {
     while (sRunning)
     {
-        printf("cpu used: %ld%%    mem used: %ld%%    task count: %ld", osTaskGetCPUUsage(), (osTotalMem() - osFreeMem()) * 100 / osTotalMem(), osTaskGetTaskCount());
-        fflush(stdout);
+        printf("\033[2J\033[0;0H");
+        printf("cpu used: %ld%%    mem used: %ld%%    task count: %ld\n", osTaskGetCPUUsage(), (osTotalMem() - osFreeMem()) * 100 / osTotalMem(), osTaskGetTaskCount());
+        os_task_ptr ptr;
+        OsTaskInfo taskInfo;
+        int result = osTaskFindFirst(&ptr, &taskInfo);
+        while (0 == result)
+        {
+            printf("tid: %ld  ptid: %ld  stack: %p  stack size: %ld  state: %d  type: %d  priority: %ld  name: %s\n",
+                   taskInfo.tid, taskInfo.ptid, taskInfo.stack, taskInfo.stackSize, taskInfo.taskState, taskInfo.taskType, taskInfo.priority, taskInfo.name);
+            result = osTaskFindNext(&ptr, &taskInfo);
+        }
         osTaskSleep(1000);
-        printf("\r\033[K");
     }
     return NULL;
 }
@@ -21,7 +29,7 @@ void resourceMonitorDump()
     sRunning = 1;
     if (0 == sTid)
     {
-        osTaskCreate(&sTid, monitorTask, NULL, "resource monitor", 20, 0);
+        osTaskCreate(&sTid, monitorTask, NULL, "resource monitor", OS_DEFAULT_TASK_PRIORITY, 0);
     }
 }
 
