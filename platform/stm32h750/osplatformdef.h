@@ -35,8 +35,8 @@ else \
 #endif
 extern int _sys_heap_start[0];
 extern int _sys_heap_end[0];
-#define OS_HEAP_ADDRESS                (void *)&_sys_heap_start                                   //堆空间指针
-#define OS_HEAP_SIZE                   ((os_size_t)&_sys_heap_end - (os_size_t)&_sys_heap_start)
+#define OS_HEAP_ADDRESS                (void *)_sys_heap_start                                   //堆空间指针
+#define OS_HEAP_SIZE                   ((os_size_t)_sys_heap_end - (os_size_t)_sys_heap_start)
 #ifdef __cplusplus
 }
 #endif

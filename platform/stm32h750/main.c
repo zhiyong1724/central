@@ -236,7 +236,7 @@ void PeriphCommonClock_Config(void);
 //   /* Enable the MPU */
 //   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 // }
-extern int _isr_vector[];
+extern int _isr_vector[0];
 /* USER CODE END 0 */
 /**
   * @brief  The application entry point.
@@ -244,7 +244,7 @@ extern int _isr_vector[];
   */
 int main(void)
 {
-  SCB->VTOR = (uint32_t)&_isr_vector;
+  SCB->VTOR = (uint32_t)_isr_vector;
   /* USER CODE BEGIN 1 */
   /* USER CODE END 1 */
   /* Enable I-Cache---------------------------------------------------------*/
