@@ -35,7 +35,7 @@ typedef enum OsFileError
     OS_FILE_ERROR_CORRUPT,
     OS_FILE_ERROR_NOT_READY,
     OS_FILE_ERROR_WRITE_PROTECTED,
-    OS_FILE_ERROR_INVALID_DRIVE,
+    OS_FILE_ERROR_INVALID_DRIVER,
     OS_FILE_ERROR_NO_FILESYSTEM,
     OS_FILE_ERROR_IS_DIR,
     OS_FILE_ERROR_DIR_NOTEMPTY,
@@ -108,7 +108,7 @@ typedef struct OsMountInfo
     OsListNode node;
     void *obj;
     char *path;
-    char *drive;
+    char *driver;
     uint32_t fs;
 } OsMountInfo;
 
@@ -140,7 +140,7 @@ typedef struct OsFSInterfaces
     OsFileError (*rename)(const char *oldPath, const char *newPath);
     OsFileError (*stat)(const char *path, OsFileInfo *fileInfo);
     OsFileError (*chMod)(const char *path, uint32_t attr, uint32_t mask);
-    OsFileError (*chDrive)(const char *path);
+    OsFileError (*chDriver)(const char *path);
     OsFileError (*statFS)(const char *path, OsFS *fs);
     OsFileError (*mount)(OsMountInfo *mountInfo);
     OsFileError (*unmount)(OsMountInfo *mountInfo);
@@ -292,10 +292,10 @@ OsFileError osFStatFS(const char *path, OsFS *fs);
 /*********************************************************************************************************************
 * 挂载文件系统
 * path：挂载路径
-* drive：驱动
+* driver：驱动
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osFMount(const char *path, const char *drive);
+OsFileError osFMount(const char *path, const char *driver);
 /*********************************************************************************************************************
 * 卸载文件系统
 * path：挂载路径

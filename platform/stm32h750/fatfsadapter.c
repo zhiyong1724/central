@@ -20,7 +20,7 @@ static OsFileError parseResult(FRESULT result)
         ret = OS_FILE_ERROR_WRITE_PROTECTED;
         break;
     case FR_INVALID_DRIVE:
-        ret = OS_FILE_ERROR_INVALID_DRIVE;
+        ret = OS_FILE_ERROR_INVALID_DRIVER;
         break;
     case FR_NO_FILESYSTEM:
         ret = OS_FILE_ERROR_NO_FILESYSTEM;
@@ -375,7 +375,7 @@ static OsFileError fatfsChMod(const char *path, uint32_t attr, uint32_t mask)
     return parseResult(result);
 }
 
-static OsFileError fatfsChDrive(const char *path)
+static OsFileError fatfsChDriver(const char *path)
 {
     FRESULT result = f_chdrive((const TCHAR *)path);
     return parseResult(result);
@@ -422,7 +422,7 @@ OsFileError fatfsMount(OsMountInfo *mountInfo)
     {
         osMemSet(fatfs, 0, sizeof(FATFS));
         mountInfo->obj = fatfs;
-        FRESULT result = f_mount(fatfs, (const TCHAR *)mountInfo->drive, 1);
+        FRESULT result = f_mount(fatfs, (const TCHAR *)mountInfo->driver, 1);
         ret = parseResult(result);
         if (ret != OS_FILE_ERROR_OK)
         {
@@ -434,7 +434,7 @@ OsFileError fatfsMount(OsMountInfo *mountInfo)
 
 OsFileError fatfsUnmount(OsMountInfo *mountInfo)
 {
-    FRESULT result = f_unmount((const TCHAR *)mountInfo->drive);
+    FRESULT result = f_unmount((const TCHAR *)mountInfo->driver);
     OsFileError ret = parseResult(result);
     osFree(mountInfo->obj);
     return ret;
@@ -461,7 +461,7 @@ OsFileError registerFatfs()
     fsInterfaces.rename = fatfsRename;
     fsInterfaces.stat = fatfsStat;
     fsInterfaces.chMod = fatfsChMod;
-    fsInterfaces.chDrive = fatfsChDrive;
+    fsInterfaces.chDriver = fatfsChDriver;
     fsInterfaces.statFS = fatfsStatFS;
     fsInterfaces.mount = fatfsMount;
     fsInterfaces.unmount = fatfsUnmount;

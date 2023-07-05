@@ -55,6 +55,8 @@ static int onReleased(void *object, KeyType type)
     return 0;
 }
 
+extern const struct lfs_config gLfsConfig;
+extern lfs_t gLFS;
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
@@ -67,6 +69,7 @@ void enterNormalMode()
     MX_DMA_Init();
     MX_SAI1_Init();
     nandFlashInit();
+    //lfs_format(&gLFS, &gLfsConfig);
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
     HAL_NVIC_SetPriority(PendSV_IRQn, 0, 0);
     registerLFS();

@@ -370,7 +370,7 @@ static OsFileError lfsChMod(const char *path, uint32_t attr, uint32_t mask)
     return OS_FILE_ERROR_NONSUPPORT;
 }
 
-static OsFileError lfsChDrive(const char *path)
+static OsFileError lfsChDriver(const char *path)
 {
     return OS_FILE_ERROR_NONSUPPORT;
 }
@@ -396,7 +396,7 @@ static OsFileError lfsStatFS(const char *path, OsFS *fs)
 
 static OsFileError lfsMount(OsMountInfo *mountInfo)
 {
-    int ret = OS_FILE_ERROR_INVALID_DRIVE;
+    int ret = OS_FILE_ERROR_INVALID_DRIVER;
     if (0 == sMount)
     {
         sMount = 1;
@@ -409,7 +409,7 @@ static OsFileError lfsMount(OsMountInfo *mountInfo)
 
 static OsFileError lfsUnmount(OsMountInfo *mountInfo)
 {
-    int ret = OS_FILE_ERROR_INVALID_DRIVE;
+    int ret = OS_FILE_ERROR_INVALID_DRIVER;
     if (1 == sMount)
     {
         sMount = 0;
@@ -441,7 +441,7 @@ OsFileError registerLFS()
     fsInterfaces.rename = lfsRename;
     fsInterfaces.stat = lfsStat;
     fsInterfaces.chMod = lfsChMod;
-    fsInterfaces.chDrive = lfsChDrive;
+    fsInterfaces.chDriver = lfsChDriver;
     fsInterfaces.statFS = lfsStatFS;
     fsInterfaces.mount = lfsMount;
     fsInterfaces.unmount = lfsUnmount;

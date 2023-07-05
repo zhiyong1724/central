@@ -68,7 +68,6 @@ SRCS := stm32h7xx_it.c \
 	stm32h7xx_ll_sdmmc.c \
 	system_stm32h7xx.c \
 	diskio.c \
-	downloadmode.c \
 	fatfsadapter.c \
 	ffsystem.c \
 	lfsadapter.c \
@@ -78,8 +77,7 @@ SRCS := stm32h7xx_it.c \
 	newlibio.c \
 	normalmode.c \
 	osport.c \
-	shellio.c \
-	xmodem.c 
+	shellio.c
 
 ASM_SRCS := startup_stm32h750xx.s
 

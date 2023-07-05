@@ -198,11 +198,11 @@ OsFileError osFStatFS(const char *path, OsFS *fs)
     return ret;
 }
 
-OsFileError osFMount(const char *path, const char *drive)
+OsFileError osFMount(const char *path, const char *driver)
 {
     fLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osRecursiveMutexLock(&sMutex);
-    OsFileError ret = osVFSMount(sVFS, path, drive);
+    OsFileError ret = osVFSMount(sVFS, path, driver);
     osRecursiveMutexUnlock(&sMutex);
     return ret;
 }

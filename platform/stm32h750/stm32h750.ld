@@ -57,6 +57,7 @@ _estack = 0x20020000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x80000;      /* required amount of heap  */
 _Min_Stack_Size = 0x20000; /* required amount of stack */
+_Sys_Heap_Size = 0x3000000;
 
 /* Specify the memory areas */
 MEMORY
@@ -67,8 +68,8 @@ RAM_D2 (xrw)       : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (xrw)       : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)      : ORIGIN = 0x00000000, LENGTH = 64K
 FLASH (rx)         : ORIGIN = 0x08000000, LENGTH = 128K
-SDRAM (xrw)        : ORIGIN = 0x60000000, LENGTH = 48M
-TEXTSDRAM (rx)     : ORIGIN = 0x63000000, LENGTH = 16M
+SDRAM (xrw)        : ORIGIN = 0xc0000000, LENGTH = 48M
+TEXTSDRAM (rx)     : ORIGIN = 0xc3000000, LENGTH = 16M
 }
 
 /* Define output sections */
@@ -78,9 +79,8 @@ SECTIONS
   .isr_vector :
   {
     . = ALIGN(4);
+    _isr_vector = .;
     KEEP(*(.isr_vector)) /* Startup code */
-    . = ALIGN(4);
-    KEEP(*(.enter))
     . = ALIGN(4);
   } >TEXTSDRAM
 
@@ -88,6 +88,7 @@ SECTIONS
   .text :
   {
     . = ALIGN(4);
+    *startup_stm32h750xx.o(.text*)
     *(.text)           /* .text sections (code) */
     *(.text*)          /* .text* sections (code) */
     *(.glue_7)         /* glue arm to thumb code */
@@ -186,6 +187,14 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = ALIGN(4);
   } >RAM_D1
+
+  ._sys_heap :
+  {
+    . = ALIGN(4);
+    _sys_heap_start = .;
+    . = . + _Sys_Heap_Size;
+    _sys_heap_end = .;
+  } >SDRAM
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

@@ -141,7 +141,7 @@ static const OsMountInfo *getMountInfo(OsVFS *vfs, const char *path)
             }
         } while (curNode != (OsMountInfo *)vfs->mountList);
     }
-    vfs->fs[curNode->fs].chDrive(curNode->drive);
+    vfs->fs[curNode->fs].chDriver(curNode->driver);
     return curNode;
 }
 
@@ -423,7 +423,7 @@ static OsFileError checkMount(OsVFS *vfs, const char *path)
     return ret;
 }
 
-OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *drive)
+OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *driver)
 {
     vfsLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     OsFileError ret = OS_FILE_ERROR_PATH_TOO_LONG;
@@ -455,11 +455,11 @@ OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *drive)
                     osAssert(mountInfo->path != NULL);
                     if (mountInfo->path != NULL)
                     {
-                        mountInfo->drive = (char *)osMalloc(osStrLen(drive) + 1);
-                        osAssert(mountInfo->drive != NULL);
-                        if (mountInfo->drive != NULL)
+                        mountInfo->driver = (char *)osMalloc(osStrLen(driver) + 1);
+                        osAssert(mountInfo->driver != NULL);
+                        if (mountInfo->driver != NULL)
                         {
-                            osStrCpy(mountInfo->drive, drive, -1);
+                            osStrCpy(mountInfo->driver, driver, -1);
                             os_size_t i = 0;
                             for (; i < vfs->fsCount; i++)
                             {
@@ -495,7 +495,7 @@ OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *drive)
                             else
                             {
                                 osFree(mountInfo->path);
-                                osFree(mountInfo->drive);
+                                osFree(mountInfo->driver);
                                 osFree(mountInfo);
                             }
                         }
@@ -536,7 +536,7 @@ OsFileError osVFSUnmount(OsVFS *vfs, const char *path)
                     vfs->fs[curNode->fs].unmount(curNode);
                     osRemoveFromList(&vfs->mountList, &curNode->node);
                     osFree(curNode->path);
-                    osFree(curNode->drive);
+                    osFree(curNode->driver);
                     osFree(curNode);
                     break;
                 }

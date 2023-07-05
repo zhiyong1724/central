@@ -26,7 +26,7 @@ static void printFSError(OsFileError error)
     case OS_FILE_ERROR_WRITE_PROTECTED:
     printf("存储设备写保护\n");
     break;
-    case OS_FILE_ERROR_INVALID_DRIVE:
+    case OS_FILE_ERROR_INVALID_DRIVER:
     printf("没有有效的驱动\n");
     break;
     case OS_FILE_ERROR_NO_FILESYSTEM:
@@ -310,7 +310,7 @@ void shellStatFS(long argc, char *argv[])
 
 static void showMountInfo(const OsMountInfo *mountInfo)
 {
-    printf("文件系统：%s  ", mountInfo->drive);
+    printf("文件系统：%s  ", mountInfo->driver);
     printf("挂载点：%s  ", mountInfo->path);
 }
 

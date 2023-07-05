@@ -189,10 +189,10 @@ OsFileError osVFSStatFS(OsVFS *vfs, const char *path, OsFS *fs);
 * 挂载文件系统
 * vfs：虚拟文件系统对象
 * path：挂载路径
-* drive：驱动
+* driver：驱动
 * return：OsFileError
 *********************************************************************************************************************/
-OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *drive);
+OsFileError osVFSMount(OsVFS *vfs, const char *path, const char *driver);
 /*********************************************************************************************************************
 * 卸载文件系统
 * vfs：虚拟文件系统对象
