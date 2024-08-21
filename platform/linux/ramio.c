@@ -122,13 +122,13 @@ static unsigned int sProgBuffer[BLOCK_SIZE / sizeof(unsigned int)];
 static unsigned int sLookaheadBuffer[BLOCK_COUNT / 8 / sizeof(unsigned int)];
 static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
-    memcpy(&((uint8_t *)buffer)[off % c->cache_size], &sLfsBuffer[block * BLOCK_SIZE + off], size);
+    memcpy(&((uint8_t *)buffer)[off % c->cache_size / sizeof(unsigned int)], &sLfsBuffer[(block * BLOCK_SIZE + off) / sizeof(unsigned int)], size);
     return LFS_ERR_OK;
 }
 
 static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
-    memcpy(&sLfsBuffer[block * BLOCK_SIZE + off], &((uint8_t *)buffer)[off % c->cache_size], size);
+    memcpy(&sLfsBuffer[(block * BLOCK_SIZE + off) / sizeof(unsigned int)], &((uint8_t *)buffer)[off % c->cache_size / sizeof(unsigned int)], size);
     return LFS_ERR_OK;
 }
 
