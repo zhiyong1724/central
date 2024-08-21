@@ -189,9 +189,9 @@ int osTaskManagerInit(OsTaskManager *taskManager)
     taskManager->idleTaskTickCount = 0;
     taskManager->idleTickCount = 0;
     os_tid_t tid;
+    ret = osTaskManagerCreateTask(taskManager, &tid, idleTask, taskManager, "idle", OS_TASK_TYPE_IDLE, 0, OS_DEFAULT_TASK_STACK_SIZE);
     ret = osTaskManagerCreateTask(taskManager, &tid, initTask, taskManager, "init", OS_TASK_TYPE_DT, 0, OS_DEFAULT_TASK_STACK_SIZE);
     taskManager->initTask = osTaskManagerGetRunningTask(taskManager);
-    ret = osTaskManagerCreateTask(taskManager, &tid, idleTask, taskManager, "idle", OS_TASK_TYPE_IDLE, 0, OS_DEFAULT_TASK_STACK_SIZE);
     return ret;
 }
 
