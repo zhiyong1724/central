@@ -282,7 +282,7 @@ int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask, uint64_t *n
         taskManager->tickCount += *ns;
         taskManager->idleTickCount += *ns;
         OsTask *runningTask = osTaskManagerGetRunningTask(taskManager);
-        if (1 == runningTask->tid)
+        if (0 == runningTask->tid)
         {
             taskManager->idleTaskTickCount += *ns;
         }
