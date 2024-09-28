@@ -44,7 +44,7 @@ void osInsertToBack(OsListNode **handle, OsListNode *node);
 * node 新节点
 * n 插入位置
 *********************************************************************************************************************/
-void osInsertToMiddle(OsListNode **handle, OsListNode *node, os_size_t n);
+void osInsertToMiddle(OsListNode **handle, OsListNode *node, size_t n);
 /*********************************************************************************************************************
 * 删除一个节点
 * handle 链表头

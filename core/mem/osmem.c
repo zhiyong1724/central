@@ -9,14 +9,14 @@
 #endif
 static OsMemManager sMemManager;
 static OsMutex sMutex;
-os_size_t osMemInit(void *startAddress, os_size_t size)
+size_t osMemInit(void *startAddress, size_t size)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMutexCreate(&sMutex);
     return osMemManagerInit(&sMemManager, startAddress, size);
 }
 
-void *osMalloc(os_size_t size)
+void *osMalloc(size_t size)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMutexLock(&sMutex);
@@ -25,7 +25,7 @@ void *osMalloc(os_size_t size)
     return ret;
 }
 
-void *osRealloc(void *address, os_size_t newSize)
+void *osRealloc(void *address, size_t newSize)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMutexLock(&sMutex);
@@ -43,7 +43,7 @@ int osFree(void *address)
     return ret;
 }
 
-os_size_t osMallocUsableSize(const void *address)
+size_t osMallocUsableSize(const void *address)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMutexLock(&sMutex);
@@ -52,7 +52,7 @@ os_size_t osMallocUsableSize(const void *address)
     return ret;
 }
 
-void *osAllocPages(os_size_t n)
+void *osAllocPages(size_t n)
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMutexLock(&sMutex);
@@ -70,25 +70,25 @@ int osFreePages(void *pages)
     return ret;
 }
 
-os_size_t osTotalMem()
+size_t osTotalMem()
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osMemManagerTotalMem(&sMemManager);
 }
 
-os_size_t osFreeMem()
+size_t osFreeMem()
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osMemManagerFreeMem(&sMemManager);
 }
 
-os_size_t osTotalPage()
+size_t osTotalPage()
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osMemManagerTotalPage(&sMemManager);
 }
 
-os_size_t osFreePage()
+size_t osFreePage()
 {
     memLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osMemManagerFreePage(&sMemManager);

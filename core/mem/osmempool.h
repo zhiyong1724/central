@@ -8,12 +8,12 @@ extern "C"
 #endif
 typedef struct OsMemPool
 {
-	os_byte_t *bitmap;                                             //记录页面是否可用
+	unsigned char *bitmap;                                             //记录页面是否可用
 	void *startAddress;                                            //内存起始地址
 	OsSingleListNode *pageList;                                    //可用页链表
-	os_size_t totalPageNum;                                        //所有页数量
-	os_size_t freePageNum;                                         //可用页数量
-    os_size_t pageSize;                                            //页面大小
+	size_t totalPageNum;                                        //所有页数量
+	size_t freePageNum;                                         //可用页数量
+    size_t pageSize;                                            //页面大小
 } OsMemPool;
 /*********************************************************************************************************************
 * OsMemPool初始化
@@ -23,7 +23,7 @@ typedef struct OsMemPool
 * pageSize：页面大小
 * return：成功初始化的页面数量
 *********************************************************************************************************************/
-os_size_t osMemPoolInit(OsMemPool *memPool, void *startAddress, os_size_t size, os_size_t pageSize);
+size_t osMemPoolInit(OsMemPool *memPool, void *startAddress, size_t size, size_t pageSize);
 /*********************************************************************************************************************
 * 申请页面
 * memPool：内存池对象
@@ -42,13 +42,13 @@ int osMemPoolFreePage(OsMemPool *memPool, void *page);
 * memPool：内存池对象
 * return：所有页面数量
 *********************************************************************************************************************/
-os_size_t osMemPoolTotalPageNum(OsMemPool *memPool);
+size_t osMemPoolTotalPageNum(OsMemPool *memPool);
 /*********************************************************************************************************************
 * 获取可用页面数量
 * memPool：内存池对象
 * return：可用页面数量
 *********************************************************************************************************************/
-os_size_t osMemPoolFreePageNum(OsMemPool *memPool);
+size_t osMemPoolFreePageNum(OsMemPool *memPool);
 #ifdef __cplusplus
 }
 #endif

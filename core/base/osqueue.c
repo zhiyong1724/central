@@ -10,15 +10,15 @@
 typedef struct Queue
 {
 	OsListNode node;
-	os_byte_t *buff;
-    os_size_t begin;
-    os_size_t end;
-	os_size_t unitSize;
-	os_size_t size;
-	os_size_t maxSize;
+	unsigned char *buff;
+    size_t begin;
+    size_t end;
+	size_t unitSize;
+	size_t size;
+	size_t maxSize;
 } Queue;
 
-static int queueInit(Queue *obj, os_size_t unitSize, os_size_t maxSize)
+static int queueInit(Queue *obj, size_t unitSize, size_t maxSize)
 {
     queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	obj->unitSize = unitSize;
@@ -26,7 +26,7 @@ static int queueInit(Queue *obj, os_size_t unitSize, os_size_t maxSize)
 	obj->size = 0;
 	obj->begin = 0;
     obj->end = 0;
-	obj->buff = (os_byte_t *)osMalloc(obj->maxSize * obj->unitSize);
+	obj->buff = (unsigned char *)osMalloc(obj->maxSize * obj->unitSize);
 	if (obj->buff != NULL)
 	{
 		return 0;
@@ -100,7 +100,7 @@ static int queuePop(Queue *obj)
     return -1;
 }
 
-int osQueueInit(OsQueue *obj, os_size_t unitSize)
+int osQueueInit(OsQueue *obj, size_t unitSize)
 {
 	queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	obj->queue = NULL;
@@ -116,13 +116,13 @@ void osQueueFree(OsQueue *obj)
 	obj->unitSize = 0;
 }
 
-os_size_t osQueueUnitSize(OsQueue *obj)
+size_t osQueueUnitSize(OsQueue *obj)
 {
 	queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return obj->unitSize;
 }
 
-os_size_t osQueueSize(OsQueue *obj)
+size_t osQueueSize(OsQueue *obj)
 {
 	queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return obj->size;
@@ -156,7 +156,7 @@ static int addQueue(OsQueue *obj)
 	return ret;
 }
 
-os_size_t osQueuePush(OsQueue *obj, void *data)
+size_t osQueuePush(OsQueue *obj, void *data)
 {
 	queueLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	if (NULL == obj->queue)

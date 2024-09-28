@@ -5,45 +5,45 @@
 #else
 #define stringLog(format, ...) (void)0
 #endif
-void *osMemSet(void *s, os_byte_t ch, os_size_t n)
+void *osMemSet(void *s, unsigned char ch, size_t n)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	if (n < sizeof(long))
 	{
-		os_byte_t *ps = (os_byte_t *)s;
-		for (os_size_t i = 0; i < n; i++)
+		unsigned char *ps = (unsigned char *)s;
+		for (size_t i = 0; i < n; i++)
 		{
 			ps[i] = ch;
 		}
 	}
 	else
 	{
-		os_size_t align = (os_size_t)s % sizeof(long) > 0 ? sizeof(long) - (os_size_t)s % sizeof(long) : 0;
+		size_t align = (size_t)s % sizeof(long) > 0 ? sizeof(long) - (size_t)s % sizeof(long) : 0;
 		{
-			os_byte_t *ps = (os_byte_t *)s;
-			for (os_size_t i = 0; i < align; i++)
+			unsigned char *ps = (unsigned char *)s;
+			for (size_t i = 0; i < align; i++)
 			{
 				ps[i] = ch;
 			}
 		}
 
-		os_size_t divisor = (n - align) / sizeof(long);
+		size_t divisor = (n - align) / sizeof(long);
 		{
-			long *ps = (long *)((os_byte_t *)s + align);
+			long *ps = (long *)((unsigned char *)s + align);
 			long va = 0;
-			for (os_size_t i = 0; i < sizeof(long); i++)
+			for (size_t i = 0; i < sizeof(long); i++)
 			{
 				va |= (long)ch << 8 * i;
 			}
-			for (os_size_t i = 0; i < divisor; i++)
+			for (size_t i = 0; i < divisor; i++)
 			{
 				ps[i] = va;
 			}
 		}
 
 		{
-			os_byte_t *ps = (os_byte_t *)s;
-			for (os_size_t i = align + divisor * sizeof(long); i < n; i++)
+			unsigned char *ps = (unsigned char *)s;
+			for (size_t i = align + divisor * sizeof(long); i < n; i++)
 			{
 				ps[i] = ch;
 			}
@@ -52,16 +52,16 @@ void *osMemSet(void *s, os_byte_t ch, os_size_t n)
 	return s;
 }
 
-void *osMemCpy(void *dest, const void *src, os_size_t n)
+void *osMemCpy(void *dest, const void *src, size_t n)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t destAlign = (os_size_t)dest % sizeof(long) > 0 ? sizeof(long) - (os_size_t)dest % sizeof(long) : 0;
-	os_size_t srcAlign = (os_size_t)src % sizeof(long) > 0 ? sizeof(long) - (os_size_t)src % sizeof(long) : 0;
+	size_t destAlign = (size_t)dest % sizeof(long) > 0 ? sizeof(long) - (size_t)dest % sizeof(long) : 0;
+	size_t srcAlign = (size_t)src % sizeof(long) > 0 ? sizeof(long) - (size_t)src % sizeof(long) : 0;
 	if (n < sizeof(long) || destAlign != srcAlign)
 	{
-		os_byte_t *pDest = (os_byte_t *)dest;
-		os_byte_t *pSrc = (os_byte_t *)src;
-		for (os_size_t i = 0; i < n; i++)
+		unsigned char *pDest = (unsigned char *)dest;
+		unsigned char *pSrc = (unsigned char *)src;
+		for (size_t i = 0; i < n; i++)
 		{
 			pDest[i] = pSrc[i];
 		}
@@ -69,28 +69,28 @@ void *osMemCpy(void *dest, const void *src, os_size_t n)
 	else
 	{
 		{
-			os_byte_t *pDest = (os_byte_t *)dest;
-			os_byte_t *pSrc = (os_byte_t *)src;
-			for (os_size_t i = 0; i < destAlign; i++)
+			unsigned char *pDest = (unsigned char *)dest;
+			unsigned char *pSrc = (unsigned char *)src;
+			for (size_t i = 0; i < destAlign; i++)
 			{
 				pDest[i] = pSrc[i];
 			}
 		}
 
-		os_size_t divisor = (n - destAlign) / sizeof(long);
+		size_t divisor = (n - destAlign) / sizeof(long);
 		{
-			long *pDest = (long *)((os_byte_t *)dest + destAlign);
-			long *pSrc = (long *)((os_byte_t *)src + destAlign);
-			for (os_size_t i = 0; i < divisor; i++)
+			long *pDest = (long *)((unsigned char *)dest + destAlign);
+			long *pSrc = (long *)((unsigned char *)src + destAlign);
+			for (size_t i = 0; i < divisor; i++)
 			{
 				pDest[i] = pSrc[i];
 			}
 		}
 
 		{
-			os_byte_t *pDest = (os_byte_t *)dest;
-			os_byte_t *pSrc = (os_byte_t *)src;
-			for (os_size_t i = destAlign + divisor * sizeof(long); i < n; i++)
+			unsigned char *pDest = (unsigned char *)dest;
+			unsigned char *pSrc = (unsigned char *)src;
+			for (size_t i = destAlign + divisor * sizeof(long); i < n; i++)
 			{
 				pDest[i] = pSrc[i];
 			}
@@ -99,10 +99,10 @@ void *osMemCpy(void *dest, const void *src, os_size_t n)
 	return dest;
 }
 
-void *osStrCpy(char *dest, const char *src, os_size_t n)
+void *osStrCpy(char *dest, const char *src, size_t n)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t i;
+	size_t i;
 	for (i = 0; src[i] != '\0' && i < n - 1; i++)
 	{
 		dest[i] = src[i];
@@ -111,12 +111,12 @@ void *osStrCpy(char *dest, const char *src, os_size_t n)
 	return dest;
 }
 
-os_size_t osStrLen(const char *str)
+size_t osStrLen(const char *str)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	if (str != NULL)
 	{
-		os_size_t i = 0;
+		size_t i = 0;
 		for (; str[i] != '\0'; i++)
 		{
 		}
@@ -128,7 +128,7 @@ os_size_t osStrLen(const char *str)
 int osStrCmp(const char *str1, const char *str2)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t i;
+	size_t i;
 	for (i = 0; str1[i] != '\0' && str2[i] != '\0'; i++)
 	{
 		if (str1[i] > str2[i])
@@ -154,10 +154,10 @@ int osStrCmp(const char *str1, const char *str2)
 	}
 }
 
-char *osStrCat(char *dest, const char *src, os_size_t n)
+char *osStrCat(char *dest, const char *src, size_t n)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t i;
+	size_t i;
 	for (i = 0; dest[i] != '\0' && i < n - 1; i++)
 	{
 	}

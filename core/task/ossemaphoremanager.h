@@ -27,7 +27,7 @@ int osSemaphoreManagerInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *
 * maxCount：最大信号个数
 * return：0：调用成功
 *********************************************************************************************************************/
-int osSemaphoreManagerSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore, os_size_t count, os_size_t maxCount);
+int osSemaphoreManagerSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore, size_t count, size_t maxCount);
 /*********************************************************************************************************************
 * 发送一个信号
 * semaphoreManager：OsSemaphoreManager对象
@@ -51,14 +51,14 @@ int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTa
 * semaphore：OsSemaphore对象
 * return：消息数量
 *********************************************************************************************************************/
-os_size_t osSemaphoreManagerGetSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore);
+size_t osSemaphoreManagerGetSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore);
 /*********************************************************************************************************************
 * 获取最大信号数量
 * semaphoreManager：OsSemaphoreManager对象
 * semaphore：OsSemaphore对象
 * return：最大信号数量
 *********************************************************************************************************************/
-os_size_t osSemaphoreManagerGetMaxSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore);
+size_t osSemaphoreManagerGetMaxSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore);
 /*********************************************************************************************************************
 * 移除等待的任务
 * semaphoreManager：OsSemaphoreManager对象

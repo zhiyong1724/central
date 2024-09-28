@@ -7,7 +7,7 @@
 extern "C"
 {
 #endif
-typedef os_size_t os_tid_t;
+typedef size_t os_tid_t;
 typedef void *(*TaskFunction)(void *arg);
 typedef enum OsTaskState
 {
@@ -26,23 +26,23 @@ typedef enum OsTaskType
 } OsTaskType;
 typedef void *(*TaskFunction)(void *arg);
 
-typedef os_size_t os_task_ptr;
+typedef size_t os_task_ptr;
 typedef struct OsTaskInfo
 {
     os_tid_t tid;
     os_tid_t ptid;
     char name[OS_TASK_MAX_NAME_LEN];
-    void *stack;
-    os_size_t stackSize;
+    stack_size_t *stack;
+    size_t stackSize;
     OsTaskState taskState;
     OsTaskType taskType;
-    os_size_t priority;
+    size_t priority;
 } OsTaskInfo;
 
 typedef struct OsSemaphore
 {
-    os_size_t count;
-    os_size_t maxCount;
+    size_t count;
+    size_t maxCount;
     OsTreeNode *highPriorityTask;
     OsTreeNode *waitRtTaskList;
     OsListNode *waitTaskList;
@@ -56,18 +56,18 @@ typedef struct OsMutex
 typedef struct OsRecursiveMutex
 {
     OsSemaphore semaphore;
-    os_size_t recursiveCount;
+    size_t recursiveCount;
     void *owner;
 } OsRecursiveMutex;
 
 typedef struct OsMsgQueue
 {
-    os_size_t messageSize;
-    os_size_t messageCount;
-    os_size_t length;
-    os_byte_t *buffer;
-    os_size_t writeIndex;
-    os_size_t readIndex;
+    size_t messageSize;
+    size_t messageCount;
+    size_t length;
+    unsigned char *buffer;
+    size_t writeIndex;
+    size_t readIndex;
     OsTreeNode *highPriorityTask;
     OsTreeNode *waitRtTaskList;
     OsListNode *waitTaskList;

@@ -12,7 +12,7 @@ int osRtSchedulerInit(OsRtScheduler *rtScheduler)
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     osMemSet(rtScheduler->readyTaskTable, 0xff, OS_RTSCHED_MAX_PRIORITY / 8);
     rtScheduler->readyGroupTable = 0xff;
-    for (os_size_t i = 0; i < OS_RTSCHED_MAX_PRIORITY; i++)
+    for (size_t i = 0; i < OS_RTSCHED_MAX_PRIORITY; i++)
     {
         rtScheduler->taskListArray[i] = NULL;
     }
@@ -22,27 +22,27 @@ int osRtSchedulerInit(OsRtScheduler *rtScheduler)
     return 0;
 }
 
-int osRtTaskControlBlockInit(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, os_size_t priority)
+int osRtTaskControlBlockInit(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, size_t priority)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     rtTaskControlBlock->priority = priority;
     return 0;
 }
 
-static os_size_t getMinimunPriority(OsRtScheduler *rtScheduler)
+static size_t getMinimunPriority(OsRtScheduler *rtScheduler)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t i = gBitmapIndex[rtScheduler->readyGroupTable];
-    os_size_t j = gBitmapIndex[rtScheduler->readyTaskTable[i]];
+    size_t i = gBitmapIndex[rtScheduler->readyGroupTable];
+    size_t j = gBitmapIndex[rtScheduler->readyTaskTable[i]];
     return (i << 3) + j;
 }
 
-static void setBitmap(OsRtScheduler *rtScheduler, os_size_t priority, os_size_t value)
+static void setBitmap(OsRtScheduler *rtScheduler, size_t priority, size_t value)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t i = priority >> 3;
-    os_size_t j = priority & 0x07;
-    os_byte_t mask = 0x80;
+    size_t i = priority >> 3;
+    size_t j = priority & 0x07;
+    unsigned char mask = 0x80;
     mask >>= j;
     if (0 == value)
     {
@@ -76,7 +76,7 @@ OsRtTaskControlBlock *osRtSchedulerTick(OsRtScheduler *rtScheduler, uint64_t *ns
         {
             osRemoveFromList(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
             osInsertToBack(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
-            os_size_t priority = getMinimunPriority(rtScheduler);
+            size_t priority = getMinimunPriority(rtScheduler);
             rtScheduler->runningTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
             *ns = OS_RTSCHED_MIN_SWITCH_INTERVAL_NS;
         }
@@ -131,7 +131,7 @@ OsRtTaskControlBlock *osRtSchedulerRemoveTask(OsRtScheduler *rtScheduler, OsRtTa
             }
             else
             {
-                os_size_t priority = getMinimunPriority(rtScheduler);
+                size_t priority = getMinimunPriority(rtScheduler);
                 rtScheduler->runningTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
             }
         }
@@ -139,7 +139,7 @@ OsRtTaskControlBlock *osRtSchedulerRemoveTask(OsRtScheduler *rtScheduler, OsRtTa
     return rtScheduler->runningTask;
 }
 
-int osRtSchedulerModifyPriority(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, os_size_t priority)
+int osRtSchedulerModifyPriority(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, size_t priority)
 {
     rtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
@@ -172,7 +172,7 @@ OsRtTaskControlBlock *osRtSchedulerYield(OsRtScheduler *rtScheduler)
     {
         osRemoveFromList(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
         osInsertToBack(&rtScheduler->taskListArray[rtScheduler->runningTask->priority], &rtScheduler->runningTask->node);
-        os_size_t priority = getMinimunPriority(rtScheduler);
+        size_t priority = getMinimunPriority(rtScheduler);
         OsRtTaskControlBlock *nextTask = (OsRtTaskControlBlock *)rtScheduler->taskListArray[priority];
         if (nextTask != rtScheduler->runningTask)
         {

@@ -10,15 +10,15 @@ extern "C"
 typedef struct OsRtTaskControlBlock
 {
     OsListNode node;
-    os_size_t priority;
+    size_t priority;
 } OsRtTaskControlBlock;
 
 typedef struct OsRtScheduler
 {
-    os_byte_t readyTaskTable[OS_RTSCHED_MAX_PRIORITY / 8];
-    os_byte_t readyGroupTable;
+    unsigned char readyTaskTable[OS_RTSCHED_MAX_PRIORITY / 8];
+    unsigned char readyGroupTable;
     OsListNode *taskListArray[OS_RTSCHED_MAX_PRIORITY];
-    os_size_t taskCount;
+    size_t taskCount;
     OsRtTaskControlBlock *runningTask;
     uint64_t interval;
 } OsRtScheduler;
@@ -35,7 +35,7 @@ int osRtSchedulerInit(OsRtScheduler *rtScheduler);
 * priority：优先级
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osRtTaskControlBlockInit(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, os_size_t priority);
+int osRtTaskControlBlockInit(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 时钟滴答
 * rtScheduler：OsRtScheduler对象
@@ -64,7 +64,7 @@ OsRtTaskControlBlock *osRtSchedulerRemoveTask(OsRtScheduler *rtScheduler, OsRtTa
 * priority：优先级
 * return：0:调用成功
 *********************************************************************************************************************/
-int osRtSchedulerModifyPriority(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, os_size_t priority);
+int osRtSchedulerModifyPriority(OsRtScheduler *rtScheduler, OsRtTaskControlBlock *rtTaskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 获取当前运行的任务
 * rtScheduler：OsRtScheduler对象

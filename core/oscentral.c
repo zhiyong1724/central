@@ -17,7 +17,7 @@ static OsQueueManager sQueueManager;
 #if OS_USE_VFS
 static OsVFS sVFS;
 #endif
-os_size_t osMemInit(void *startAddress, os_size_t size);
+size_t osMemInit(void *startAddress, size_t size);
 int osTaskInit(OsTaskManager *taskManager);
 int osSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *taskManager);
 int osMsgQueueInit(OsQueueManager *queueManager, OsTaskManager *taskManager);

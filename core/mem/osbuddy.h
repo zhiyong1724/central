@@ -8,12 +8,12 @@ extern "C"
 #endif
 typedef struct OsBuddy
 {
-	os_byte_t *blockGroup;                                         //记录块属于哪一组
-	os_size_t groupCount;                                          //记录块组数量
+	unsigned char *blockGroup;                                         //记录块属于哪一组
+	size_t groupCount;                                          //记录块组数量
 	OsListNode **blockListArray;                                   //可用块链表队列
 	void *startAddress;                                            //内存起始地址
-	os_size_t totalPageNum;                                        //所有页数量
-	os_size_t freePageNum;                                         //可用页数量
+	size_t totalPageNum;                                        //所有页数量
+	size_t freePageNum;                                         //可用页数量
 } OsBuddy;
 /*********************************************************************************************************************
 * OsBuddy初始化
@@ -22,14 +22,14 @@ typedef struct OsBuddy
 * size：内存大小
 * return：成功初始化的页面数量
 *********************************************************************************************************************/
-os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size);
+size_t osBuddyInit(OsBuddy *buddy, void *startAddress, size_t size);
 /*********************************************************************************************************************
 * 申请页面
 * buddy：伙伴算法对象
 * n：要申请的页面数量
 * return：NULL：分配失败：否则返回页面首地址
 *********************************************************************************************************************/
-void *osBuddyAllocPages(OsBuddy *buddy, os_size_t n);
+void *osBuddyAllocPages(OsBuddy *buddy, size_t n);
 /*********************************************************************************************************************
 * 释放页面
 * buddy：伙伴算法对象
@@ -42,13 +42,13 @@ int osBuddyFreePages(OsBuddy *buddy, void *pages);
 * buddy：伙伴算法对象
 * return：所有页面数量
 *********************************************************************************************************************/
-os_size_t osBuddyTotalPageNum(OsBuddy *buddy);
+size_t osBuddyTotalPageNum(OsBuddy *buddy);
 /*********************************************************************************************************************
 * 获取可用页面数量
 * buddy：伙伴算法对象
 * return：可用页面数量
 *********************************************************************************************************************/
-os_size_t osBuddyFreePageNum(OsBuddy *buddy);
+size_t osBuddyFreePageNum(OsBuddy *buddy);
 #ifdef __cplusplus
 }
 #endif

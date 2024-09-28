@@ -7,7 +7,7 @@ extern "C"
 #endif
 typedef struct OsIdleTaskControlBlock
 {
-    os_size_t priority;
+    size_t priority;
 } OsIdleTaskControlBlock;
 
 typedef struct OsIdleScheduler
@@ -26,7 +26,7 @@ int osIdleSchedulerInit(OsIdleScheduler *idleScheduler);
 * priority：优先级
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osIdleTaskControlBlockInit(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, os_size_t priority);
+int osIdleTaskControlBlockInit(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 时钟滴答
 * idleScheduler：OsIdleScheduler对象
@@ -55,7 +55,7 @@ OsIdleTaskControlBlock *osIdleSchedulerRemoveTask(OsIdleScheduler *idleScheduler
 * priority：优先级
 * return：0:调用成功
 *********************************************************************************************************************/
-int osIdleSchedulerModifyPriority(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, os_size_t priority);
+int osIdleSchedulerModifyPriority(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 获取当前运行的任务
 * idleScheduler：OsIdleScheduler对象

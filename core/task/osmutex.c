@@ -7,8 +7,8 @@
 #else
 #define mutexLog(format, ...) (void)0
 #endif
-os_size_t portDisableInterrupts();
-int portRecoveryInterrupts(os_size_t state);
+size_t portDisableInterrupts();
+int portRecoveryInterrupts(size_t state);
 OsTask *osTaskGetRunningTask();
 int osMutexCreate(os_mutex_t mutex)
 {
@@ -54,7 +54,7 @@ int osRecursiveMutexLock(os_recursive_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     if (osTaskGetRunningTask() == mutex->owner)
     {
         mutex->recursiveCount++;
@@ -76,7 +76,7 @@ int osRecursiveMutexUnlock(os_recursive_mutex_t mutex)
 {
     mutexLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     if (osTaskGetRunningTask() == mutex->owner)
     {
         mutex->recursiveCount--;

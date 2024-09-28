@@ -7,7 +7,7 @@
 #define dtSchedulerLog(format, ...) (void)0
 #endif
 #define OS_DTSCHED_MAX_PRIORITY                     40
-static const os_size_t sWeightingTable[] = 
+static const size_t sWeightingTable[] = 
 {
     10,    12,    15,    18,    22,    27,    33,     40,                    //0-7
     49,    60,    73,    89,    109,   133,   162,    197,                   //8-15
@@ -28,7 +28,7 @@ int osDtSchedulerInit(OsDtScheduler *dtScheduler)
     return 0;
 }
 
-int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, os_size_t priority)
+int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, size_t priority)
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     dtTaskControlBlock->priority = priority;
@@ -150,7 +150,7 @@ OsDtTaskControlBlock *osDtSchedulerRemoveTask(OsDtScheduler *dtScheduler, OsDtTa
     return dtScheduler->runningTask;
 }
 
-int osDtSchedulerModifyPriority(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, os_size_t priority)
+int osDtSchedulerModifyPriority(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, size_t priority)
 {
     dtSchedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;

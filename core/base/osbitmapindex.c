@@ -1,5 +1,5 @@
 #include "osbitmapindex.h"
-const os_byte_t gBitmapIndex[] =
+const unsigned char gBitmapIndex[] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,         //0-15
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,         //16-31

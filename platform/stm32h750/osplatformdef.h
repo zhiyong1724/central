@@ -6,8 +6,7 @@
 extern "C"
 {
 #endif
-typedef unsigned char os_byte_t;
-typedef unsigned long os_size_t;
+typedef unsigned long stack_size_t;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define ENABLE_PRINTF                                     1
 #define ENABLE_ASSERT                                     1
@@ -36,7 +35,7 @@ else \
 extern int _sys_heap_start[0];
 extern int _sys_heap_end[0];
 #define OS_HEAP_ADDRESS                (void *)_sys_heap_start                                   //堆空间指针
-#define OS_HEAP_SIZE                   ((os_size_t)_sys_heap_end - (os_size_t)_sys_heap_start)
+#define OS_HEAP_SIZE                   ((stack_size_t)_sys_heap_end - (stack_size_t)_sys_heap_start)
 #ifdef __cplusplus
 }
 #endif

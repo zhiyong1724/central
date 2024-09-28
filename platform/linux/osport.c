@@ -18,11 +18,11 @@ typedef struct thread_t
     int eventTriggered;
     int exit;
 } thread_t;
-static void **sPreTask = NULL;
-static void **sRunningTask = NULL;
+static stack_size_t **sPreTask = NULL;
+static stack_size_t **sRunningTask = NULL;
 static pthread_once_t sSigSetupThread = PTHREAD_ONCE_INIT;
 static sigset_t sSignals;
-static os_size_t sInterruptFlag = 1;
+static size_t sInterruptFlag = 1;
 
 static void eventWait(thread_t *thread)
 {
@@ -62,12 +62,12 @@ void handleSignalInit()
     pthread_sigmask(SIG_SETMASK, &sSignals, NULL);
 }
 
-int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskStackMagic, TaskFunction taskFunction, void *arg)
+int portInitializeStack(stack_size_t **stackTop, size_t stackSize, stack_size_t *taskStackMagic, TaskFunction taskFunction, void *arg)
 {
     pthread_once(&sSigSetupThread, handleSignalInit);
-    os_byte_t *stackStart = (os_byte_t *)*stackTop - stackSize;
+    unsigned char *stackStart = (unsigned char *)*stackTop - stackSize;
     thread_t *thread = (thread_t *)*stackTop - 1;
-    *stackTop = thread;
+    *stackTop = (stack_size_t *)thread;
     thread->taskFunction = taskFunction;
     thread->arg = arg;
     thread->eventTriggered = 0;
@@ -91,7 +91,7 @@ static timer_t sTimer;
 static void handleTimerTick(int arg)
 {
     static uint64_t ns = 1000 * 1000;
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     lv_tick_inc(ns / 1000 / 1000);
     osTaskTick(&ns);
     struct itimerspec timerSpec;
@@ -114,7 +114,7 @@ static void handleTaskYield(int arg)
     }
 } 
 
-int portStartScheduler(void **stackTop)
+int portStartScheduler(stack_size_t **stackTop)
 {
     struct sigaction action;
     sigfillset(&action.sa_mask);
@@ -143,7 +143,7 @@ int portStartScheduler(void **stackTop)
     return 0;
 }
 
-int portYield(void **stackTop)
+int portYield(stack_size_t **stackTop)
 {
     if (stackTop != sRunningTask)
     {
@@ -154,15 +154,15 @@ int portYield(void **stackTop)
     return 0;
 }
 
-os_size_t portDisableInterrupts()
+size_t portDisableInterrupts()
 {
     pthread_sigmask(SIG_BLOCK, &sSignals, NULL);
-    os_size_t ret = sInterruptFlag;
+    size_t ret = sInterruptFlag;
     sInterruptFlag = 0;
     return ret;
 }
 
-int portRecoveryInterrupts(os_size_t state)
+int portRecoveryInterrupts(size_t state)
 {  
     if (1 == state)
     {

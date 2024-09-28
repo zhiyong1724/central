@@ -7,11 +7,11 @@
 #define memPoolLog(format, ...) (void)0
 #endif
 
-static void *addressAlign(void *address, os_size_t size)
+static void *addressAlign(void *address, size_t size)
 {
     memPoolLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_byte_t *startAddress = (os_byte_t *)address;
-    os_size_t offset = (os_size_t)startAddress % size;
+    unsigned char *startAddress = (unsigned char *)address;
+    size_t offset = (size_t)startAddress % size;
     if (offset > 0)
     {
         startAddress += size - offset;
@@ -22,8 +22,8 @@ static void *addressAlign(void *address, os_size_t size)
 static void fillBitmap(OsMemPool *memPool)
 {
     memPoolLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t count = memPool->totalPageNum / 8;
-    os_size_t i = 0;
+    size_t count = memPool->totalPageNum / 8;
+    size_t i = 0;
     for (; i < count; i++)
     {
         memPool->bitmap[i] = 0;
@@ -32,7 +32,7 @@ static void fillBitmap(OsMemPool *memPool)
     if (count > 0)
     {
         memPool->bitmap[i] = 0;
-        for (os_size_t j = 0; j < count; j++)
+        for (size_t j = 0; j < count; j++)
         {
             memPool->bitmap[i] |= 0x80 >> j;
         }
@@ -40,11 +40,11 @@ static void fillBitmap(OsMemPool *memPool)
     }
 }
 
-static void fillPageList(OsMemPool *memPool, os_byte_t *address)
+static void fillPageList(OsMemPool *memPool, unsigned char *address)
 {
     memPoolLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     memPool->pageList = NULL;
-    for (os_size_t i = 0; i < memPool->totalPageNum; i++)
+    for (size_t i = 0; i < memPool->totalPageNum; i++)
     {
         osInsertToSingleList(&memPool->pageList, (OsSingleListNode *)address);
         address += memPool->pageSize;
@@ -52,26 +52,26 @@ static void fillPageList(OsMemPool *memPool, os_byte_t *address)
     
 }
 
-os_size_t osMemPoolInit(OsMemPool *memPool, void *startAddress, os_size_t size, os_size_t pageSize)
+size_t osMemPoolInit(OsMemPool *memPool, void *startAddress, size_t size, size_t pageSize)
 {
     memPoolLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    pageSize = (os_size_t)addressAlign((void *)pageSize, sizeof(void *));
+    pageSize = (size_t)addressAlign((void *)pageSize, sizeof(void *));
     memPool->totalPageNum = size / pageSize;
     osAssert(memPool->totalPageNum >= 2);
     if (memPool->totalPageNum >= 2)
     {
         memPool->pageSize = pageSize;
 
-        memPool->bitmap = (os_byte_t *)startAddress;
-        os_size_t offset = memPool->totalPageNum / 8;
+        memPool->bitmap = (unsigned char *)startAddress;
+        size_t offset = memPool->totalPageNum / 8;
         if (memPool->totalPageNum % 8 > 0)
         {
             offset++;
         }
         size -= offset;
 
-        os_byte_t *bitmapEnd = memPool->bitmap + offset;
-        os_byte_t *memStart = (os_byte_t *)addressAlign(bitmapEnd, sizeof(long long));
+        unsigned char *bitmapEnd = memPool->bitmap + offset;
+        unsigned char *memStart = (unsigned char *)addressAlign(bitmapEnd, sizeof(long long));
         offset = memStart - bitmapEnd;
         size -= offset;
         memPool->totalPageNum = size / pageSize;
@@ -96,10 +96,10 @@ void *osMemPoolAllocPage(OsMemPool *memPool)
     {
         ret = memPool->pageList;
         osRemoveFromSingleList(&memPool->pageList);
-        os_size_t index = ((char *)ret - (char *)memPool->startAddress) / memPool->pageSize;
-        os_size_t i = index / 8;
-        os_size_t j = index % 8;
-        os_byte_t mask = 0x80;
+        size_t index = ((char *)ret - (char *)memPool->startAddress) / memPool->pageSize;
+        size_t i = index / 8;
+        size_t j = index % 8;
+        unsigned char mask = 0x80;
         mask >>= j;
         memPool->bitmap[i] |= mask;
         memPool->freePageNum--;
@@ -117,13 +117,13 @@ int osMemPoolFreePage(OsMemPool *memPool, void *page)
         osAssert(0 == ((char *)page - (char *)memPool->startAddress) % memPool->pageSize);
         if (0 == ((char *)page - (char *)memPool->startAddress) % memPool->pageSize)
         {
-            os_size_t index = ((char *)page - (char *)memPool->startAddress) / memPool->pageSize;
+            size_t index = ((char *)page - (char *)memPool->startAddress) / memPool->pageSize;
             osAssert(index < memPool->totalPageNum);
             if (index < memPool->totalPageNum)
             {
-                os_size_t i = index / 8;
-                os_size_t j = index % 8;
-                os_byte_t mask = 0x80;
+                size_t i = index / 8;
+                size_t j = index % 8;
+                unsigned char mask = 0x80;
                 mask >>= j;
                 mask &= memPool->bitmap[i];
                 osAssert(mask > 0);
@@ -142,13 +142,13 @@ int osMemPoolFreePage(OsMemPool *memPool, void *page)
     return ret;
 }
 
-os_size_t osMemPoolTotalPageNum(OsMemPool *memPool)
+size_t osMemPoolTotalPageNum(OsMemPool *memPool)
 {
     memPoolLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return memPool->totalPageNum;
 }
 
-os_size_t osMemPoolFreePageNum(OsMemPool *memPool)
+size_t osMemPoolFreePageNum(OsMemPool *memPool)
 {
     memPoolLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return memPool->freePageNum;

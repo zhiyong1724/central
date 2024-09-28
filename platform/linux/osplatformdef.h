@@ -6,8 +6,7 @@
 extern "C"
 {
 #endif
-typedef unsigned char os_byte_t;
-typedef unsigned long os_size_t;
+typedef unsigned long stack_size_t;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define ENABLE_PRINTF                                     1
 #define ENABLE_ASSERT                                     1

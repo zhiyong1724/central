@@ -7,10 +7,10 @@ extern "C"
 #endif
 typedef struct OsTidManager
 {
-	os_byte_t *tidTable;
-	os_size_t tableSize;
-	os_size_t tableLevel;
-	os_size_t maxTidCount;
+	unsigned char *tidTable;
+	size_t tableSize;
+	size_t tableLevel;
+	size_t maxTidCount;
 } OsTidManager;
 /*********************************************************************************************************************
 * 初始化tid管理器
@@ -28,13 +28,13 @@ void osTidManagerUninit(OsTidManager *tidManager);
 * tidManager：tid管理器对象
 * return：获得的tid
 *********************************************************************************************************************/
-os_size_t osTidAlloc(OsTidManager *tidManager);
+size_t osTidAlloc(OsTidManager *tidManager);
 /*********************************************************************************************************************
 * 释放tid
 * tidManager：tid管理器对象
 * tid：要释放的tid
 *********************************************************************************************************************/
-int osTidFree(OsTidManager *tidManager, os_size_t tid);
+int osTidFree(OsTidManager *tidManager, size_t tid);
 #ifdef __cplusplus
 }
 #endif

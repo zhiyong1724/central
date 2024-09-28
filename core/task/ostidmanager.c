@@ -11,7 +11,7 @@
 int osTidManagerInit(OsTidManager *tidManager)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	tidManager->tidTable = (os_byte_t *)osMalloc(1);
+	tidManager->tidTable = (unsigned char *)osMalloc(1);
 	osAssert(tidManager->tidTable != NULL);
 	if (tidManager->tidTable != NULL)
 	{
@@ -34,12 +34,12 @@ void osTidManagerUninit(OsTidManager *tidManager)
 	}
 }
 
-static os_byte_t setTable(os_byte_t *table, os_size_t tid, os_size_t va, os_size_t offset, os_size_t level)
+static unsigned char setTable(unsigned char *table, size_t tid, size_t va, size_t offset, size_t level)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t index = tid >> 3 * level;
-	os_byte_t bitOffset = (tid >> 3 * (level - 1)) % 8;
-	os_byte_t mark = 0x80;
+	size_t index = tid >> 3 * level;
+	unsigned char bitOffset = (tid >> 3 * (level - 1)) % 8;
+	unsigned char mark = 0x80;
 	mark >>= bitOffset;
 	level--;
 	if (0 == level)
@@ -73,13 +73,13 @@ static os_byte_t setTable(os_byte_t *table, os_size_t tid, os_size_t va, os_size
 static int expandTable(OsTidManager *tidManager)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t newSize = (tidManager->tableSize << 3) + 1;
-	os_byte_t *newTable = (os_byte_t *)osMalloc(newSize);
+	size_t newSize = (tidManager->tableSize << 3) + 1;
+	unsigned char *newTable = (unsigned char *)osMalloc(newSize);
 	osAssert(newTable != NULL);
 	if (newTable != NULL)
 	{
 		osMemSet(newTable, 0, newSize);
-		for (os_size_t i = 0; i < tidManager->maxTidCount; i++)
+		for (size_t i = 0; i < tidManager->maxTidCount; i++)
 		{
 			setTable(newTable, i, 1, 0, tidManager->tableLevel + 1);
 		}
@@ -94,10 +94,10 @@ static int expandTable(OsTidManager *tidManager)
 	return -1;
 }
 
-static os_size_t lookupTable(os_byte_t *table, os_size_t tid, os_size_t offset, os_size_t level)
+static size_t lookupTable(unsigned char *table, size_t tid, size_t offset, size_t level)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t va = gBitmapIndex[table[offset + tid]];
+	size_t va = gBitmapIndex[table[offset + tid]];
 	if (va < 8)
 	{
 		level--;
@@ -111,31 +111,31 @@ static os_size_t lookupTable(os_byte_t *table, os_size_t tid, os_size_t offset, 
 			return lookupTable(table, tid, (offset << 3) + 1, level);
 		}
 	}
-	return (os_size_t)-1;
+	return (size_t)-1;
 }
 
-os_size_t osTidAlloc(OsTidManager *tidManager)
+size_t osTidAlloc(OsTidManager *tidManager)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-	os_size_t ret = lookupTable(tidManager->tidTable, 0, 0, tidManager->tableLevel);
-	if ((os_size_t)-1 == ret)
+	size_t ret = lookupTable(tidManager->tidTable, 0, 0, tidManager->tableLevel);
+	if ((size_t)-1 == ret)
 	{
 		ret = expandTable(tidManager);
-		osAssert(ret != (os_size_t)-1);
-		if (ret != (os_size_t)-1)
+		osAssert(ret != (size_t)-1);
+		if (ret != (size_t)-1)
 		{
 			ret = lookupTable(tidManager->tidTable, 0, 0, tidManager->tableLevel);
 		}
 	}
-	osAssert(ret != (os_size_t)-1);
-	if (ret != (os_size_t)-1)
+	osAssert(ret != (size_t)-1);
+	if (ret != (size_t)-1)
 	{
 		setTable(tidManager->tidTable, ret, 1, 0, tidManager->tableLevel);
 	}
 	return ret;
 }
 
-int osTidFree(OsTidManager *tidManager, os_size_t tid)
+int osTidFree(OsTidManager *tidManager, size_t tid)
 {
 	tidManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	osAssert(tid < tidManager->maxTidCount);

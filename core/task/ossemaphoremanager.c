@@ -6,7 +6,7 @@
 #else
 #define semaphoreManagerLog(format, ...) (void)0
 #endif
-#define OS_SEMAPHORE_MAX_WAIT_TIME ((os_size_t)-1 / 1000 / 1000)
+#define OS_SEMAPHORE_MAX_WAIT_TIME ((size_t)-1 / 1000 / 1000)
 int osTaskWakeup(os_tid_t tid);
 OsTask *osTaskGetRunningTask();
 int osSemaphoreManagerInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *taskManager)
@@ -16,7 +16,7 @@ int osSemaphoreManagerInit(OsSemaphoreManager *semaphoreManager, OsTaskManager *
     return 0;
 }
 
-int osSemaphoreManagerSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore, os_size_t count, os_size_t maxCount)
+int osSemaphoreManagerSemaphoreInit(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore, size_t count, size_t maxCount)
 {
     semaphoreManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     semaphore->count = count;
@@ -34,7 +34,7 @@ int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsTask **nextTa
     if (semaphore->count < semaphore->maxCount)
     {
         OsTask *task = NULL;
-        os_byte_t *highPriorityTask = (os_byte_t *)semaphore->highPriorityTask;
+        unsigned char *highPriorityTask = (unsigned char *)semaphore->highPriorityTask;
         if (highPriorityTask != NULL)
         {
             osDeleteNode(&semaphore->waitRtTaskList, (OsTreeNode *)highPriorityTask);
@@ -43,7 +43,7 @@ int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsTask **nextTa
         }
         if (NULL == task)
         {
-            highPriorityTask = (os_byte_t *)semaphore->waitTaskList;
+            highPriorityTask = (unsigned char *)semaphore->waitTaskList;
             if (highPriorityTask != NULL)
             {
                 osRemoveFromList(&semaphore->waitTaskList, (OsListNode *)highPriorityTask);
@@ -75,8 +75,8 @@ int osSemaphoreManagerPost(OsSemaphoreManager *semaphoreManager, OsTask **nextTa
 static int onCompare(void *key1, void *key2, void *arg)
 {
 	semaphoreManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    OsTask *task1 = (OsTask *)((os_byte_t *)key1 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task1->realTaskControlBlock));
-    OsTask *task2 = (OsTask *)((os_byte_t *)key2 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task2->realTaskControlBlock));
+    OsTask *task1 = (OsTask *)((unsigned char *)key1 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task1->realTaskControlBlock));
+    OsTask *task2 = (OsTask *)((unsigned char *)key2 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task2->realTaskControlBlock));
     if (task1->realTaskControlBlock.rtTaskControlBlock.priority < task2->realTaskControlBlock.rtTaskControlBlock.priority)
     {
         return -1;
@@ -123,7 +123,7 @@ int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTa
                 }
                 else
                 {
-                    OsTask *highPriorityTask = (OsTask *)((os_byte_t *)semaphore->highPriorityTask - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task->realTaskControlBlock));
+                    OsTask *highPriorityTask = (OsTask *)((unsigned char *)semaphore->highPriorityTask - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task->realTaskControlBlock));
                     if (task->realTaskControlBlock.rtTaskControlBlock.priority < highPriorityTask->realTaskControlBlock.rtTaskControlBlock.priority)
                     {
                         semaphore->highPriorityTask = &task->exNode.treeNode;
@@ -139,13 +139,13 @@ int osSemaphoreManagerWait(OsSemaphoreManager *semaphoreManager, OsTask **nextTa
     return ret;
 }
 
-os_size_t osSemaphoreManagerGetSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore)
+size_t osSemaphoreManagerGetSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore)
 {
     semaphoreManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return semaphore->count;
 }
 
-os_size_t osSemaphoreManagerGetMaxSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore)
+size_t osSemaphoreManagerGetMaxSemaphoreCount(OsSemaphoreManager *semaphoreManager, OsSemaphore *semaphore)
 {
     semaphoreManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return semaphore->maxCount;

@@ -5,7 +5,7 @@
 extern "C"
 {
 #endif
-#define OS_MESSAGE_MAX_WAIT_TIME ((os_size_t)-1 / 1000 / 1000)
+#define OS_MESSAGE_MAX_WAIT_TIME ((size_t)-1 / 1000 / 1000)
 typedef struct OsMsgQueue * os_queue_t;
 /*********************************************************************************************************************
 * 创建队列
@@ -13,7 +13,7 @@ typedef struct OsMsgQueue * os_queue_t;
 * messageSize：消息大小
 * return：0：调用成功
 *********************************************************************************************************************/
-int osMsgQueueCreate(os_queue_t queue, os_size_t queueLength, os_size_t messageSize);
+int osMsgQueueCreate(os_queue_t queue, size_t queueLength, size_t messageSize);
 /*********************************************************************************************************************
 * 删除一个队列，如果有任务正在阻塞，会删除失败
 * queue：队列对象
@@ -53,13 +53,13 @@ int osMsgQueueReceive(os_queue_t queue, void *message, uint64_t wait);
 * queue：OsQueue对象
 * return：消息数量
 *********************************************************************************************************************/
-os_size_t osMsgQueueGetMessageCount(os_queue_t queue);
+size_t osMsgQueueGetMessageCount(os_queue_t queue);
 /*********************************************************************************************************************
 * 获取队列长度
 * queue：OsQueue对象
 * return：队列长度
 *********************************************************************************************************************/
-os_size_t osMsgQueueGetQueueLength(os_queue_t queue);
+size_t osMsgQueueGetQueueLength(os_queue_t queue);
 #ifdef __cplusplus
 }
 #endif

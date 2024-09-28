@@ -5,7 +5,7 @@
 extern "C"
 {
 #endif
-#define OS_SEMAPHORE_MAX_WAIT_TIME ((os_size_t)-1 / 1000 / 1000)
+#define OS_SEMAPHORE_MAX_WAIT_TIME ((size_t)-1 / 1000 / 1000)
 typedef struct OsSemaphore * os_semaphore_t;
 /*********************************************************************************************************************
 * 创建信号量
@@ -14,7 +14,7 @@ typedef struct OsSemaphore * os_semaphore_t;
 * maxCount：最大信号个数
 * return：0：调用成功
 *********************************************************************************************************************/
-int osSemaphoreCreate(os_semaphore_t semaphore, os_size_t count, os_size_t maxCount);
+int osSemaphoreCreate(os_semaphore_t semaphore, size_t count, size_t maxCount);
 /*********************************************************************************************************************
 * 删除信号量，如果有任务正在阻塞，会删除失败
 * semaphore：信号量对象
@@ -45,13 +45,13 @@ int osSemaphoreWait(os_semaphore_t semaphore, uint64_t wait);
 * semaphore：信号量对象
 * return：信号数量
 *********************************************************************************************************************/
-os_size_t osSemaphoreGetSemaphoreCount(os_semaphore_t semaphore);
+size_t osSemaphoreGetSemaphoreCount(os_semaphore_t semaphore);
 /*********************************************************************************************************************
 * 获取最大信号数量
 * semaphore：信号量对象
 * return：最大信号数量
 *********************************************************************************************************************/
-os_size_t osSemaphoreGetMaxSemaphoreCount(os_semaphore_t semaphore);
+size_t osSemaphoreGetMaxSemaphoreCount(os_semaphore_t semaphore);
 #ifdef __cplusplus
 }
 #endif

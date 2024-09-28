@@ -5,7 +5,7 @@
 extern "C"
 {
 #endif
-    extern const os_byte_t gBitmapIndex[];
+    extern const unsigned char gBitmapIndex[];
 #ifdef __cplusplus
 }
 #endif

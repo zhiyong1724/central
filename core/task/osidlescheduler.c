@@ -12,7 +12,7 @@ int osIdleSchedulerInit(OsIdleScheduler *idleScheduler)
     return 0;
 }
 
-int osIdleTaskControlBlockInit(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, os_size_t priority)
+int osIdleTaskControlBlockInit(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, size_t priority)
 {
     idlechedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     idleTaskControlBlock->priority = priority;
@@ -43,7 +43,7 @@ OsIdleTaskControlBlock *osIdleSchedulerRemoveTask(OsIdleScheduler *idleScheduler
     return idleScheduler->runningTask;
 }
 
-int osIdleSchedulerModifyPriority(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, os_size_t priority)
+int osIdleSchedulerModifyPriority(OsIdleScheduler *idleScheduler, OsIdleTaskControlBlock *idleTaskControlBlock, size_t priority)
 {
     idlechedulerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     idleTaskControlBlock->priority = priority;

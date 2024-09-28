@@ -10,7 +10,7 @@ extern "C"
 typedef void *(*Tick)(void *scheduler, uint64_t *ns);
 typedef int (*AddTask)(void *scheduler, void *task);
 typedef void *(*RemoveTask)(void *scheduler, void *task);
-typedef int (*ModifyPriority)(void *scheduler, void *task, os_size_t priority);
+typedef int (*ModifyPriority)(void *scheduler, void *task, size_t priority);
 typedef void *(*GetRunningTask)(void *scheduler);
 typedef void *(*Yield)(void *scheduler);
 typedef struct OsSchedulerInterfaces
@@ -31,7 +31,7 @@ typedef struct OsTaskControlBlock
         OsTreeNode treeNode;
     } node;
     OsTaskState taskState;
-    os_size_t schedulerId;
+    size_t schedulerId;
     uint64_t sleepTime;
 } OsTaskControlBlock;
 
@@ -39,7 +39,7 @@ typedef struct OsVScheduler
 {
     void *schedulers[OS_MAX_SCHEDULER_COUNT];
     OsSchedulerInterfaces schedulerInterfaces[OS_MAX_SCHEDULER_COUNT];
-    os_size_t schedulerCount;
+    size_t schedulerCount;
     uint64_t clock;
     OsListNode *suspendedList;
     OsTreeNode *sleepTree;
@@ -81,7 +81,7 @@ int osVSchedulerAddTask(OsVScheduler *vScheduler, OsTaskControlBlock *taskContro
 * priority：优先级
 * return：0:调用成功
 *********************************************************************************************************************/
-int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *taskControlBlock, os_size_t priority);
+int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *taskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 时钟滴答
 * osVScheduler：OsVScheduler对象
@@ -89,7 +89,7 @@ int osVSchedulerModifyPriority(OsVScheduler *vScheduler, OsTaskControlBlock *tas
 * ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
 * return：调用成功返回下一个任务控制块，否则返回NULL
 *********************************************************************************************************************/
-OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, os_size_t schedulerId, uint64_t *ns);
+OsTaskControlBlock *osVSchedulerTick(OsVScheduler *vScheduler, size_t schedulerId, uint64_t *ns);
 /*********************************************************************************************************************
 * 挂起一个任务
 * vScheduler：OsVScheduler对象

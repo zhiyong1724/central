@@ -9,8 +9,8 @@ extern "C"
 typedef struct OsMemManager
 {
 	OsBuddy pageFactory;
-	os_size_t totalMem;
-	os_size_t freeMem;
+	size_t totalMem;
+	size_t freeMem;
 	OsTreeNode *root;
 } OsMemManager;
 
@@ -21,14 +21,14 @@ typedef struct OsMemManager
 * size：内存大小
 * return：成功初始化的内存大小
 *********************************************************************************************************************/
-os_size_t osMemManagerInit(OsMemManager *memManager, void *startAddress, os_size_t size);
+size_t osMemManagerInit(OsMemManager *memManager, void *startAddress, size_t size);
 /*********************************************************************************************************************
 * 申请内存
 * memManager：内存管理器对象
 * size：要分配的内存大小
 * return：NULL：分配失败：否则返回内存首地址
 *********************************************************************************************************************/
-void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size);
+void *osMemManagerAlloc(OsMemManager *memManager, size_t size);
 /*********************************************************************************************************************
 * 重新分配内存
 * memManager：内存管理器对象
@@ -36,7 +36,7 @@ void *osMemManagerAlloc(OsMemManager *memManager, os_size_t size);
 * size：重新分配的内存地址
 * return：NULL：分配失败：否则返回内存首地址
 *********************************************************************************************************************/
-void *osMemManagerRealloc(OsMemManager *memManager, void *address, os_size_t newSize);
+void *osMemManagerRealloc(OsMemManager *memManager, void *address, size_t newSize);
 /*********************************************************************************************************************
 * 释放内存
 * memManager：内存管理器对象
@@ -50,14 +50,14 @@ int osMemManagerFree(OsMemManager *memManager, void *address);
 * address：要获取的地址
 * return：指定地址占用的内存大小
 *********************************************************************************************************************/
-os_size_t osMemManagerAllocUsableSize(OsMemManager *memManager, const void *address);
+size_t osMemManagerAllocUsableSize(OsMemManager *memManager, const void *address);
 /*********************************************************************************************************************
 * 申请页面
 * memManager：内存管理器对象
 * n：页面个数
 * return：NULL：分配失败：否则返回页面首地址
 *********************************************************************************************************************/
-void *osMemManagerAllocPages(OsMemManager *memManager, os_size_t n);
+void *osMemManagerAllocPages(OsMemManager *memManager, size_t n);
 /*********************************************************************************************************************
 * 释放页面
 * memManager：内存管理器对象
@@ -70,25 +70,25 @@ int osMemManagerFreePages(OsMemManager *memManager, void *pages);
 * memManager：内存管理器对象
 * return：所有堆空间
 *********************************************************************************************************************/
-os_size_t osMemManagerTotalMem(OsMemManager *memManager);
+size_t osMemManagerTotalMem(OsMemManager *memManager);
 /*********************************************************************************************************************
 * 获取可用内存
 * memManager：内存管理器对象
 * return：可用内存
 *********************************************************************************************************************/
-os_size_t osMemManagerFreeMem(OsMemManager *memManager);
+size_t osMemManagerFreeMem(OsMemManager *memManager);
 /*********************************************************************************************************************
 * 获取所有页面数量
 * memManager：内存管理器对象
 * return：所有页面数量
 *********************************************************************************************************************/
-os_size_t osMemManagerTotalPage(OsMemManager *memManager);
+size_t osMemManagerTotalPage(OsMemManager *memManager);
 /*********************************************************************************************************************
 * 获取可用页面数量
 * memManager：内存管理器对象
 * return：可用页面数量
 *********************************************************************************************************************/
-os_size_t osMemManagerFreePage(OsMemManager *memManager);
+size_t osMemManagerFreePage(OsMemManager *memManager);
 
 #ifdef __cplusplus
 }

@@ -8,7 +8,7 @@
 #else
 #define queueManagerLog(format, ...) (void)0
 #endif
-#define OS_MESSAGE_MAX_WAIT_TIME ((os_size_t)-1 / 1000 / 1000)
+#define OS_MESSAGE_MAX_WAIT_TIME ((size_t)-1 / 1000 / 1000)
 int osTaskWakeup(os_tid_t tid);
 OsTask *osTaskGetRunningTask();
 int osQueueManagerInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
@@ -18,11 +18,11 @@ int osQueueManagerInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
     return 0;
 }
 
-int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, os_size_t queueLength, os_size_t messageSize)
+int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, size_t queueLength, size_t messageSize)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    queue->buffer = (os_byte_t *)osMalloc(queueLength * messageSize);
+    queue->buffer = (unsigned char *)osMalloc(queueLength * messageSize);
     if (queue->buffer != NULL)
     {
         queue->messageCount = 0;
@@ -64,7 +64,7 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, void *me
     if (queue->messageCount < queue->length)
     {
         OsTask *task = NULL;
-        os_byte_t *highPriorityTask = (os_byte_t *)queue->highPriorityTask;
+        unsigned char *highPriorityTask = (unsigned char *)queue->highPriorityTask;
         if (highPriorityTask != NULL)
         {
             osDeleteNode(&queue->waitRtTaskList, (OsTreeNode *)highPriorityTask);
@@ -73,7 +73,7 @@ int osQueueManagerSend(OsQueueManager *queueManager, OsMsgQueue *queue, void *me
         }
         if (NULL == task)
         {
-            highPriorityTask = (os_byte_t *)queue->waitTaskList;
+            highPriorityTask = (unsigned char *)queue->waitTaskList;
             if (highPriorityTask != NULL)
             {
                 osRemoveFromList(&queue->waitTaskList, (OsListNode *)highPriorityTask);
@@ -111,7 +111,7 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, v
     if (queue->messageCount < queue->length)
     {
         OsTask *task = NULL;
-        os_byte_t *highPriorityTask = (os_byte_t *)queue->highPriorityTask;
+        unsigned char *highPriorityTask = (unsigned char *)queue->highPriorityTask;
         if (highPriorityTask != NULL)
         {
             osDeleteNode(&queue->waitRtTaskList, (OsTreeNode *)highPriorityTask);
@@ -120,7 +120,7 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, v
         }
         if (NULL == task)
         {
-            highPriorityTask = (os_byte_t *)queue->waitTaskList;
+            highPriorityTask = (unsigned char *)queue->waitTaskList;
             if (highPriorityTask != NULL)
             {
                 osRemoveFromList(&queue->waitTaskList, (OsListNode *)highPriorityTask);
@@ -157,8 +157,8 @@ int osQueueManagerSendToFront(OsQueueManager *queueManager, OsMsgQueue *queue, v
 static int onCompare(void *key1, void *key2, void *arg)
 {
 	queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    OsTask *task1 = (OsTask *)((os_byte_t *)key1 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task1->realTaskControlBlock));
-    OsTask *task2 = (OsTask *)((os_byte_t *)key2 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task2->realTaskControlBlock));
+    OsTask *task1 = (OsTask *)((unsigned char *)key1 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task1->realTaskControlBlock));
+    OsTask *task2 = (OsTask *)((unsigned char *)key2 - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task2->realTaskControlBlock));
     if (task1->realTaskControlBlock.rtTaskControlBlock.priority < task2->realTaskControlBlock.rtTaskControlBlock.priority)
     {
         return -1;
@@ -206,7 +206,7 @@ int osQueueManagerReceive(OsQueueManager *queueManager, void *message, OsTask **
                 }
                 else
                 {
-                    OsTask *highPriorityTask = (OsTask *)((os_byte_t *)queue->highPriorityTask - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task->realTaskControlBlock));
+                    OsTask *highPriorityTask = (OsTask *)((unsigned char *)queue->highPriorityTask - sizeof(OsTaskControlBlock) - sizeof(OsListNode) - sizeof(task->realTaskControlBlock));
                     if (task->realTaskControlBlock.rtTaskControlBlock.priority < highPriorityTask->realTaskControlBlock.rtTaskControlBlock.priority)
                     {
                         queue->highPriorityTask = &task->exNode.treeNode;
@@ -222,13 +222,13 @@ int osQueueManagerReceive(OsQueueManager *queueManager, void *message, OsTask **
     return ret;
 }
 
-os_size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsMsgQueue *queue)
+size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsMsgQueue *queue)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return queue->messageCount;
 }
 
-os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue *queue)
+size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue *queue)
 {
     queueManagerLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return queue->length;

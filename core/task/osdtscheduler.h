@@ -9,14 +9,14 @@ extern "C"
 typedef struct OsDtTaskControlBlock
 {
     OsTreeNode node;
-    os_size_t priority;
+    size_t priority;
     uint64_t vRunTime;
 } OsDtTaskControlBlock;
 
 typedef struct OsDtScheduler
 {
     OsTreeNode *taskTree;
-    os_size_t taskCount;
+    size_t taskCount;
     uint64_t minVRunTime;
     OsDtTaskControlBlock *runningTask;
     uint64_t switchInterval;
@@ -34,7 +34,7 @@ int osDtSchedulerInit(OsDtScheduler *dtScheduler);
 * priority：优先级
 * return：0：初始化成功
 *********************************************************************************************************************/
-int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, os_size_t priority);
+int osDtTaskControlBlockInit(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 时钟滴答
 * dtScheduler：OsDtScheduler对象
@@ -63,7 +63,7 @@ OsDtTaskControlBlock *osDtSchedulerRemoveTask(OsDtScheduler *dtScheduler, OsDtTa
 * priority：优先级
 * return：0:调用成功
 *********************************************************************************************************************/
-int osDtSchedulerModifyPriority(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, os_size_t priority);
+int osDtSchedulerModifyPriority(OsDtScheduler *dtScheduler, OsDtTaskControlBlock *dtTaskControlBlock, size_t priority);
 /*********************************************************************************************************************
 * 获取当前运行的任务
 * dtScheduler：OsDtScheduler对象

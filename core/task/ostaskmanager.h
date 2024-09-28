@@ -30,11 +30,11 @@ typedef struct OsTask
     os_tid_t tid;
     struct OsTask *parent;
     struct OsTask *children;
-    os_size_t childrenCount;
-    void *stackStart;
-    void *stackTop;
-    os_size_t stackSize;
-    os_size_t *taskStackMagic;
+    size_t childrenCount;
+    stack_size_t *stackStart;
+    stack_size_t *stackTop;
+    size_t stackSize;
+    stack_size_t *taskStackMagic;
     TaskFunction taskFunction;
     void *arg;
     os_tid_t waitTid;
@@ -48,11 +48,11 @@ typedef struct OsTaskManager
     OsIdleScheduler idleScheduler;
     OsTidManager tidManager;
     OsVector taskList;
-    os_size_t taskCount;
+    size_t taskCount;
     OsTask *deleteTaskList;
     OsTask *initTask;
     uint64_t tickCount;
-    os_size_t cpuUsage;
+    size_t cpuUsage;
     uint64_t idleTaskTickCount;
     uint64_t idleTickCount;
 } OsTaskManager;
@@ -74,7 +74,7 @@ int osTaskManagerInit(OsTaskManager *taskManager);
 * stackSize：任务堆栈大小
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, OsTaskType taskType, os_size_t priority, os_size_t stackSize);
+int osTaskManagerCreateTask(OsTaskManager *taskManager, os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, OsTaskType taskType, size_t priority, size_t stackSize);
 /*********************************************************************************************************************
 * 时钟滴答
 * taskManager：OsTaskManager对象
@@ -90,7 +90,7 @@ int osTaskManagerTick(OsTaskManager *taskManager, OsTask **nextTask, uint64_t *n
 * priority：优先级
 * return：0:调用成功
 *********************************************************************************************************************/
-int osTaskManagerModifyPriority(OsTaskManager *taskManager, os_tid_t tid, os_size_t priority);
+int osTaskManagerModifyPriority(OsTaskManager *taskManager, os_tid_t tid, size_t priority);
 /*********************************************************************************************************************
 * 休眠一段时间
 * taskManager：OsTaskManager对象
@@ -158,7 +158,7 @@ uint64_t osTaskManagerGetTickCount(OsTaskManager *taskManager);
 * taskManager：OsTaskManager对象
 * return：任务个数
 *********************************************************************************************************************/
-os_size_t osTaskManagerGetTaskCount(OsTaskManager *taskManager);
+size_t osTaskManagerGetTaskCount(OsTaskManager *taskManager);
 /*********************************************************************************************************************
 * 获取当前任务TID
 * taskManager：OsTaskManager对象
@@ -172,7 +172,7 @@ os_tid_t osTaskManagerGetTid(OsTaskManager *taskManager);
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerGetTaskPriority(OsTaskManager *taskManager, os_size_t *priority, os_tid_t tid);
+int osTaskManagerGetTaskPriority(OsTaskManager *taskManager, size_t *priority, os_tid_t tid);
 /*********************************************************************************************************************
 * 获取任务调度类型
 * taskManager：OsTaskManager对象
@@ -197,7 +197,7 @@ int osTaskManagerGetTaskState(OsTaskManager *taskManager, OsTaskState *state, os
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerGetTaskName(OsTaskManager *taskManager, char *name, os_size_t size, os_tid_t tid);
+int osTaskManagerGetTaskName(OsTaskManager *taskManager, char *name, size_t size, os_tid_t tid);
 /*********************************************************************************************************************
 * 获取任务堆栈大小
 * taskManager：OsTaskManager对象
@@ -205,7 +205,7 @@ int osTaskManagerGetTaskName(OsTaskManager *taskManager, char *name, os_size_t s
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskManagerGetTaskStackSize(OsTaskManager *taskManager, os_size_t *stackSize, os_tid_t tid);
+int osTaskManagerGetTaskStackSize(OsTaskManager *taskManager, size_t *stackSize, os_tid_t tid);
 /*********************************************************************************************************************
 * 返回任务是否为joinable
 * taskManager：OsTaskManager对象
@@ -224,7 +224,7 @@ OsTask *osTaskManagerGetRunningTask(OsTaskManager *taskManager);
 * taskManager：OsTaskManager对象
 * return：cpu占用
 *********************************************************************************************************************/
-os_size_t osTaskManagerGetCPUUsage(OsTaskManager *taskManager);
+size_t osTaskManagerGetCPUUsage(OsTaskManager *taskManager);
 /*********************************************************************************************************************
 * 发现第一个任务信息
 * taskManager：OsTaskManager对象

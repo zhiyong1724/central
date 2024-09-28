@@ -692,7 +692,7 @@ void testTid()
     osTidManagerInit(&tidManager);
     for (size_t i = 0; i < 100000; i++)
     {
-        os_size_t tid = osTidAlloc(&tidManager);
+        size_t tid = osTidAlloc(&tidManager);
         printf("tid = %ld\n", tid);
         if (tid != i)
         {
@@ -705,7 +705,7 @@ void testTid()
     }
     for (size_t i = 0; i < 110; i++)
     {
-        os_size_t tid = osTidAlloc(&tidManager);
+        size_t tid = osTidAlloc(&tidManager);
         printf("tid = %ld\n", tid);
     }
     for (size_t i = 0; i < 100000; i++)
@@ -714,7 +714,7 @@ void testTid()
     }
     for (size_t i = 0; i < 100000; i++)
     {
-        os_size_t tid = osTidAlloc(&tidManager);
+        size_t tid = osTidAlloc(&tidManager);
         printf("tid = %ld\n", tid);
         if (tid != i)
         {
@@ -936,11 +936,11 @@ void *taskA(void *arg)
         ret = osTaskGetTaskState(&state, tid);
         printf("任务状态：%d\n", state);
 
-        os_size_t priority;
+        size_t priority;
         ret = osTaskGetTaskPriority(&priority, tid);
         printf("任务优先级：%ld\n", priority);
 
-        os_size_t stackSize;
+        size_t stackSize;
         ret = osTaskGetTaskStackSize(&stackSize, tid);
         printf("任务堆栈大小：%ld\n", stackSize);
 

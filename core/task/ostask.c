@@ -8,41 +8,41 @@
 #endif
 static OsTaskManager *sTaskManager;
 static int sRunning = 0;
-int portStartScheduler(void **stackTop);
-int portYield(void **stackTop);
-os_size_t portDisableInterrupts();
-int portRecoveryInterrupts(os_size_t state);
+int portStartScheduler(stack_size_t **stackTop);
+int portYield(stack_size_t **stackTop);
+size_t portDisableInterrupts();
+int portRecoveryInterrupts(size_t state);
 int osTaskInit(OsTaskManager *taskManager)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     sTaskManager = taskManager;
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerInit(sTaskManager);
     portRecoveryInterrupts(state);
     return ret;
 }
 
-int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, os_size_t priority, os_size_t stackSize)
+int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, size_t priority, size_t stackSize)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (0 == stackSize)
     {
         stackSize = OS_DEFAULT_TASK_STACK_SIZE;
     }
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerCreateTask(sTaskManager, tid, taskFunction, arg, name, OS_TASK_TYPE_DT, priority, stackSize);
     portRecoveryInterrupts(state);
     return ret;
 }
 
-int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, os_size_t priority, os_size_t stackSize)
+int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, size_t priority, size_t stackSize)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     if (0 == stackSize)
     {
         stackSize = OS_DEFAULT_TASK_STACK_SIZE;
     }
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerCreateTask(sTaskManager, tid, taskFunction, arg, name, OS_TASK_TYPE_RT, priority, stackSize);
     portRecoveryInterrupts(state);
     return ret;
@@ -54,7 +54,7 @@ int osTaskTick(uint64_t *ns)
     int ret = -1;
     if (sRunning > 0)
     {
-        os_size_t state = portDisableInterrupts();
+        size_t state = portDisableInterrupts();
         OsTask *nextTask;
         ret = osTaskManagerTick(sTaskManager, &nextTask, ns);
         portYield(&nextTask->stackTop);
@@ -63,10 +63,10 @@ int osTaskTick(uint64_t *ns)
     return ret;
 }
 
-int osTaskModifyPriority(os_tid_t tid, os_size_t priority)
+int osTaskModifyPriority(os_tid_t tid, size_t priority)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerModifyPriority(sTaskManager, tid, priority);
     portRecoveryInterrupts(state);
     return ret;
@@ -75,7 +75,7 @@ int osTaskModifyPriority(os_tid_t tid, os_size_t priority)
 int osTaskSleep(uint64_t ms)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *nextTask;
     int ret = osTaskManagerSleep(sTaskManager, &nextTask, ms * 1000 * 1000);
     portYield(&nextTask->stackTop);
@@ -86,7 +86,7 @@ int osTaskSleep(uint64_t ms)
 int osTaskWakeup(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *nextTask;
     int ret = osTaskManagerWakeup(sTaskManager, &nextTask, tid);
     portYield(&nextTask->stackTop);
@@ -97,7 +97,7 @@ int osTaskWakeup(os_tid_t tid)
 int osTaskSupend(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *nextTask;
     int ret = osTaskManagerSupend(sTaskManager, &nextTask, tid);
     portYield(&nextTask->stackTop);
@@ -108,7 +108,7 @@ int osTaskSupend(os_tid_t tid)
 int osTaskResume(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *nextTask;
     int ret = osTaskManagerResume(sTaskManager, &nextTask, tid);
     portYield(&nextTask->stackTop);
@@ -119,7 +119,7 @@ int osTaskResume(os_tid_t tid)
 int osTaskExit(void *arg)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *nextTask;
     int ret = osTaskManagerExit(sTaskManager, &nextTask, arg);
     portYield(&nextTask->stackTop);
@@ -130,7 +130,7 @@ int osTaskExit(void *arg)
 void osTaskStart()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     sRunning = 1;
     OsTask *task = osTaskManagerGetRunningTask(sTaskManager);
     osAssert(task != NULL);
@@ -144,11 +144,11 @@ void osTaskStart()
     }
 }
 
-int osTaskJoin(void **retval, os_size_t tid)
+int osTaskJoin(void **retval, size_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *nextTask = NULL;
     ret = osTaskManagerJoin(sTaskManager, &nextTask, retval, tid);
     if (nextTask != NULL)
@@ -163,7 +163,7 @@ int osTaskDetach(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     int ret = -1;
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     ret = osTaskManagerDetach(sTaskManager, tid);
     portRecoveryInterrupts(state);
     return ret;
@@ -175,7 +175,7 @@ uint64_t osTaskGetTickCount()
     return osTaskManagerGetTickCount(sTaskManager);
 }
 
-os_size_t osTaskGetTaskCount()
+size_t osTaskGetTaskCount()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osTaskManagerGetTaskCount(sTaskManager);
@@ -184,16 +184,16 @@ os_size_t osTaskGetTaskCount()
 os_tid_t osTaskGetTid()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     os_tid_t tid = osTaskManagerGetTid(sTaskManager);
     portRecoveryInterrupts(state);
     return tid;
 }
 
-int osTaskGetTaskPriority(os_size_t *priority, os_tid_t tid)
+int osTaskGetTaskPriority(size_t *priority, os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerGetTaskPriority(sTaskManager, priority, tid);
     portRecoveryInterrupts(state);
     return ret;
@@ -202,7 +202,7 @@ int osTaskGetTaskPriority(os_size_t *priority, os_tid_t tid)
 int osTaskGetTaskType(OsTaskType *type, os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerGetTaskType(sTaskManager, type, tid);
     portRecoveryInterrupts(state);
     return ret;
@@ -211,25 +211,25 @@ int osTaskGetTaskType(OsTaskType *type, os_tid_t tid)
 int osTaskGetTaskState(OsTaskState *state, os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t interruptState = portDisableInterrupts();
+    size_t interruptState = portDisableInterrupts();
     int ret = osTaskManagerGetTaskState(sTaskManager, state, tid);
     portRecoveryInterrupts(interruptState);
     return ret;
 }
 
-int osTaskGetTaskName(char *name, os_size_t size, os_tid_t tid)
+int osTaskGetTaskName(char *name, size_t size, os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerGetTaskName(sTaskManager, name, size, tid);
     portRecoveryInterrupts(state);
     return ret;
 }
 
-int osTaskGetTaskStackSize(os_size_t *stackSize, os_tid_t tid)
+int osTaskGetTaskStackSize(size_t *stackSize, os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerGetTaskStackSize(sTaskManager, stackSize, tid);
     portRecoveryInterrupts(state);
     return ret;
@@ -238,7 +238,7 @@ int osTaskGetTaskStackSize(os_size_t *stackSize, os_tid_t tid)
 int osTaskJoinable(os_tid_t tid)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerJoinable(sTaskManager, tid);
     portRecoveryInterrupts(state);
     return ret;
@@ -247,13 +247,13 @@ int osTaskJoinable(os_tid_t tid)
 OsTask *osTaskGetRunningTask()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     OsTask *task = osTaskManagerGetRunningTask(sTaskManager);
     portRecoveryInterrupts(state);
     return task;
 }
 
-os_size_t osTaskGetCPUUsage()
+size_t osTaskGetCPUUsage()
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     return osTaskManagerGetCPUUsage(sTaskManager);
@@ -262,7 +262,7 @@ os_size_t osTaskGetCPUUsage()
 int osTaskFindFirst(os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerFindFirst(sTaskManager, taskPtr, taskInfo);
     portRecoveryInterrupts(state);
     return ret;
@@ -271,7 +271,7 @@ int osTaskFindFirst(os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
 int osTaskFindNext(os_task_ptr *taskPtr, OsTaskInfo *taskInfo)
 {
     taskLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t state = portDisableInterrupts();
+    size_t state = portDisableInterrupts();
     int ret = osTaskManagerFindNext(sTaskManager, taskPtr, taskInfo);
     portRecoveryInterrupts(state);
     return ret;

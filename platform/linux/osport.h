@@ -6,12 +6,12 @@
 extern "C"
 {
 #endif
-int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskStackMagic, TaskFunction taskFunction, void *arg);
-int portStartScheduler(void **stackTop);
-int portYield(void **stackTop);
+int portInitializeStack(stack_size_t **stackTop, size_t stackSize, stack_size_t *taskStackMagic, TaskFunction taskFunction, void *arg);
+int portStartScheduler(stack_size_t **stackTop);
+int portYield(stack_size_t **stackTop);
 
-os_size_t portDisableInterrupts();
-int portRecoveryInterrupts(os_size_t state);
+size_t portDisableInterrupts();
+int portRecoveryInterrupts(size_t state);
 #ifdef __cplusplus
 }
 #endif

@@ -7,14 +7,14 @@
 #else
 #define vectorLog(format, ...) (void)0
 #endif
-#define OS_VECTOR_MAX_SIZE ((os_size_t)-1)
-int osVectorInit(OsVector *obj, os_size_t unitSize)
+#define OS_VECTOR_MAX_SIZE ((size_t)-1)
+int osVectorInit(OsVector *obj, size_t unitSize)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	obj->unitSize = unitSize;
 	obj->size = 0;
 	obj->maxSize = 8;
-	obj->buff = (os_byte_t *)osMalloc(obj->maxSize * obj->unitSize);
+	obj->buff = (unsigned char *)osMalloc(obj->maxSize * obj->unitSize);
 	if (obj->buff != NULL)
 	{
 		return 0;
@@ -35,19 +35,19 @@ void osVectorFree(OsVector *obj)
 	}
 }
 
-os_size_t osVectorSize(OsVector *obj)
+size_t osVectorSize(OsVector *obj)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return obj->size;
 }
 
-os_size_t osVectorMaxSize(OsVector *obj)
+size_t osVectorMaxSize(OsVector *obj)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return obj->maxSize;
 }
 
-os_size_t osVectorUnitSize(OsVector *obj)
+size_t osVectorUnitSize(OsVector *obj)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return obj->unitSize;
@@ -66,12 +66,12 @@ int osVectorEmpty(OsVector *obj)
 	}
 }
 
-os_size_t osVectorResize(OsVector *obj, os_size_t size)
+size_t osVectorResize(OsVector *obj, size_t size)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	if (size > obj->maxSize)
 	{
-		os_byte_t *newBuff = (os_byte_t *)osMalloc(size * obj->unitSize);
+		unsigned char *newBuff = (unsigned char *)osMalloc(size * obj->unitSize);
 		if (newBuff != NULL)
 		{
 			osMemCpy(newBuff, obj->buff, obj->unitSize * obj->size);
@@ -83,19 +83,19 @@ os_size_t osVectorResize(OsVector *obj, os_size_t size)
 	return obj->maxSize;
 }
 
-os_size_t osVectorPushBack(OsVector *obj, void *data)
+size_t osVectorPushBack(OsVector *obj, void *data)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return osVectorInsert(obj, data, obj->size);
 }
 
-os_size_t osVectorPushFront(OsVector *obj, void *data)
+size_t osVectorPushFront(OsVector *obj, void *data)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return osVectorInsert(obj, data, 0);
 }
 
-os_size_t osVectorInsert(OsVector *obj, void *data, os_size_t n)
+size_t osVectorInsert(OsVector *obj, void *data, size_t n)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	osAssert(obj->buff != NULL && obj->size < OS_VECTOR_MAX_SIZE);
@@ -105,7 +105,7 @@ os_size_t osVectorInsert(OsVector *obj, void *data, os_size_t n)
 		{
 			osVectorResize(obj, obj->maxSize * 2);
 		}
-		for (os_size_t i = obj->size; i > n; i--)
+		for (size_t i = obj->size; i > n; i--)
 		{
 			osMemCpy(&obj->buff[i * obj->unitSize], &obj->buff[(i - 1) * obj->unitSize], obj->unitSize);
 		}
@@ -127,7 +127,7 @@ void *osVectorFront(OsVector *obj)
 	return osVectorAt(obj, 0);
 }
 
-void *osVectorAt(OsVector *obj, os_size_t n)
+void *osVectorAt(OsVector *obj, size_t n)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	osAssert(obj->buff != NULL && n < obj->size);
@@ -138,13 +138,13 @@ void *osVectorAt(OsVector *obj, os_size_t n)
 	return NULL;
 }
 
-int osVectorErase(OsVector *obj, os_size_t n)
+int osVectorErase(OsVector *obj, size_t n)
 {
 	vectorLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	osAssert(obj->buff != NULL && n < obj->size);
 	if (obj->buff != NULL && n < obj->size)
 	{
-		for (os_size_t i = n + 1; i < obj->size; i++)
+		for (size_t i = n + 1; i < obj->size; i++)
 		{
 			osMemCpy(&obj->buff[(i - 1) * obj->unitSize], &obj->buff[i * obj->unitSize], obj->unitSize);
 		}

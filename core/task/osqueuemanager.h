@@ -27,7 +27,7 @@ int osQueueManagerInit(OsQueueManager *queueManager, OsTaskManager *taskManager)
 * queueLength：队列长度
 * return：0：调用成功
 *********************************************************************************************************************/
-int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, os_size_t queueLength, os_size_t messageSize);
+int osQueueManagerQueueInit(OsQueueManager *queueManager, OsMsgQueue *queue, size_t queueLength, size_t messageSize);
 /*********************************************************************************************************************
 * 释放OsQueue
 * queueManager：OsQueueManager对象
@@ -69,14 +69,14 @@ int osQueueManagerReceive(OsQueueManager *queueManager, void *message, OsTask **
 * queue：OsQueue对象
 * return：消息数量
 *********************************************************************************************************************/
-os_size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsMsgQueue *queue);
+size_t osQueueManagerGetMessageCount(OsQueueManager *queueManager, OsMsgQueue *queue);
 /*********************************************************************************************************************
 * 获取队列长度
 * queueManager：OsQueueManager对象
 * queue：OsQueue对象
 * return：队列长度
 *********************************************************************************************************************/
-os_size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue *queue);
+size_t osQueueManagerGetQueueLength(OsQueueManager *queueManager, OsMsgQueue *queue);
 /*********************************************************************************************************************
 * 弹出一条消息，如果没有消息则返回NULL
 * queueManager：OsQueueManager对象

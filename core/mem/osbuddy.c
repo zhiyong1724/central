@@ -7,11 +7,11 @@
 #define buddyLog(format, ...) (void)0
 #endif
 
-static void *addressAlign(void *address, os_size_t size)
+static void *addressAlign(void *address, size_t size)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_byte_t *startAddress = (os_byte_t *)address;
-    os_size_t offset = (os_size_t)startAddress % size;
+    unsigned char *startAddress = (unsigned char *)address;
+    size_t offset = (size_t)startAddress % size;
     if (offset > 0)
     {
         startAddress += size - offset;
@@ -19,11 +19,11 @@ static void *addressAlign(void *address, os_size_t size)
     return startAddress;
 }
 
-static os_size_t calculateGroupCount(os_size_t pageNum)
+static size_t calculateGroupCount(size_t pageNum)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t i = 1;
-    os_size_t compareValue = 2;
+    size_t i = 1;
+    size_t compareValue = 2;
     for (; compareValue <= pageNum && i < 128; compareValue <<= 1)
     {
         i++;
@@ -31,10 +31,10 @@ static os_size_t calculateGroupCount(os_size_t pageNum)
     return i;
 }
 
-static os_byte_t *fillBlockArray(OsBuddy *buddy, os_byte_t *address, os_size_t blockArrayId)
+static unsigned char *fillBlockArray(OsBuddy *buddy, unsigned char *address, size_t blockArrayId)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t pageCount = 1 << blockArrayId;
+    size_t pageCount = 1 << blockArrayId;
     for (; buddy->totalPageNum - buddy->freePageNum >= pageCount; buddy->freePageNum += pageCount)
     {
         osInsertToFront(&buddy->blockListArray[blockArrayId], (OsListNode *)address);
@@ -43,7 +43,7 @@ static os_byte_t *fillBlockArray(OsBuddy *buddy, os_byte_t *address, os_size_t b
     return address;
 }
 
-os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
+size_t osBuddyInit(OsBuddy *buddy, void *startAddress, size_t size)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     buddy->freePageNum = 0;
@@ -51,21 +51,21 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
     osAssert(buddy->totalPageNum >= 2);
     if (buddy->totalPageNum >= 2)
     {
-        buddy->blockGroup = (os_byte_t *)startAddress;
+        buddy->blockGroup = (unsigned char *)startAddress;
         osMemSet(buddy->blockGroup, 0, buddy->totalPageNum);
         size -= buddy->totalPageNum;
-        os_byte_t *blockGroupEnd = buddy->blockGroup + buddy->totalPageNum;
+        unsigned char *blockGroupEnd = buddy->blockGroup + buddy->totalPageNum;
 
-        os_byte_t *blockListArrayStart = (os_byte_t *)addressAlign(blockGroupEnd, sizeof(void *));
-        os_size_t offset = blockListArrayStart - blockGroupEnd;
+        unsigned char *blockListArrayStart = (unsigned char *)addressAlign(blockGroupEnd, sizeof(void *));
+        size_t offset = blockListArrayStart - blockGroupEnd;
         size -= offset;
         buddy->blockListArray = (OsListNode **)blockListArrayStart;
         buddy->groupCount = calculateGroupCount(buddy->totalPageNum);
         size -= buddy->groupCount * sizeof(void *);
-        os_byte_t *blockListArrayEnd = blockListArrayStart + buddy->groupCount * sizeof(void *);
+        unsigned char *blockListArrayEnd = blockListArrayStart + buddy->groupCount * sizeof(void *);
         
-        buddy->startAddress = (os_byte_t *)addressAlign(blockListArrayEnd, OS_BUDDY_PAGE_SIZE);
-        offset = (os_byte_t *)buddy->startAddress - blockListArrayEnd;
+        buddy->startAddress = (unsigned char *)addressAlign(blockListArrayEnd, OS_BUDDY_PAGE_SIZE);
+        offset = (unsigned char *)buddy->startAddress - blockListArrayEnd;
         size -= offset;
 
         buddy->totalPageNum = size / OS_BUDDY_PAGE_SIZE;
@@ -73,7 +73,7 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
         if (buddy->totalPageNum >= 2)
         {
             buddy->groupCount = calculateGroupCount(buddy->totalPageNum);
-            os_byte_t *handle = (os_byte_t *)buddy->startAddress;
+            unsigned char *handle = (unsigned char *)buddy->startAddress;
             for (int i = 0; i < (int)buddy->groupCount; i++)
             {
                 buddy->blockListArray[i] = NULL;
@@ -81,7 +81,7 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
             
             for (int i = (int)buddy->groupCount - 1; i >= 0; i--)
             {
-                handle = fillBlockArray(buddy, handle, (os_size_t)i);
+                handle = fillBlockArray(buddy, handle, (size_t)i);
                 if (buddy->freePageNum == buddy->totalPageNum)
                 {
                     break;
@@ -92,32 +92,32 @@ os_size_t osBuddyInit(OsBuddy *buddy, void *startAddress, os_size_t size)
     return buddy->freePageNum;
 }
 
-static void setBlockGroup(OsBuddy *buddy, void *address, os_byte_t value)
+static void setBlockGroup(OsBuddy *buddy, void *address, unsigned char value)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t index = ((char *)address - (char *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE;
+    size_t index = ((char *)address - (char *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE;
     buddy->blockGroup[index] = value;
 }
 
-static os_byte_t getBlockGroup(OsBuddy *buddy, void *address)
+static unsigned char getBlockGroup(OsBuddy *buddy, void *address)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t index = ((char *)address - (char *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE;
+    size_t index = ((char *)address - (char *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE;
     return buddy->blockGroup[index];
 }
 
-static void *splitBlock(OsBuddy *buddy, void *address, os_size_t groupId)
+static void *splitBlock(OsBuddy *buddy, void *address, size_t groupId)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    setBlockGroup(buddy, address, (os_byte_t)groupId);
-    os_byte_t *blockB = (os_byte_t *)address;
+    setBlockGroup(buddy, address, (unsigned char)groupId);
+    unsigned char *blockB = (unsigned char *)address;
     blockB += (1 << (groupId - 1)) * OS_BUDDY_PAGE_SIZE;
-    setBlockGroup(buddy, blockB, (os_byte_t)groupId * -1);
+    setBlockGroup(buddy, blockB, (unsigned char)groupId * -1);
     osInsertToFront(&buddy->blockListArray[groupId - 1], (OsListNode *)blockB);
     return address;
 }
 
-static void *allocPages(OsBuddy *buddy, os_size_t groupId)
+static void *allocPages(OsBuddy *buddy, size_t groupId)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     void *ret = NULL;
@@ -128,7 +128,7 @@ static void *allocPages(OsBuddy *buddy, os_size_t groupId)
         {
             ret = buddy->blockListArray[groupId];
             osRemoveFromList(&buddy->blockListArray[groupId], (OsListNode *)ret);
-            setBlockGroup(buddy, ret, (os_byte_t)groupId + 1);
+            setBlockGroup(buddy, ret, (unsigned char)groupId + 1);
         }
         else
         {
@@ -144,15 +144,15 @@ static void *allocPages(OsBuddy *buddy, os_size_t groupId)
     return ret;
 }
 
-void *osBuddyAllocPages(OsBuddy *buddy, os_size_t n)
+void *osBuddyAllocPages(OsBuddy *buddy, size_t n)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     void *ret = NULL;
     osAssert(n > 0 && n <= buddy->freePageNum);
     if (n > 0 && n <= buddy->freePageNum)
     {
-        os_size_t groupId = 0;
-        os_size_t pageNumPerBlock = 1;
+        size_t groupId = 0;
+        size_t pageNumPerBlock = 1;
         for (; n > pageNumPerBlock; pageNumPerBlock <<= 1)
         {
             groupId++;
@@ -167,35 +167,35 @@ void *osBuddyAllocPages(OsBuddy *buddy, os_size_t n)
     return ret;
 }
 
-static void freePages(OsBuddy *buddy, void *pages, os_size_t groupId);
-static os_size_t mergeBlock(OsBuddy *buddy, void *pages, os_size_t groupId)
+static void freePages(OsBuddy *buddy, void *pages, size_t groupId);
+static size_t mergeBlock(OsBuddy *buddy, void *pages, size_t groupId)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_byte_t ret = 0;
+    unsigned char ret = 0;
     if (groupId < buddy->groupCount - 1)
     {
-        os_byte_t *blockA;
-        os_byte_t *blockB;
-        os_byte_t *buddyBlock;
-        os_size_t blockSize = OS_BUDDY_PAGE_SIZE * (1 << groupId);
+        unsigned char *blockA;
+        unsigned char *blockB;
+        unsigned char *buddyBlock;
+        size_t blockSize = OS_BUDDY_PAGE_SIZE * (1 << groupId);
         if (0 == ((char *)pages - (char *)buddy->startAddress) % (blockSize << 1))
         {
-            blockA = (os_byte_t *)pages;
+            blockA = (unsigned char *)pages;
             blockB = blockA + blockSize;
             buddyBlock = blockB;
-            if (blockB + blockSize >= (os_byte_t *)buddy->startAddress + buddy->totalPageNum * OS_BUDDY_PAGE_SIZE)
+            if (blockB + blockSize >= (unsigned char *)buddy->startAddress + buddy->totalPageNum * OS_BUDDY_PAGE_SIZE)
             {
                 return ret;
             }
         }
         else
         {
-            blockB = (os_byte_t *)pages;
+            blockB = (unsigned char *)pages;
             blockA = blockB - blockSize;
             buddyBlock = blockA;
         }
-        os_byte_t blockGroup = getBlockGroup(buddy, buddyBlock);
-        ret = ((os_byte_t)groupId + 1) * -1;
+        unsigned char blockGroup = getBlockGroup(buddy, buddyBlock);
+        ret = ((unsigned char)groupId + 1) * -1;
         if (blockGroup == ret)
         {
             osRemoveFromList(&buddy->blockListArray[groupId], (OsListNode *)buddyBlock);
@@ -208,13 +208,13 @@ static os_size_t mergeBlock(OsBuddy *buddy, void *pages, os_size_t groupId)
     return ret;
 }
 
-static void freePages(OsBuddy *buddy, void *pages, os_size_t groupId)
+static void freePages(OsBuddy *buddy, void *pages, size_t groupId)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-    os_size_t value = mergeBlock(buddy, pages, groupId);
+    size_t value = mergeBlock(buddy, pages, groupId);
     if (value > 127 || 0 == value)
     {
-        setBlockGroup(buddy, pages, (os_byte_t)value);
+        setBlockGroup(buddy, pages, (unsigned char)value);
         osInsertToFront(&buddy->blockListArray[groupId], (OsListNode *)pages);
     }
 }
@@ -230,9 +230,9 @@ int osBuddyFreePages(OsBuddy *buddy, void *pages)
         if (0 == ((char *)pages - (char *)buddy->startAddress) % OS_BUDDY_PAGE_SIZE)
         {
             //osAssert(((unsigned int *)pages - (unsigned int *)buddy->startAddress) / OS_BUDDY_PAGE_SIZE < buddy->totalPageNum);
-            if (((char *)pages - (char *)buddy->startAddress) / (os_size_t)OS_BUDDY_PAGE_SIZE < buddy->totalPageNum)
+            if (((char *)pages - (char *)buddy->startAddress) / (size_t)OS_BUDDY_PAGE_SIZE < buddy->totalPageNum)
             {
-                os_size_t blockGroup = getBlockGroup(buddy, pages);
+                size_t blockGroup = getBlockGroup(buddy, pages);
                 osAssert(blockGroup > 0 && blockGroup <= buddy->groupCount);
                 if (blockGroup > 0 && blockGroup <= buddy->groupCount)
                 {
@@ -246,13 +246,13 @@ int osBuddyFreePages(OsBuddy *buddy, void *pages)
     return ret;
 }
 
-os_size_t osBuddyTotalPageNum(OsBuddy *buddy) 
+size_t osBuddyTotalPageNum(OsBuddy *buddy) 
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return buddy->totalPageNum;
 }
 
-os_size_t osBuddyFreePageNum(OsBuddy *buddy)
+size_t osBuddyFreePageNum(OsBuddy *buddy)
 {
     buddyLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	return buddy->freePageNum;

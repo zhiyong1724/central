@@ -15,7 +15,7 @@ extern "C"
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, os_size_t priority, os_size_t stackSize);
+int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, size_t priority, size_t stackSize);
 /*********************************************************************************************************************
 * 创建实时任务
 * taskFunction：任务处理函数
@@ -26,7 +26,7 @@ int osTaskCreate(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, os_size_t priority, os_size_t stackSize);
+int osTaskCreateRT(os_tid_t *tid, TaskFunction taskFunction, void *arg, const char *name, size_t priority, size_t stackSize);
 /*********************************************************************************************************************
 * 时钟滴答
 * ns：输入与上次tick的时间间隔，输出下次tick的时间间隔
@@ -39,7 +39,7 @@ int osTaskTick(uint64_t *ns);
 * priority：优先级
 * return：0:调用成功
 *********************************************************************************************************************/
-int osTaskModifyPriority(os_tid_t tid, os_size_t priority);
+int osTaskModifyPriority(os_tid_t tid, size_t priority);
 /*********************************************************************************************************************
 * 休眠一段时间
 * ms：休眠的时间
@@ -75,7 +75,7 @@ void osTaskStart();
 * tid：等待任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskJoin(void **retval, os_size_t tid);
+int osTaskJoin(void **retval, size_t tid);
 /*********************************************************************************************************************
 * 把任务与父任务分离
 * tid：分离任务tid
@@ -91,7 +91,7 @@ uint64_t osTaskGetTickCount();
 * 获取任务个数
 * return：任务个数
 *********************************************************************************************************************/
-os_size_t osTaskGetTaskCount();
+size_t osTaskGetTaskCount();
 /*********************************************************************************************************************
 * 获取当前任务TID
 * return：当前任务TID
@@ -103,7 +103,7 @@ os_tid_t osTaskGetTid();
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskGetTaskPriority(os_size_t *priority, os_tid_t tid);
+int osTaskGetTaskPriority(size_t *priority, os_tid_t tid);
 /*********************************************************************************************************************
 * 获取任务调度类型
 * type：任务调度类型
@@ -125,14 +125,14 @@ int osTaskGetTaskState(OsTaskState *state, os_tid_t tid);
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskGetTaskName(char *name, os_size_t size, os_tid_t tid);
+int osTaskGetTaskName(char *name, size_t size, os_tid_t tid);
 /*********************************************************************************************************************
 * 获取任务堆栈大小
 * stackSize：任务堆栈大小
 * tid：任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int osTaskGetTaskStackSize(os_size_t *stackSize, os_tid_t tid);
+int osTaskGetTaskStackSize(size_t *stackSize, os_tid_t tid);
 /*********************************************************************************************************************
 * 返回任务是否为joinable
 * tid：任务tid
@@ -144,7 +144,7 @@ int osTaskJoinable(os_tid_t tid);
 * taskManager：OsTaskManager对象
 * return：cpu占用
 *********************************************************************************************************************/
-os_size_t osTaskGetCPUUsage();
+size_t osTaskGetCPUUsage();
 /*********************************************************************************************************************
 * 发现第一个任务信息
 * taskPtr：当前位置

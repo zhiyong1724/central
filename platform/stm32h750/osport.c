@@ -7,27 +7,27 @@
 #include "osstring.h"
 #define NVIC_INT_CTRL_REG (*((volatile uint32_t *)0xe000ed04))
 #define NVIC_PENDSVSET_BIT (1UL << 28UL)
-static void **sPreTask = NULL;
-static void **sRunningTask = NULL;
+static stack_size_t **sPreTask = NULL;
+static stack_size_t **sRunningTask = NULL;
 static struct _reent sReent = _REENT_INIT (sReent);
-int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskStackMagic, TaskFunction taskFunction, void *arg)
+int portInitializeStack(stack_size_t **stackTop, size_t stackSize, stack_size_t *taskStackMagic, TaskFunction taskFunction, void *arg)
 {
-    os_size_t **stack = (os_size_t **)stackTop;     
-    (*stack) -= sizeof(struct _reent) / sizeof(os_size_t);    //给C库全局变量预留空间
+    stack_size_t **stack = (stack_size_t **)stackTop;     
+    (*stack) -= sizeof(struct _reent) / sizeof(stack_size_t);    //给C库全局变量预留空间
     (*stack)--;
     osMemCpy(*stack, &sReent, sizeof(struct _reent));
-    if ((os_size_t)*stack % 8 > 0)                            //8字节对齐
+    if ((stack_size_t)*stack % 8 > 0)                            //8字节对齐
     {
         (*stack)--;
     }
     (*stack)--;
     **stack = 0x01000000;     /* xPSR */
     (*stack)--;
-    **stack = (os_size_t)taskFunction;     /* PC */
+    **stack = (stack_size_t)taskFunction;     /* PC */
     (*stack)--;
-    **stack = (os_size_t)osTaskExit;     /* LR */
+    **stack = (stack_size_t)osTaskExit;     /* LR */
     (*stack) -= 5;	/* R12, R3, R2 and R1. */
-    **stack = (os_size_t) arg;	/* R0 */
+    **stack = (stack_size_t) arg;	/* R0 */
     (*stack)--;
 	**stack = 0xfffffffd;       //EXC_RETURN
 
@@ -35,14 +35,14 @@ int portInitializeStack(void **stackTop, os_size_t stackSize, os_size_t *taskSta
     return 0;
 }
 
-int portStartScheduler(void **stackTop)
+int portStartScheduler(stack_size_t **stackTop)
 {
     if (stackTop != sRunningTask)
     {
-        os_size_t **stackStart = (os_size_t **)stackTop - 1;
-        os_size_t *stackSize = (os_size_t *)stackTop + 1;
-        os_size_t *stackEnd = *stackStart + *stackSize / sizeof(os_size_t);
-        stackEnd -= sizeof(struct _reent) / sizeof(os_size_t);
+        stack_size_t **stackStart = (stack_size_t **)stackTop - 1;
+        stack_size_t *stackSize = (stack_size_t *)stackTop + 1;
+        stack_size_t *stackEnd = *stackStart + *stackSize / sizeof(stack_size_t);
+        stackEnd -= sizeof(struct _reent) / sizeof(stack_size_t);
         stackEnd--;
         _REENT = (struct _reent *)stackEnd;
         sPreTask = sRunningTask;
@@ -52,14 +52,14 @@ int portStartScheduler(void **stackTop)
     return 0;
 }
 
-int portYield(void **stackTop)
+int portYield(stack_size_t **stackTop)
 {
     if (stackTop != sRunningTask)
     {
-        os_size_t **stackStart = (os_size_t **)stackTop - 1;
-        os_size_t *stackSize = (os_size_t *)stackTop + 1;
-        os_size_t *stackEnd = *stackStart + *stackSize / sizeof(os_size_t);
-        stackEnd -= sizeof(struct _reent) / sizeof(os_size_t);
+        stack_size_t **stackStart = (stack_size_t **)stackTop - 1;
+        stack_size_t *stackSize = (stack_size_t *)stackTop + 1;
+        stack_size_t *stackEnd = *stackStart + *stackSize / sizeof(stack_size_t);
+        stackEnd -= sizeof(struct _reent) / sizeof(stack_size_t);
         stackEnd--;
         _REENT = (struct _reent *)stackEnd;
         sPreTask = sRunningTask;
@@ -102,16 +102,16 @@ void PendSV_Handler(void)
         "runningTask: .word sRunningTask	    \n");        
 }
 
-static os_size_t sInterruptFlag = 1;
-os_size_t portDisableInterrupts()
+static size_t sInterruptFlag = 1;
+size_t portDisableInterrupts()
 {
     __disable_irq();
-    os_size_t ret = sInterruptFlag;
+    size_t ret = sInterruptFlag;
     sInterruptFlag = 0;
     return ret;
 }
 
-int portRecoveryInterrupts(os_size_t state)
+int portRecoveryInterrupts(size_t state)
 {  
     if (1 == state)
     {
