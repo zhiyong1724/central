@@ -9,18 +9,18 @@ include $(LVGL_DIR)/$(LVGL_DIR_NAME)/lvgl.mk
 
 vpath %.o $(OBJ_DIR)
 
-CC := arm-none-eabi-gcc
-CXX := arm-none-eabi-g++
-AR := arm-none-eabi-ar
-LD := arm-none-eabi-ld
+CC := gcc
+CXX := g++
+AR := ar
+LD := ld
 
-INCLUDES := -I. -I../../platform/stm32h750/cmsis/Device/ST/STM32H7xx/Include -I../../platform/stm32h750/cmsis/Include
+INCLUDES := -I. 
 
 LIBS_DIR := -L.
 
 LIBS := -lpthread
 
-CFLAGS := $(CFLAGS) -O3 -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DUSE_HAL_DRIVER -DSTM32H750xx -DSTM32H7
+CFLAGS := $(CFLAGS) -O3 
 
 CSRCS := $(CSRCS)
 
