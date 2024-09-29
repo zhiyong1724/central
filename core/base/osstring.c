@@ -1,10 +1,118 @@
 #include "osstring.h"
+#include "osmem.h"
 #define ENABLE_STRING_LOG 0
 #if ENABLE_STRING_LOG
 #define stringLog(format, ...) osPrintf(format, ##__VA_ARGS__)
 #else
 #define stringLog(format, ...) (void)0
 #endif
+int osStringInit(OsString *obj)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	int ret = -1;
+	obj->len = 0;
+	obj->size = 8;
+	obj->str = (char *)osMalloc(obj->size);
+	if (obj->str != NULL)
+	{
+		ret = 0;
+	}
+	return ret;
+}
+
+void osStringFree(OsString *obj)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	if (obj->str != NULL)
+	{
+		obj->len = 0;
+		obj->size = 0;
+		osFree(obj->str);
+		obj->str = NULL;
+	}
+}
+
+static size_t getSuitableSize(size_t size)
+{
+	size_t ret = 1;
+	while (ret < size)
+	{
+		ret <<= 1;
+	}
+	return ret;
+}
+
+int osStringCopy(OsString *obj, const char *s)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	size_t len = osStrLen(s);
+	if (obj->size <= len)
+	{
+		size_t size = getSuitableSize(len);
+		if (osStringResize(obj, size) != size)
+		{
+			return -1;
+		}
+	}
+	osMemCpy(obj->str, s, len);
+	obj->len = len;
+	obj->str[obj->len] = '\0';
+	return 0;
+}
+
+int osStringAppend(OsString *obj, const char *s)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	size_t len = osStrLen(s);
+	if (obj->size <= obj->len + len)
+	{
+		size_t size = getSuitableSize(obj->len + len);
+		if (osStringResize(obj, size) != size)
+		{
+			return -1;
+		}
+	}
+	osMemCpy(&obj->str[obj->len], s, len);
+	obj->len += len;
+	obj->str[obj->len] = '\0';
+	return 0;
+}
+
+int osStringPush(OsString *obj, char c)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	if (obj->size <= obj->len + 1)
+	{
+		size_t size = getSuitableSize(obj->len + 1);
+		if (osStringResize(obj, size) != size)
+		{
+			return -1;
+		}
+	}
+	obj->str[obj->len] = c;
+	obj->len++;
+	obj->str[obj->len] = '\0';
+	return 0;
+}
+
+size_t osStringResize(OsString *obj, size_t size)
+{
+	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	if (size > obj->size)
+	{
+		char *newStr = (char *)osMalloc(size);
+		if (newStr != NULL)
+		{
+			osMemCpy(newStr, obj->str, obj->len);
+			obj->str[obj->len] = '\0';
+			obj->size = size;
+			osFree(obj->str);
+			obj->str = newStr;
+		}
+	}
+	return obj->size;
+}
+
 void *osMemSet(void *s, unsigned char ch, size_t n)
 {
 	stringLog("%s:%s:%d\n", __FILE__, __func__, __LINE__);

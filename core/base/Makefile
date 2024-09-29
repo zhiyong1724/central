@@ -7,4 +7,7 @@ SRCS += osbitmapindex.c \
 	osqueue.c \
 	osstring.c \
 	ostree.c \
-	osvector.c
+	osvector.c \
+	osstack.c \
+	oskmp.c \
+	osregex.c
