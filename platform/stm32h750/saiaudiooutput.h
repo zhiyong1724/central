@@ -1,13 +1,13 @@
 #ifndef __SAIAUDIOOUTPUT_H__
 #define __SAIAUDIOOUTPUT_H__
 #include "audiooutput.h"
-#include "ostask.h"
-#include "ossemaphore.h"
+#include "sys_task.h"
+#include "sys_semaphore.h"
 typedef struct SaiAudioOutput
 {
     AudioOutput audioOutput;
-    os_tid_t tid;
-    OsSemaphore semaphore;
+    sys_tid_t tid;
+    sys_semaphore_t semaphore;
     int running;
     void *bufferA;
     void *bufferB;

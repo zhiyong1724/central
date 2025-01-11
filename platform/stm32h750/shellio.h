@@ -4,7 +4,7 @@
 extern "C"
 {
 #endif
-int shellIOInit();
+int shell_io_init();
 #ifdef __cplusplus
 }
 #endif

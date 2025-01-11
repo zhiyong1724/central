@@ -4,15 +4,15 @@
 #include "usart.h"
 #include <fcntl.h>
 #include "osf.h"
-#include "osmem.h"
+#include "sys_mem.h"
 #include <string.h>
 #include "led.h"
-#include "osmutex.h"
+#include "sys_lock.h"
 #include <sys/times.h>
 #include <unistd.h>
-#include "osmsgqueue.h"
-static OsRecursiveMutex sMallocMutex;
-static int sMallocMutexInit = 0;
+#include "sys_msg_queue.h"
+static sys_recursive_lock_t s_malloc_mutex;
+static int s_malloc_mutexInit = 0;
 static int sAddressMask = 0;
 void _exit(int rc)
 {
@@ -71,33 +71,33 @@ int _open(char *file, int flags, int mode)
   uint32_t openMode = 0;
   if ((flags & O_WRONLY) > 0)
   {
-    openMode |= OS_FILE_MODE_WRITE;
+    openMode |= SYS_FILE_MODE_WRITE;
   }
   else
   {
-    openMode |= OS_FILE_MODE_READ;
+    openMode |= SYS_FILE_MODE_READ;
   }
   if ((flags & O_RDWR) > 0)
   {
-    openMode |= OS_FILE_MODE_READ | OS_FILE_MODE_WRITE;
+    openMode |= SYS_FILE_MODE_READ | SYS_FILE_MODE_WRITE;
   }
 
   if ((flags & O_CREAT) > 0)
   {
     if ((flags & O_TRUNC) > 0)
     {
-      openMode |= OS_FILE_MODE_CREATE_ALWAYS;
+      openMode |= SYS_FILE_MODE_CREATE_ALWAYS;
     }
     else if ((flags & O_APPEND) > 0)
     {
-      openMode |= OS_FILE_MODE_OPEN_ALWAYS | OS_FILE_MODE_OPEN_APPEND;
+      openMode |= SYS_FILE_MODE_OPEN_ALWAYS | SYS_FILE_MODE_OPEN_APPEND;
     }
   }
   else
   {
-    openMode |= OS_FILE_MODE_OPEN_EXISTING;
+    openMode |= SYS_FILE_MODE_OPEN_EXISTING;
   }
-  OsFile *osFile = (OsFile *)osMalloc(sizeof(OsFile));
+  sys_file_t *osFile = (sys_file_t *)sys_malloc(sizeof(sys_file_t));
   if (osFile > 0)
   {
     if (osFOpen(osFile, file, openMode) == 0)
@@ -106,7 +106,7 @@ int _open(char *file, int flags, int mode)
     }
     else
     {
-      osFree(osFile);
+      sys_free(osFile);
       errno = ENOENT;
       return -1;
     }
@@ -123,13 +123,13 @@ int _close(int fildes)
   int ret = -1;
   if (fildes > STDERR_FILENO)
   {
-    OsFile *osFile = (OsFile *)shortToAddress((short)fildes);
+    sys_file_t *osFile = (sys_file_t *)shortToAddress((short)fildes);
     if (osFile != NULL)
     {
-      OsFileError result = osFClose(osFile);
-      if (OS_FILE_ERROR_OK == result)
+      sys_file_error_t result = osFClose(osFile);
+      if (SYS_FILE_ERROR_OK == result)
       {
-        osFree(osFile);
+        sys_free(osFile);
         ret = 0;
       }
       else
@@ -142,13 +142,13 @@ int _close(int fildes)
 }
 
 static int sInBuffQueueInit = 0;
-static OsMsgQueue sInBuffQueue;
+static sys_msg_queue_t sInBuffQueue;
 static char sInBuff;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   UNUSED(huart);
   MX_USART1_UART_Receive(&sInBuff, 1);
-  osMsgQueueSend(&sInBuffQueue, &sInBuff);
+  sys_msg_queue_send(&sInBuffQueue, &sInBuff);
 }
 
 int _read(int file, char *ptr, int len)
@@ -159,20 +159,20 @@ int _read(int file, char *ptr, int len)
     if (0 == sInBuffQueueInit)
     {
       sInBuffQueueInit = 1;
-      osMsgQueueCreate(&sInBuffQueue, 256, 1);
+      sys_msg_queue_create(&sInBuffQueue, 256, 1);
       MX_USART1_UART_Receive(&sInBuff, 1);
     }
-    osMsgQueueReceive(&sInBuffQueue, ptr, OS_MESSAGE_MAX_WAIT_TIME);
+    sys_msg_queue_receive(&sInBuffQueue, ptr, SYS_MESSAGE_MAX_WAIT_TIME);
     ret = 1;
   }
   else if (file > STDERR_FILENO)
   {
-    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    sys_file_t *osFile = (sys_file_t *)shortToAddress((short)file);
     if (osFile != NULL)
     {
       uint64_t length = 0;
-      OsFileError result = osFRead(osFile, ptr, len, &length);
-      if (OS_FILE_ERROR_OK == result)
+      sys_file_error_t result = osFRead(osFile, ptr, len, &length);
+      if (SYS_FILE_ERROR_OK == result)
       {
         ret = (int)length;
       }
@@ -202,12 +202,12 @@ int _write(int file, char *ptr, int len)
   }
   else if (file > STDERR_FILENO)
   {
-    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    sys_file_t *osFile = (sys_file_t *)shortToAddress((short)file);
     if (osFile != NULL)
     {
       uint64_t length = 0;
-      OsFileError result = osFWrite(osFile, ptr, len, &length);
-      if (OS_FILE_ERROR_OK == result)
+      sys_file_error_t result = osFWrite(osFile, ptr, len, &length);
+      if (SYS_FILE_ERROR_OK == result)
       {
         ret = (int)length;
       }
@@ -225,26 +225,26 @@ int _lseek(int file, int ptr, int dir)
   int ret = -1;
   if (file > STDERR_FILENO)
   {
-    OsSeekType seekType = OS_SEEK_TYPE_SET;
+    sys_seek_type_t seekType = SYS_SEEK_TYPE_SET;
     switch (dir)
     {
     case SEEK_SET:
-      seekType = OS_SEEK_TYPE_SET;
+      seekType = SYS_SEEK_TYPE_SET;
       break;
     case SEEK_CUR:
-      seekType = OS_SEEK_TYPE_CUR;
+      seekType = SYS_SEEK_TYPE_CUR;
       break;
     case SEEK_END:
-      seekType = OS_SEEK_TYPE_END;
+      seekType = SYS_SEEK_TYPE_END;
       break;
     default:
       break;
     }
-    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    sys_file_t *osFile = (sys_file_t *)shortToAddress((short)file);
     if (osFile != NULL)
     {
-      OsFileError result = osFSeek(osFile, ptr, seekType);
-      if (OS_FILE_ERROR_OK == result)
+      sys_file_error_t result = osFSeek(osFile, ptr, seekType);
+      if (SYS_FILE_ERROR_OK == result)
       {
         uint64_t cur = 0;
         osFTell(osFile, &cur);
@@ -267,18 +267,18 @@ int _fstat(int file, struct stat *st)
   }
   else
   {
-    OsFile *osFile = (OsFile *)shortToAddress((short)file);
+    sys_file_t *osFile = (sys_file_t *)shortToAddress((short)file);
     if (osFile != NULL)
     {
       st->st_mode = S_IFBLK;
       uint64_t cur = 0;
       int result = osFTell(osFile, &cur);
-      result = osFSeek(osFile, 0, OS_SEEK_TYPE_END);
+      result = osFSeek(osFile, 0, SYS_SEEK_TYPE_END);
       uint64_t size = 0;
       result = osFTell(osFile, &size);
       st->st_size = (__off_t)size;
-      result = osFSeek(osFile, cur, OS_SEEK_TYPE_SET);
-      if (OS_FILE_ERROR_OK == result)
+      result = osFSeek(osFile, cur, SYS_SEEK_TYPE_SET);
+      if (SYS_FILE_ERROR_OK == result)
       {
         errno = ENXIO;
       }
@@ -301,22 +301,22 @@ int _isatty(int file)
 
 void __malloc_lock(struct _reent *reent)
 {
-  if (0 == sMallocMutexInit)
+  if (0 == s_malloc_mutexInit)
   {
-    sMallocMutexInit = 1;
-    osRecursiveMutexCreate(&sMallocMutex);
+    s_malloc_mutexInit = 1;
+    sys_recursive_lock_create(&s_malloc_mutex);
   }
-  osRecursiveMutexLock(&sMallocMutex);
+  sys_recursive_lock_lock(&s_malloc_mutex);
 }
 
 void __malloc_unlock(struct _reent *reent)
 {
-  if (0 == sMallocMutexInit)
+  if (0 == s_malloc_mutexInit)
   {
-    sMallocMutexInit = 1;
-    osRecursiveMutexCreate(&sMallocMutex);
+    s_malloc_mutexInit = 1;
+    sys_recursive_lock_create(&s_malloc_mutex);
   }
-  osRecursiveMutexUnlock(&sMallocMutex);
+  sys_recursive_lock_unlock(&s_malloc_mutex);
 }
 
 clock_t _times(struct tms *buffer)
@@ -336,14 +336,14 @@ int _link()
 
 int _stat(const char *path, struct stat *st)
 {
-  OsFileInfo fileInfo;
-  int ret = osFStat(path, &fileInfo);
-  if (OS_FILE_ERROR_OK == ret)
+  sys_file_info_t file_info;
+  int ret = osFStat(path, &file_info);
+  if (SYS_FILE_ERROR_OK == ret)
   {
     errno = ENXIO;
   }
   st->st_mode = S_IFBLK;
-  st->st_size = fileInfo.fileSize;
+  st->st_size = file_info.file_size;
   return ret;
 }
 

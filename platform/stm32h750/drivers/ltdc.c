@@ -21,24 +21,24 @@
 #include "ltdc.h"
 #include <stdint.h>
 #include "dma.h"
-#include "ossemaphore.h"
+#include "sys_semaphore.h"
 #include <string.h>
 /* USER CODE BEGIN 0 */
-static OsSemaphore sSemaphore;
+static sys_semaphore_t sSemaphore;
 static uint32_t sLcdBuffer[LCD_WIDTH * LCD_HEIGH];
 /* USER CODE END 0 */
 LTDC_HandleTypeDef hltdc;
 
 static void dmaCallback(DMA_HandleTypeDef *_hdma)
 {
-  osSemaphorePost(&sSemaphore);
+  sys_semaphore_post(&sSemaphore);
 }
 
 /* LTDC init function */
 void MX_LTDC_Init(void)
 {
   /* USER CODE BEGIN LTDC_Init 0 */
-  osSemaphoreCreate(&sSemaphore, 0, 1);
+  sys_semaphore_create(&sSemaphore, 0, 1);
   /* USER CODE END LTDC_Init 0 */
 
   LTDC_LayerCfgTypeDef pLayerCfg = {0};
@@ -111,13 +111,13 @@ void lcdCopy(const uint32_t *data)
   // {
   //   len = LCD_WIDTH * LCD_HEIGH - i <= 0xffff ? LCD_WIDTH * LCD_HEIGH - i : 0xffff;
   //   HAL_DMA_Start_IT(&hdma_memtomem_dma1_stream1, (uint32_t)&data[i], (uint32_t)&sLcdBuffer[i], len);
-  //   osSemaphoreWait(&sSemaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
+  //   sys_semaphore_wait(&sSemaphore, SYS_SEMAPHORE_MAX_WAIT_TIME);
   // }
 }
 
 void HAL_LTDC_MspInit(LTDC_HandleTypeDef* ltdcHandle)
 {
-  osSemaphoreDestory(&sSemaphore);
+  sys_semaphore_destory(&sSemaphore);
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(ltdcHandle->Instance==LTDC)
   {

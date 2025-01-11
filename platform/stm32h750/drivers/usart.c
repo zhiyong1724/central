@@ -20,8 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 #include "led.h"
-#include "osmutex.h"
-static OsMutex sMutex;
+#include "sys_lock.h"
+static sys_mutex_t s_mutex;
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -68,16 +68,16 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-  osMutexCreate(&sMutex);
+  sys_mutex_create(&s_mutex);
   /* USER CODE END USART1_Init 2 */
 
 }
 
 void MX_USART1_UART_Transmit(const void *data, int size)
 {
-  osMutexLock(&sMutex);
+  sys_mutex_lock(&s_mutex);
   HAL_UART_Transmit(&huart1, (uint8_t *)data, (uint16_t)size, HAL_MAX_DELAY);
-  osMutexUnlock(&sMutex);
+  sys_mutex_unlock(&s_mutex);
 }
 
 void MX_USART1_UART_Receive(void *data, int size)

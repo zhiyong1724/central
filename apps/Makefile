@@ -4,6 +4,5 @@ INCLUDES += -I$(CURRENT_DIR)
 vpath %.c $(CURRENT_DIR)
 SRCS += 
 include $(CURRENT_DIR)/resourcemonitor/Makefile \
-	$(CURRENT_DIR)/jsinterpreter/Makefile \
 	$(CURRENT_DIR)/fscommand/Makefile \
 	$(CURRENT_DIR)/syscommand/Makefile

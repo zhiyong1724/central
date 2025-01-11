@@ -264,8 +264,8 @@ g_pfnVectors:
   .word     TIM15_IRQHandler                  /* TIM15 global Interrupt      */
   .word     TIM16_IRQHandler                  /* TIM16 global Interrupt      */
   .word     TIM17_IRQHandler                  /* TIM17 global Interrupt      */
-  .word     MDIOS_WKUP_IRQHandler             /* MDIOS Wakeup  Interrupt     */
-  .word     MDIOS_IRQHandler                  /* MDIOS global Interrupt      */
+  .word     MDISYS_WKUP_IRQHandler             /* MDIOS Wakeup  Interrupt     */
+  .word     MDISYS_IRQHandler                  /* MDIOS global Interrupt      */
   .word     JPEG_IRQHandler                   /* JPEG global Interrupt       */
   .word     MDMA_IRQHandler                   /* MDMA global Interrupt       */
   .word     0                                 /* Reserved                    */
@@ -672,11 +672,11 @@ g_pfnVectors:
    .weak      TIM17_IRQHandler
    .thumb_set TIM17_IRQHandler,Default_Handler
 
-   .weak      MDIOS_WKUP_IRQHandler
-   .thumb_set MDIOS_WKUP_IRQHandler,Default_Handler
+   .weak      MDISYS_WKUP_IRQHandler
+   .thumb_set MDISYS_WKUP_IRQHandler,Default_Handler
 
-   .weak      MDIOS_IRQHandler
-   .thumb_set MDIOS_IRQHandler,Default_Handler
+   .weak      MDISYS_IRQHandler
+   .thumb_set MDISYS_IRQHandler,Default_Handler
 
    .weak      JPEG_IRQHandler
    .thumb_set JPEG_IRQHandler,Default_Handler

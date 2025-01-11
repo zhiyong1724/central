@@ -43,7 +43,7 @@ static int sync(const struct lfs_config *c)
     return LFS_ERR_OK;
 }
 
-const struct lfs_config gLfsConfig =
+const struct lfs_config g_lfs_config =
 {
     .read = read,
     .prog = prog,
@@ -65,4 +65,4 @@ const struct lfs_config gLfsConfig =
     .metadata_max = 0,
 };
 
-lfs_t gLFS;
+lfs_t g_lfs;

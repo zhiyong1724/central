@@ -6,15 +6,15 @@
 #include "key.h"
 #include "led.h"
 #include "stm32h7xx_hal_cortex.h"
-#include "oscentral.h"
-#include "ostask.h"
+#include "sys_central.h"
+#include "sys_task.h"
 #include "shellio.h"
 #include "lfs.h"
 #include "nandflash.h"
-#include "lfsadapter.h"
+#include "lfs_adapter.h"
 #include "ff.h"
-#include "fatfsadapter.h"
-#include "osmem.h"
+#include "fatfs_adapter.h"
+#include "sys_mem.h"
 #include "pcf8574.h"
 #include "es8388.h"
 #include "sai.h"
@@ -55,12 +55,12 @@ static int onReleased(void *object, KeyType type)
     return 0;
 }
 
-extern const struct lfs_config gLfsConfig;
-extern lfs_t gLFS;
+extern const struct lfs_config g_lfs_config;
+extern lfs_t g_lfs;
 void enterNormalMode()
 {
     printf("Start normal mode...\n");
-    osInit();
+    sys_init();
     PCF8574_Init();
     ES8388_Init();
     ES8388_ADDA_Cfg(1, 0); //开启DAC
@@ -69,11 +69,11 @@ void enterNormalMode()
     MX_DMA_Init();
     MX_SAI1_Init();
     nandFlashInit();
-    //lfs_format(&gLFS, &gLfsConfig);
+    //lfs_format(&g_lfs, &g_lfs_config);
     HAL_NVIC_EnableIRQ(PendSV_IRQn);
     HAL_NVIC_SetPriority(PendSV_IRQn, 0, 0);
-    registerLFS();
-    registerFatfs();
+    register_lfs();
+    register_fatfs();
     osFMount("/", "nand");
     if (sdcardInit() == 0)
     {
@@ -87,7 +87,7 @@ void enterNormalMode()
     keyManagerCallBack.onPressed = onPressed;
     keyManagerCallBack.onReleased = onReleased;
     keyManagerRegisterCallback(&keyManagerCallBack);
-    shellIOInit();
+    shell_io_init();
     //lvglIOInit();
-    osTaskStart();
+    sys_task_start();
 }

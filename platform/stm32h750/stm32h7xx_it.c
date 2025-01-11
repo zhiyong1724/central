@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "ostask.h"
+#include "sys_task.h"
 #include "led.h"
 #include "lvgl.h"
 /* Private includes ----------------------------------------------------------*/
@@ -113,7 +113,7 @@ void printRegisters(Registers *registers)
   printf("pc: 0x%08lx\n", registers->pc);
   printf("psr: 0x%08lx\n", registers->psr);
   char name[32];
-  osTaskGetTaskName(name, 32, osTaskGetTid());
+  sys_task_get_task_name(name, 32, sys_task_get_tid());
   printf("task: %s\n", name);
 }
 /**
@@ -225,7 +225,7 @@ void DebugMon_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
-int osTaskTick();
+int sys_task_tick();
 static uint64_t sCurCount = 0;
 void SysTick_Handler(void)
 {
@@ -240,7 +240,7 @@ void SysTick_Handler(void)
   {
     ns = sCurCount;
     sCurCount = 0;
-    osTaskTick(&ns);
+    sys_task_tick(&ns);
   }
   /* USER CODE BEGIN SysTick_IRQn 1 */
 

@@ -84,7 +84,7 @@
 /* #define HAL_DFSDM_MODULE_ENABLED   */
 /* #define HAL_DSI_MODULE_ENABLED   */
 /* #define HAL_JPEG_MODULE_ENABLED   */
-/* #define HAL_MDIOS_MODULE_ENABLED   */
+/* #define HAL_MDISYS_MODULE_ENABLED   */
 /* #define HAL_PSSI_MODULE_ENABLED   */
 /* #define HAL_DTS_MODULE_ENABLED   */
 #define HAL_GPIO_MODULE_ENABLED
@@ -197,7 +197,7 @@
 #define  USE_HAL_JPEG_REGISTER_CALLBACKS    0U /* JPEG register callback disabled    */
 #define  USE_HAL_LPTIM_REGISTER_CALLBACKS   0U /* LPTIM register callback disabled   */
 #define  USE_HAL_LTDC_REGISTER_CALLBACKS    0U /* LTDC register callback disabled    */
-#define  USE_HAL_MDIOS_REGISTER_CALLBACKS   0U /* MDIO register callback disabled    */
+#define  USE_HAL_MDISYS_REGISTER_CALLBACKS   0U /* MDIO register callback disabled    */
 #define  USE_HAL_MMC_REGISTER_CALLBACKS     0U /* MMC register callback disabled     */
 #define  USE_HAL_OPAMP_REGISTER_CALLBACKS   0U /* MDIO register callback disabled    */
 #define  USE_HAL_OSPI_REGISTER_CALLBACKS    0U /* OSPI register callback disabled    */
@@ -373,9 +373,9 @@
  #include "stm32h7xx_hal_jpeg.h"
 #endif /* HAL_JPEG_MODULE_ENABLED */
 
-#ifdef HAL_MDIOS_MODULE_ENABLED
+#ifdef HAL_MDISYS_MODULE_ENABLED
  #include "stm32h7xx_hal_mdios.h"
-#endif /* HAL_MDIOS_MODULE_ENABLED */
+#endif /* HAL_MDISYS_MODULE_ENABLED */
 
 #ifdef HAL_MMC_MODULE_ENABLED
  #include "stm32h7xx_hal_mmc.h"

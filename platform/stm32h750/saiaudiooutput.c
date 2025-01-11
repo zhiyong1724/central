@@ -8,7 +8,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 {
     if (sSaiAudioOutput > 0)
     {
-        osSemaphorePost(&sSaiAudioOutput->semaphore);
+        sys_semaphore_post(&sSaiAudioOutput->semaphore);
     }
 }
 
@@ -16,7 +16,7 @@ void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai)
 {
     if (sSaiAudioOutput > 0)
     {
-        osSemaphorePost(&sSaiAudioOutput->semaphore);
+        sys_semaphore_post(&sSaiAudioOutput->semaphore);
     }
 }
 
@@ -31,7 +31,7 @@ static void *audioPlayTask(void *arg)
     while (sSaiAudioOutput->running > 0)
     {
         int result = 0;
-        osSemaphoreWait(&sSaiAudioOutput->semaphore, OS_SEMAPHORE_MAX_WAIT_TIME);
+        sys_semaphore_wait(&sSaiAudioOutput->semaphore, SYS_SEMAPHORE_MAX_WAIT_TIME);
         if (sSaiAudioOutput->exchange > 0)
         {
             MX_SAI1_Send(sSaiAudioOutput->bufferA, sSaiAudioOutput->bufferSize / sizeof(int16_t));
@@ -45,7 +45,7 @@ static void *audioPlayTask(void *arg)
         }
         if (0 == result)
         {
-            osTaskDetach(sSaiAudioOutput->tid);
+            sys_task_detach(sSaiAudioOutput->tid);
             sSaiAudioOutput->tid = 0;
             sSaiAudioOutput->running = 0;
         }
@@ -64,7 +64,7 @@ static int play(void *audioOutput)
     if (0 == saiAudioOutput->tid && 0 == saiAudioOutput->running) 
     {
         saiAudioOutput->running = 1;
-        ret = osTaskCreateRT(&saiAudioOutput->tid, audioPlayTask, audioOutput, "audio output", 30, OS_DEFAULT_TASK_STACK_SIZE);
+        ret = sys_task_create_rt(&saiAudioOutput->tid, audioPlayTask, audioOutput, "audio output", 30, SYS_DEFAULT_TASK_STACK_SIZE);
         if (ret != 0)
         {
             saiAudioOutput->running = 0;
@@ -82,7 +82,7 @@ static int stop(void *audioOutput)
         ret = 0;
         saiAudioOutput->running = 0;
         void *retval = NULL;
-        osTaskJoin(&retval, saiAudioOutput->tid);
+        sys_task_join(&retval, saiAudioOutput->tid);
         sSaiAudioOutput->tid = 0;
     }
     return ret;
@@ -99,7 +99,7 @@ int saiAudioOutputInit(SaiAudioOutput *saiAudioOutput)
     audioOutputInfo.samplesPerSec = 48000;
     audioOutputInfo.numChannels = 2;
     audioOutputInit((AudioOutput *)saiAudioOutput, &audioOutputInfo, &audioOutputInterface);
-    osSemaphoreCreate(&saiAudioOutput->semaphore, 1, 1);
+    sys_semaphore_create(&saiAudioOutput->semaphore, 1, 1);
 
     saiAudioOutput->tid = 0;
     saiAudioOutput->running = 0;
@@ -117,7 +117,7 @@ int saiAudioOutputUninit(SaiAudioOutput *saiAudioOutput)
     {
         saiAudioOutput->running = 0;
         void *retval = NULL;
-        osTaskJoin(&retval, saiAudioOutput->tid);
+        sys_task_join(&retval, saiAudioOutput->tid);
         sSaiAudioOutput->tid = 0;
     }
     if (saiAudioOutput->bufferA != NULL)
@@ -131,6 +131,6 @@ int saiAudioOutputUninit(SaiAudioOutput *saiAudioOutput)
         saiAudioOutput->bufferB = NULL;
     }
     audioOutputUninit((AudioOutput *)saiAudioOutput);
-    osSemaphoreDestory(&saiAudioOutput->semaphore);
+    sys_semaphore_destory(&saiAudioOutput->semaphore);
     return 0;
 }

@@ -1,12 +1,12 @@
 #include "shellio.h"
 #include "shell.h"
-#include "ostask.h"
+#include "sys_task.h"
 #include <stdlib.h>
 #include <stdio.h>
-static Shell sShell;
-static char sShellBuffer[1024];
-char gShellPathBuffer[OS_MAX_FILE_PATH_LENGTH] = {'/', '\0'};
-static short shellRead(char *data, unsigned short len)
+static Shell s_shell;
+static char s_shell_buffer[1024];
+char g_shell_path_buffer[SYS_MAX_FILE_PATH_LENGTH] = {'/', '\0'};
+static short shell_read(char *data, unsigned short len)
 {
     int value = getchar();
     if (value != EOF)
@@ -17,7 +17,7 @@ static short shellRead(char *data, unsigned short len)
     return 0;
 }
 
-static short shellWrite(char *data, unsigned short len)
+static short shell_write(char *data, unsigned short len)
 {
     for (unsigned short i = 0; i < len; i++)
     {
@@ -27,24 +27,24 @@ static short shellWrite(char *data, unsigned short len)
     return len;
 }
 
-static void *_shellTask(void *arg)
+static void *shell_task(void *arg)
 {
     while (1)
     {
         shellTask(arg);
-        osTaskSleep(10);
+        sys_task_sleep(10);
     }
     return NULL;
 }
 
-int shellIOInit()
+int shell_io_init()
 {
-    sShell.read = shellRead;
-    sShell.write = shellWrite;
-    shellInit(&sShell, sShellBuffer, 1024);
-    shellSetPath(&sShell, gShellPathBuffer);
-    os_tid_t tid;
-    osTaskCreate(&tid, _shellTask, &sShell, "shell", OS_DEFAULT_TASK_PRIORITY, 4096 * 1024);
+    s_shell.read = shell_read;
+    s_shell.write = shell_write;
+    shellInit(&s_shell, s_shell_buffer, 1024);
+    shellSetPath(&s_shell, g_shell_path_buffer);
+    sys_tid_t tid;
+    sys_task_create(&tid, shell_task, &s_shell, "shell", SYS_DEFAULT_TASK_PRIORITY, 4096 * 1024);
     system("stty -echo");
     system("stty -icanon");
     return 0;

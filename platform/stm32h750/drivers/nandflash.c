@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include "bch_codec.h"
 #include "fmc.h"
-#include "osmutex.h"
-static OsMutex sMutex;
+#include "sys_lock.h"
+static sys_mutex_t s_mutex;
 #define MAX_CORRECT_BITS 32
 static struct bch_control *sBchHandle = NULL;
 static void delay(uint32_t n)
@@ -39,13 +39,13 @@ void nandFlashInit()
     {
     }
     sBchHandle = init_bch(15, MAX_CORRECT_BITS, 0);
-    osMutexCreate(&sMutex);
+    sys_mutex_create(&s_mutex);
     printf("Init nandflash succeed, size 512M bytes, block size 128K bytes, page size 2K bytes\n");
 }
 
 void nandFlashEraseBlock(uint32_t block)
 {
-    osMutexLock(&sMutex);
+    sys_mutex_lock(&s_mutex);
     gNandFlashReady = 0;
     block <<= 6;
     *(__IO uint8_t *)((uint32_t)(NAND_DEVICE | CMD_AREA)) = NAND_CMD_ERASE0;
@@ -61,7 +61,7 @@ void nandFlashEraseBlock(uint32_t block)
     while (0 == gNandFlashReady)
     {
     }
-    osMutexUnlock(&sMutex);
+    sys_mutex_unlock(&s_mutex);
 }
 
 static void read(uint32_t block, uint32_t page, uint32_t column, void *buffer, uint32_t size)
@@ -96,7 +96,7 @@ static void read(uint32_t block, uint32_t page, uint32_t column, void *buffer, u
 
 int nandFlashReadPage(uint32_t block, uint32_t page, void *buffer)
 {
-    osMutexLock(&sMutex);
+    sys_mutex_lock(&s_mutex);
     int ret = -1;
     read(block, page, 0, buffer, NAND_FLASH_PAGE_SIZE);
     uint8_t ecc[NAND_FLASH_SPAREAREA] = {0, };
@@ -108,7 +108,7 @@ int nandFlashReadPage(uint32_t block, uint32_t page, void *buffer)
         ret = 0;
         correct_bch(sBchHandle, buffer, NAND_FLASH_PAGE_SIZE, errloc, errNum);
     }
-    osMutexUnlock(&sMutex);
+    sys_mutex_unlock(&s_mutex);
     return ret;
 }
 
@@ -148,11 +148,11 @@ static void write(uint32_t block, uint32_t page, uint32_t column, const void *bu
 
 int nandFlashWritePage(uint32_t block, uint32_t page, const void *buffer)
 {
-    osMutexLock(&sMutex);
+    sys_mutex_lock(&s_mutex);
     write(block, page, 0, buffer, NAND_FLASH_PAGE_SIZE);
     uint8_t ecc[NAND_FLASH_SPAREAREA] = {0, };
     encode_bch(sBchHandle, (const uint8_t *)buffer, NAND_FLASH_PAGE_SIZE, ecc);
     write(block, page, NAND_FLASH_PAGE_SIZE, ecc, NAND_FLASH_SPAREAREA);
-    osMutexUnlock(&sMutex);
+    sys_mutex_unlock(&s_mutex);
     return 0;
 }

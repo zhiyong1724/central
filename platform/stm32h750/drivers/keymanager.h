@@ -1,9 +1,9 @@
 #ifndef __KEYMANAGER_H__
 #define __KEYMANAGER_H__
 #include "key.h"
-#include "oslist.h"
-#include "ostask.h"
-#include "osmutex.h"
+#include "sys_list.h"
+#include "sys_task.h"
+#include "sys_lock.h"
 typedef enum KeyType
 {
     KEY_TYPE_KEY_0,
@@ -22,7 +22,7 @@ typedef struct Key
 
 typedef struct KeyManagerCallBack
 {
-    OsListNode node;
+    sys_list_node_t node;
     int (*onPressed)(void *object, KeyType type);
     int (*onReleased)(void *object, KeyType type);
     void *object;

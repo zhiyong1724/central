@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-OsFileError registerLFS();
+sys_file_error_t register_lfs();
 #ifdef __cplusplus
 }
 #endif

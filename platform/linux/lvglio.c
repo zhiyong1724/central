@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "lvgl.h"
-#include "ostask.h"
+#include "sys_task.h"
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 480
 static SDL_Window *sWindow = NULL;
@@ -111,8 +111,8 @@ int lvglIOInit()
     }
     sTexture = SDL_CreateTexture(sRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
     initLvgl();
-    os_tid_t tid;
-    osTaskCreate(&tid, lvglIORun, NULL, "ui", 0, 0);
+    sys_tid_t tid;
+    sys_task_create(&tid, lvglIORun, NULL, "ui", 0, 0);
     return 0;
 }
 

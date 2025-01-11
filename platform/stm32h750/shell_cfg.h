@@ -11,8 +11,8 @@
 
 #ifndef __SHELL_CFG_H__
 #define __SHELL_CFG_H__
-#include "ostask.h"
-#include "osmem.h"
+#include "sys_task.h"
+#include "sys_mem.h"
 /**
  * @brief 是否使用默认shell任务while循环，使能宏`SHELL_USING_TASK`后此宏有意义
  *        使能此宏，则`shellTask()`函数会一直循环读取输入，一般使用操作系统建立shell
@@ -129,7 +129,7 @@
  *        定义此宏为获取系统Tick，如`HAL_GetTick()`
  * @note 此宏不定义时无法使用双击tab补全命令help，无法使用shell超时锁定
  */
-#define     SHELL_GET_TICK()            osTaskGetTickCount()
+#define     SHELL_GET_TICK()            sys_task_get_tick_count()
 
 /**
  * @brief 使用锁
@@ -141,13 +141,13 @@
  * @brief shell内存分配
  *        shell本身不需要此接口，若使用shell伴生对象，需要进行定义
  */
-#define     SHELL_MALLOC(size)          osMalloc(size)
+#define     SHELL_MALLOC(size)          sys_malloc(size)
 
 /**
  * @brief shell内存释放
  *        shell本身不需要此接口，若使用shell伴生对象，需要进行定义
  */
-#define     SHELL_FREE(obj)             osFree(obj)
+#define     SHELL_FREE(obj)             sys_free(obj)
 
 /**
  * @brief 是否显示shell信息

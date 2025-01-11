@@ -1,8 +1,8 @@
 #include "sdcard.h"
 #include "sdmmc.h"
 #include <stdio.h>
-#include "osmutex.h"
-static OsMutex sMutex;
+#include "sys_lock.h"
+static sys_mutex_t s_mutex;
 int sdcardInit()
 {
   int ret = -1;
@@ -10,7 +10,7 @@ int sdcardInit()
   HAL_SD_CardInfoTypeDef sdcardInfo;
   if (MX_SDMMC1_SD_Init() == HAL_OK && HAL_SD_GetCardInfo(&hsd1, &sdcardInfo) == HAL_OK)
   {
-    osMutexCreate(&sMutex);
+    sys_mutex_create(&s_mutex);
     printf("Init SD card succeed, block size %ld, block number %ld, type %ld.\n", sdcardInfo.LogBlockSize, sdcardInfo.LogBlockNbr, sdcardInfo.CardType);
     ret = 0;
   }
@@ -23,31 +23,31 @@ int sdcardInit()
 
 uint32_t sdcardGetBlockSize()
 {
-  osMutexLock(&sMutex);
+  sys_mutex_lock(&s_mutex);
   HAL_SD_CardInfoTypeDef sdcardInfo;
   if (HAL_SD_GetCardInfo(&hsd1, &sdcardInfo) != HAL_OK)
   {
     Error_Handler();
   }
-  osMutexUnlock(&sMutex);
+  sys_mutex_unlock(&s_mutex);
   return sdcardInfo.LogBlockSize;
 }
 
 uint32_t sdcardGetBlockNumber()
 {
-  osMutexLock(&sMutex);
+  sys_mutex_lock(&s_mutex);
   HAL_SD_CardInfoTypeDef sdcardInfo;
   if (HAL_SD_GetCardInfo(&hsd1, &sdcardInfo) != HAL_OK)
   {
     Error_Handler();
   }
-  osMutexUnlock(&sMutex);
+  sys_mutex_unlock(&s_mutex);
   return sdcardInfo.LogBlockNbr;
 }
 
 int sdcardWriteBlock(uint32_t block, uint32_t num, const void *buffer)
 {
-  osMutexLock(&sMutex);
+  sys_mutex_lock(&s_mutex);
   int ret = -1;
   while ((HAL_SD_GetCardState(&hsd1) != HAL_SD_CARD_TRANSFER))
   {
@@ -58,13 +58,13 @@ int sdcardWriteBlock(uint32_t block, uint32_t num, const void *buffer)
     ret = 0;
   }
   __enable_irq();
-  osMutexUnlock(&sMutex);
+  sys_mutex_unlock(&s_mutex);
   return ret;
 }
 
 int sdcardReadBlock(uint32_t block, uint32_t num, void *buffer)
 {
-  osMutexLock(&sMutex);
+  sys_mutex_lock(&s_mutex);
   int ret = -1;
   while ((HAL_SD_GetCardState(&hsd1) != HAL_SD_CARD_TRANSFER))
   {
@@ -75,6 +75,6 @@ int sdcardReadBlock(uint32_t block, uint32_t num, void *buffer)
     ret = 0;
   }
   __enable_irq();
-  osMutexUnlock(&sMutex);
+  sys_mutex_unlock(&s_mutex);
   return ret;
 }

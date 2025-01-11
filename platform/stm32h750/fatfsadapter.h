@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-OsFileError registerFatfs();
+sys_file_error_t register_fatfs();
 #ifdef __cplusplus
 }
 #endif

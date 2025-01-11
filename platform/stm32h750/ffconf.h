@@ -292,7 +292,7 @@
 /      option/syscall.c.
 /
 /  The FF_FS_TIMEOUT defines timeout period in unit of time tick.
-/  The FF_SYNC_t defines O/S dependent sync object type. e.g. HANDLE, ID, OS_EVENT*,
+/  The FF_SYNC_t defines O/S dependent sync object type. e.g. HANDLE, ID, SYS_EVENT*,
 /  SemaphoreHandle_t and etc. A header file for O/S definitions needs to be
 /  included somewhere in the scope of ff.h. */
 

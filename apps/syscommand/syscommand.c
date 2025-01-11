@@ -1,29 +1,29 @@
 #include <stdio.h>
-#include "ostask.h"
-#include "osmem.h"
-#include "oscentral.h"
-void shellFree(long argc, char *argv[])
+#include "sys_task.h"
+#include "sys_mem.h"
+#include "central.h"
+void shell_free(long argc, char *argv[])
 {
-    printf("所有内存：%ld\n", osTotalMem());
-    printf("可用内存：%ld\n", osFreeMem());
-    printf("所有页：%ld\n", osTotalPage());
-    printf("可用页：%ld\n", osFreePage());
+    printf("所有内存：%ld\n", sys_total_mem());
+    printf("可用内存：%ld\n", sys_free_mem());
+    printf("所有页：%ld\n", sys_total_page());
+    printf("可用页：%ld\n", sys_free_page());
 }
 
-void shellPS(long argc, char *argv[])
+void shell_ps(long argc, char *argv[])
 {
-    os_task_ptr ptr;
-    OsTaskInfo taskInfo;
-    int result = osTaskFindFirst(&ptr, &taskInfo);
+    sys_task_ptr ptr;
+    sys_task_info_t task_info;
+    int result = sys_task_find_first(&ptr, &task_info);
     while (0 == result)
     {
-        printf("tid: %ld  ptid: %ld  stack: %p  stack size: %ld  state: %d  type: %d  priority: %ld  name: %s\n",
-                   taskInfo.tid, taskInfo.ptid, taskInfo.stack, taskInfo.stackSize, taskInfo.taskState, taskInfo.taskType, taskInfo.priority, taskInfo.name);
-        result = osTaskFindNext(&ptr, &taskInfo);
+        printf("tid: %d  ptid: %d  stack: %p  stack size: %d  state: %d  type: %d  priority: %d  name: %s\n",
+                   task_info.tid, task_info.ptid, task_info.stack, task_info.stack_size, task_info.task_state, task_info.task_type, task_info.priority, task_info.name);
+        result = sys_task_find_next(&ptr, &task_info);
     }
 }
 
-void shellUName(long argc, char *argv[])
+void shell_uname(long argc, char *argv[])
 {
-    printf("Central V%d %s %s\n", osVersion(), __DATE__, __TIME__);
+    printf("Central V%s %s %s\n", sys_version(), __DATE__, __TIME__);
 } 

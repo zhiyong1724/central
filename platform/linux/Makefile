@@ -22,17 +22,12 @@ LIBS := -lpthread -lrt -lSDL2 -llvgl
 
 CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 
-SRCS := diskio.c \
-	fatfsadapter.c \
-	ffsystem.c \
-	lfsadapter.c \
-	lvglio.c \
+SRCS := lvglio.c \
 	main.c \
-	osport.c \
-	ramio.c \
-	shellio.c 
+	sys_port.c
 
 include ../../apps/Makefile
+include ../../user/Makefile
 include ../../core/Makefile
 include ../../third/Makefile
 

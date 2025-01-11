@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "lvgl.h"
-#include "ostask.h"
+#include "sys_task.h"
 #include "ltdc.h"
 #include "gt9147.h"
 #include "stm32h7xx.h"
@@ -69,7 +69,7 @@ static void *lvglIORun(void *arg)
         sX = lcdTouchInfo[0].x;
         sY = lcdTouchInfo[0].y;
         uint32_t ms = lv_timer_handler();
-        osTaskSleep(ms);
+        sys_task_sleep(ms);
     }
     return NULL;
 }
@@ -80,8 +80,8 @@ int lvglIOInit()
     lcdOn();
     GT9147_Init();
     initLvgl();
-    os_tid_t tid;
-    osTaskCreate(&tid, lvglIORun, NULL, "ui", 0, OS_DEFAULT_TASK_STACK_SIZE);
+    sys_tid_t tid;
+    sys_task_create(&tid, lvglIORun, NULL, "ui", 0, SYS_DEFAULT_TASK_STACK_SIZE);
     return 0;
 }
 

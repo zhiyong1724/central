@@ -2,9 +2,9 @@
 typedef struct KeyManager
 {
     Key key[KEY_TYPE_KEY_NUM];
-    OsListNode *callBackList;
-    os_tid_t tid;
-    OsMutex mutex;
+    sys_list_node_t *callBackList;
+    sys_tid_t tid;
+    sys_mutex_t mutex;
     int running;
 } KeyManager;
 
@@ -22,7 +22,7 @@ static void handleStatus(KeyManager *keyManager, KeyStatus keyStatus, KeyType ke
             keyManager->key[keyType].count = 0;
             if (KEY_STATUS_PRESS == keyStatus)
             {
-                osMutexLock(&keyManager->mutex);
+                sys_mutex_lock(&keyManager->mutex);
                 KeyManagerCallBack *callBack = (KeyManagerCallBack *)keyManager->callBackList;
                 if (callBack != NULL)
                 {
@@ -33,14 +33,14 @@ static void handleStatus(KeyManager *keyManager, KeyStatus keyStatus, KeyType ke
                         {
                             break;
                         }
-                        callBack = (KeyManagerCallBack *)keyManager->callBackList->nextNode;
+                        callBack = (KeyManagerCallBack *)keyManager->callBackList->next_node;
                     } while (callBack != (KeyManagerCallBack *)keyManager->callBackList);
                 }
-                osMutexUnlock(&keyManager->mutex);
+                sys_mutex_unlock(&keyManager->mutex);
             }
             else
             {
-                osMutexLock(&keyManager->mutex);
+                sys_mutex_lock(&keyManager->mutex);
                 KeyManagerCallBack *callBack = (KeyManagerCallBack *)keyManager->callBackList;
                 if (callBack != NULL)
                 {
@@ -51,10 +51,10 @@ static void handleStatus(KeyManager *keyManager, KeyStatus keyStatus, KeyType ke
                         {
                             break;
                         }
-                        callBack = (KeyManagerCallBack *)keyManager->callBackList->nextNode;
+                        callBack = (KeyManagerCallBack *)keyManager->callBackList->next_node;
                     } while (callBack != (KeyManagerCallBack *)keyManager->callBackList);
                 }
-                osMutexUnlock(&keyManager->mutex);
+                sys_mutex_unlock(&keyManager->mutex);
             }
         }
     }
@@ -69,7 +69,7 @@ static void *keyTask(void *arg)
         handleStatus(keyManager, key1Status(), KEY_TYPE_KEY_1);
         handleStatus(keyManager, key2Status(), KEY_TYPE_KEY_2);
         handleStatus(keyManager, keyUpStatus(), KEY_TYPE_KEY_UP);
-        osTaskSleep(10);
+        sys_task_sleep(10);
     }
     return NULL;
 }
@@ -94,10 +94,10 @@ int keyManagerInit()
     sKeyManager.key[KEY_TYPE_KEY_UP].count = 0;
 
     sKeyManager.callBackList = NULL;
-    osMutexCreate(&sKeyManager.mutex);
+    sys_mutex_create(&sKeyManager.mutex);
 
     sKeyManager.running = 1;
-    return osTaskCreate(&sKeyManager.tid, keyTask, &sKeyManager, "key manager", 0, OS_DEFAULT_TASK_STACK_SIZE);
+    return sys_task_create(&sKeyManager.tid, keyTask, &sKeyManager, "key manager", 0, SYS_DEFAULT_TASK_STACK_SIZE);
 }
 
 int keyManagerUninit(KeyManager *keyManager)
@@ -107,26 +107,26 @@ int keyManagerUninit(KeyManager *keyManager)
     {
         keyManager->running = 0;
         void *result = NULL;
-        osTaskJoin(&result, keyManager->tid);
+        sys_task_join(&result, keyManager->tid);
         keyManager->tid = 0;
         keyManager->callBackList = NULL;
-        ret = osMutexDestory(&keyManager->mutex);
+        ret = sys_mutex_destory(&keyManager->mutex);
     }
     return ret;   
 }
 
 int keyManagerRegisterCallback(KeyManagerCallBack *callback)
 {
-    osMutexLock(&sKeyManager.mutex);
-    osInsertToBack(&sKeyManager.callBackList, &callback->node);
-    osMutexUnlock(&sKeyManager.mutex);
+    sys_mutex_lock(&sKeyManager.mutex);
+    sys_insert_to_back(&sKeyManager.callBackList, &callback->node);
+    sys_mutex_unlock(&sKeyManager.mutex);
     return 0;
 }
 
 int keyManagerRemoveCallback(KeyManagerCallBack *callback)
 {
-    osMutexLock(&sKeyManager.mutex);
-    osRemoveFromList(&sKeyManager.callBackList, &callback->node);
-    osMutexUnlock(&sKeyManager.mutex);
+    sys_mutex_lock(&sKeyManager.mutex);
+    sys_remove_from_list(&sKeyManager.callBackList, &callback->node);
+    sys_mutex_unlock(&sKeyManager.mutex);
     return 0;
 }
