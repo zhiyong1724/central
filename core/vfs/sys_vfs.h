@@ -4,6 +4,8 @@
 #include "sys_list.h"
 #include "sys_tree.h"
 #include "sys_vector.h"
+#include "sys_lock.h"
+#include <sys/statfs.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -64,6 +66,21 @@ struct vfs_stat_t
     int64_t st_ctim;      //最后一次状态改变时间
 };
 
+struct vfs_statfs_t
+{
+    int f_type;        // 文件系统类型
+    int f_bsize;       // 块大小
+    int64_t f_blocks;  // 文件系统数据块总数
+    int64_t f_bfree;   // 可用块数
+    int64_t f_bavail;  // 非超级用户可获取的块数
+    int64_t f_files;   // 文件结点总数
+    int64_t f_ffree;   // 可用文件结点数
+    int f_fsid;        // 文件系统标识
+    int f_namelen;     // 文件名的最大长度
+    int f_frsize;      // 片段大小
+    int f_flags;       // 文件系统安装标志
+};
+
 struct vfs_dirent_t
 {
     int d_ino;                             // 文件编号
@@ -79,16 +96,19 @@ struct vfs_file_t
     void *obj;
     int flags;
     struct vfs_super_block_t *super_block;
+    sys_mutex_t lock;
 };
 
 struct vfs_fs_operations_t
 {
     int (*mount)(struct vfs_super_block_t *super_block, const char *path, const char *device);
     int (*unmount)(struct vfs_super_block_t *super_block);
+    int (*statfs)(struct vfs_super_block_t *super_block, const char *path, struct vfs_statfs_t *statfs);
 };
 
 struct vfs_node_operations_t
 {
+    int (*stat)(struct vfs_super_block_t *super_block, const char *path, struct vfs_stat_t *stat);
     int (*link)(struct vfs_super_block_t *super_block, const char *oldpath, const char *newpath);
     int (*unlink)(struct vfs_super_block_t *super_block, const char *path);
     int (*chmod)(struct vfs_super_block_t *super_block, const char *path, int mode);
@@ -109,7 +129,6 @@ struct vfs_file_operations_t
     int (*write)(struct vfs_file_t *file, const void *buff, int count);
     int (*lseek)(struct vfs_file_t *file, int64_t offset, int whence);
     int64_t (*ftell)(struct vfs_file_t *file);
-    int (*fstat)(struct vfs_file_t *file, struct vfs_stat_t *stat);
     int (*syncfs)(struct vfs_file_t *file);
     int (*ftruncate)(struct vfs_file_t *file, int64_t length);
 };
@@ -217,13 +236,6 @@ int64_t sys_lseek(int fd, int64_t offset, int whence);
 *********************************************************************************************************************/
 int64_t sys_ftell(int fd);
 /*********************************************************************************************************************
-* 获取文件信息
-* fd：文件句柄
-* stat：返回的文件信息
-* return：sys_error_t
-*********************************************************************************************************************/
-int sys_fstat(int fd, struct vfs_stat_t *stat);
-/*********************************************************************************************************************
 * 把缓存数据写入到存储设备
 * fd：文件句柄
 * return：sys_error_t
@@ -236,6 +248,13 @@ int sys_syncfs(int fd);
 * return：sys_error_t
 *********************************************************************************************************************/
 int sys_ftruncate(int fd, int64_t length);
+/*********************************************************************************************************************
+* 获取文件信息
+* path：文件路径
+* stat：返回的文件信息
+* return：sys_error_t
+*********************************************************************************************************************/
+int sys_stat(const char *path, struct vfs_stat_t *stat);
 /*********************************************************************************************************************
 * 创建硬链接
 * oldpath：旧的文件路径
@@ -300,7 +319,14 @@ int sys_readdir(int fd, struct vfs_dirent_t *dirent);
 * fd：文件句柄
 * return：sys_error_t
 *********************************************************************************************************************/
-int rewinddir(int fd);
+int sys_rewinddir(int fd);
+/*********************************************************************************************************************
+* 获取文件系统信息
+* path：目录路径
+* statfs：文件系统信息
+* return：sys_error_t
+*********************************************************************************************************************/
+int sys_statfs(const char *path, struct vfs_statfs_t *statfs);
 #ifdef __cplusplus
 }
 #endif

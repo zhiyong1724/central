@@ -17,6 +17,15 @@
 #endif
 #endif
 
+#ifndef sys_info
+#if SYS_INFO_ENABLE
+#define sys_info(fmt, ...) \
+    printf(""fmt"\n", ##__VA_ARGS__)
+#else
+#define sys_info(...)
+#endif
+#endif
+
 #ifndef sys_debug
 #if SYS_DEBUG_ENABLE
 #define sys_debug(fmt, ...) \

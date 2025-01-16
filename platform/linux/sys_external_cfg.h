@@ -9,7 +9,7 @@ extern "C"
 #endif
 //调试相关开关
 #define SYS_TRACE_ENABLE 0
-#define SYS_DEBUG_ENABLE 1
+#define SYS_DEBUG_ENABLE 0
 #define SYS_WARN_ENABLE 1
 #define SYS_ERROR_ENABLE 1
 #define SYS_ASSERT_ENABLE 1

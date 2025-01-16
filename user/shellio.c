@@ -56,7 +56,7 @@ int shell_io_init()
 
 const char *get_shell_path()
 {
-    return s_shell_buffer;
+    return s_shell_path_buffer;
 }
 
 static void dump_str(char *dest, const char *src, const cregex_match_t *match)
@@ -81,11 +81,8 @@ size_t pre_dentry_index(size_t index)
 
 void set_shell_path(const char *path)
 {
-    if ('/' == path[0])
-    {
-        strncpy(s_shell_path_buffer, "/", VFS_MAX_FILE_PATH_LEN);
-    }
-    size_t index = strlen(s_shell_path_buffer);
+    s_shell_path_buffer[0] = '\0';
+    size_t index = 0;
     cregex_t *regex = cregex_compile("/+([^/]+)");
     if (NULL == regex)
     {
@@ -108,10 +105,7 @@ void set_shell_path(const char *path)
         }
         else
         {
-            if (index > 0)
-            {
-                strcat(&s_shell_path_buffer[index++], "/");
-            }
+            strcat(&s_shell_path_buffer[index++], "/");
             strcat(&s_shell_path_buffer[index], name);
             index += strlen(name);
         }

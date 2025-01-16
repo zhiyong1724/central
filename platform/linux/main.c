@@ -1017,8 +1017,7 @@ int main()
     // sys_task_create_rt(&tid, taskG, NULL, "task g", 20, 512);
     lfs_format_ram();
     register_lfs();
-    // sys_mount("/mnt", "ram");
-    // sys_umount("/mnt");
+    sys_mount("/", "");
     //register_fatfs(); 
     //lfs_format(&g_lfs, &g_lfs_config);
     //f_mkfs("0:", NULL, NULL, FF_MAX_SS);

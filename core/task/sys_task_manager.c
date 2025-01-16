@@ -197,13 +197,14 @@ int sys_task_manager_create_task(sys_task_manager_t *task_manager, sys_tid_t *ti
 {
     sys_trace();
     int ret = 0;
+    sys_task_t *task = NULL;
     if (task_manager->task_count >= SYS_TASK_MAX_SIZE)
     {
         sys_error("No child processes.");
         ret = SYS_ERROR_CHILD;
         goto exception;
     }
-    sys_task_t *task = (sys_task_t *)sys_malloc(sizeof(sys_task_t));
+    task = (sys_task_t *)sys_malloc(sizeof(sys_task_t));
     if (NULL == task)
     {
         sys_error("Out of memory.");

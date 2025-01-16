@@ -18,114 +18,120 @@ static int parse_result(int result)
         ret = SYS_ERROR_OK;
         break;
     case LFS_ERR_IO:
-        sys_error("I/O error..");
+        sys_info("I/O error..");
         ret = SYS_ERROR_IO;
         break;
     case LFS_ERR_CORRUPT:
-        sys_error("Illegal byte sequence.");
+        sys_info("Illegal byte sequence.");
         ret = SYS_ERROR_ILSEQ;
         break;
     case LFS_ERR_NOENT:
-        sys_error("No such file or directory.");
+        sys_info("No such file or directory.");
         ret = SYS_ERROR_NOENT;
         break;
     case LFS_ERR_EXIST:
-        sys_error("File exists.");
+        sys_info("File exists.");
         ret = SYS_ERROR_EXIST;
         break;
     case LFS_ERR_NOTDIR:
-        sys_error("Not a directory.");
+        sys_info("Not a directory.");
         ret = SYS_ERROR_NOTDIR;
         break;
     case LFS_ERR_ISDIR:
-        sys_error("Is a directory.");
+        sys_info("Is a directory.");
         ret = SYS_ERROR_ISDIR;
         break;
     case LFS_ERR_NOTEMPTY:
-        sys_error("Directory not empty.");
+        sys_info("Directory not empty.");
         ret = SYS_ERROR_NOTEMPTY;
         break;
     case LFS_ERR_FBIG:
-        sys_error("File too large.");
+        sys_info("File too large.");
         ret = SYS_ERROR_MFBIG;
         break;
     case LFS_ERR_INVAL:
-        sys_error("Invalid argument.");
+        sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
         break;
     case LFS_ERR_NOSPC:
-        sys_error("No space left on device.");
+        sys_info("No space left on device.");
         ret = SYS_ERROR_NOSPC;
         break;
     case LFS_ERR_NOMEM:
-        sys_error("Out of memory.");
+        sys_info("Out of memory.");
         ret = SYS_ERROR_NOMEM;
         break;
     case LFS_ERR_NOATTR:
-        sys_error("No data available.");
+        sys_info("No data available.");
         ret = SYS_ERROR_NODATA;
         break;
     case LFS_ERR_NAMETOOLONG:
-        sys_error("File name too int64_t.");
+        sys_info("File name too int64_t.");
         ret = SYS_ERROR_NAMETOOLONG;
         break;
     }
     return ret;
 }
 
-static int lfs_open(struct vfs_file_t *file, const char *path, int mode)
+static int vfs_flags_to_lfs_flags(int vfs_flags)
 {
-    int ret = 0;
-    struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
-    file->obj = sys_malloc(sizeof(lfs_file_t));
-    static struct lfs_file_config cfg;
-    if (NULL == file->obj)
-    {
-        sys_error("Out of memory.");
-        ret = SYS_ERROR_NOMEM;
-        goto exception;
-    }
-    memset(&cfg, 0, sizeof(struct lfs_file_config));
-    cfg.buffer = sys_malloc(handle->lfs.cfg->cache_size);
-    if (NULL == cfg.buffer)
-    {
-        sys_error("Out of memory.");
-        ret = SYS_ERROR_NOMEM;
-        goto exception;
-    }
     int flags = 0;
-    if (((file->flags + 1) & (VFS_FLAG_RDONLY + 1)) > 0)
+    if (((vfs_flags + 1) & (VFS_FLAG_RDONLY + 1)) == VFS_FLAG_RDONLY + 1)
     {
         flags |= LFS_O_RDONLY;
     }
-    else if (((file->flags + 1) & (VFS_FLAG_WRONLY + 1)) > 0)
+    else if (((vfs_flags + 1) & (VFS_FLAG_WRONLY + 1)) == VFS_FLAG_WRONLY + 1)
     {
         flags |= LFS_O_WRONLY;
     }
-    else if (((file->flags + 1) & (VFS_FLAG_RDWR + 1)) > 0)
+    else if (((vfs_flags + 1) & (VFS_FLAG_RDWR + 1)) == VFS_FLAG_RDWR + 1)
     {
         flags |= LFS_O_RDWR;
     }
-    if ((file->flags & VFS_FLAG_CREAT) > 0)
+    if ((vfs_flags & VFS_FLAG_CREAT) == VFS_FLAG_CREAT)
     {
         flags |= LFS_O_CREAT;
     }
-    if ((file->flags & VFS_FLAG_EXCL) > 0)
+    if ((vfs_flags & VFS_FLAG_EXCL) == VFS_FLAG_EXCL)
     {
         flags |= LFS_O_EXCL;
     }
-    if ((file->flags & VFS_FLAG_TRUNC) > 0)
+    if ((vfs_flags & VFS_FLAG_TRUNC) == VFS_FLAG_TRUNC)
     {
         flags |= LFS_O_TRUNC;
     }
-    if ((file->flags & VFS_FLAG_APPEND) > 0)
+    if ((vfs_flags & VFS_FLAG_APPEND) == VFS_FLAG_APPEND)
     {
         flags |= LFS_O_APPEND;
     }
+    return flags;
+}
+
+static int lfs_open(struct vfs_file_t *file, const char *path, int mode)
+{
+    int ret = 0;
+    static struct lfs_file_config cfg;
+    memset(&cfg, 0, sizeof(struct lfs_file_config));
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
+    file->obj = sys_malloc(sizeof(lfs_file_t));
+    if (NULL == file->obj)
+    {
+        sys_info("Out of memory.");
+        ret = SYS_ERROR_NOMEM;
+        goto exception;
+    }
+    cfg.buffer = sys_malloc(handle->lfs.cfg->cache_size);
+    if (NULL == cfg.buffer)
+    {
+        sys_info("Out of memory.");
+        ret = SYS_ERROR_NOMEM;
+        goto exception;
+    }
+    int flags = vfs_flags_to_lfs_flags(file->flags);
     ret = lfs_file_opencfg(&handle->lfs, (lfs_file_t *)file->obj, path, flags, &cfg);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         goto exception;
     }
     goto finally;
@@ -146,38 +152,38 @@ static int lfs_close(struct vfs_file_t *file)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     int ret = lfs_file_close(&handle->lfs, (lfs_file_t *)file->obj);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
     sys_free(((lfs_file_t *)file->obj)->cache.buffer);
     sys_free(file->obj);
-    return 0;
+    return ret;
 }
 
 static int lfs_read(struct vfs_file_t *file, void *buff, int count)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
-    int ret = lfs_file_read(&handle->lfs, (lfs_file_t *)file->obj, buff, count);
-    ret = parse_result(ret);
+    int ret = (int)lfs_file_read(&handle->lfs, (lfs_file_t *)file->obj, buff, count);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_write(struct vfs_file_t *file, const void *buff, int count)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
-    int ret = lfs_file_write(&handle->lfs, (lfs_file_t *)file->obj, buff, count);
-    ret = parse_result(ret);
+    int ret = (int)lfs_file_write(&handle->lfs, (lfs_file_t *)file->obj, buff, count);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_lseek(struct vfs_file_t *file, int64_t offset, int whence)
@@ -198,60 +204,83 @@ static int lfs_lseek(struct vfs_file_t *file, int64_t offset, int whence)
     default:
         break;
     }
-    int ret = lfs_file_seek(&handle->lfs, (lfs_file_t *)file->obj, offset, flag);
-    ret = parse_result(ret);
+    int ret = (int)lfs_file_seek(&handle->lfs, (lfs_file_t *)file->obj, offset, flag);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int64_t lfs_ftell(struct vfs_file_t *file)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
-    int ret = lfs_file_tell(&handle->lfs, (lfs_file_t *)file->obj);
-    ret = parse_result(ret);
+    int64_t ret = lfs_file_tell(&handle->lfs, (lfs_file_t *)file->obj);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
-static int lfs_fstat(struct vfs_file_t *file, struct vfs_stat_t *stat)
+static int lfs_mode_to_vfs_mode(int lfs_mode)
 {
-    sys_error("The file system is nonsupport such operation.");
-    return SYS_ERROR_PERM;
+    int mode = 0;
+    if ((lfs_mode & LFS_TYPE_REG) == LFS_TYPE_REG)
+    {
+        mode |= VFS_MODE_ISREG;
+    }
+    else if ((lfs_mode & LFS_TYPE_DIR) == LFS_TYPE_DIR)
+    {
+        mode |= VFS_MODE_ISDIR;
+    }
+    return mode;
+}
+
+static int _lfs_stat(struct vfs_super_block_t *super_block, const char *path, struct vfs_stat_t *stat)
+{
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
+    struct lfs_info info;
+    int ret = lfs_stat(&handle->lfs, path, &info);
+    if (ret < 0)
+    {
+        ret = parse_result(ret);
+        return ret;
+    }
+    stat->st_mode = lfs_mode_to_vfs_mode(info.type);
+    stat->st_size = info.size;
+    return ret;
 }
 
 static int lfs_syncfs(struct vfs_file_t *file)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     int ret = lfs_file_sync(&handle->lfs, (lfs_file_t *)file->obj);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_ftruncate(struct vfs_file_t *file, int64_t length)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     int ret = lfs_file_truncate(&handle->lfs, (lfs_file_t *)file->obj, length);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_link(struct vfs_super_block_t *super_block, const char *oldpath, const char *newpath)
 {
-    sys_error("The file system is nonsupport such operation.");
+    sys_info("The file system is nonsupport such operation.");
     return SYS_ERROR_PERM;
 }
 
@@ -259,17 +288,17 @@ static int lfs_unlink(struct vfs_super_block_t *super_block, const char *path)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
     int ret = lfs_remove(&handle->lfs, path);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_chmod(struct vfs_super_block_t *super_block, const char *path, int mode)
 {
-    sys_error("The file system is nonsupport such operation.");
+    sys_info("The file system is nonsupport such operation.");
     return SYS_ERROR_PERM;
 }
 
@@ -277,36 +306,36 @@ static int _lfs_rename(struct vfs_super_block_t *super_block, const char *oldpat
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
     int ret = lfs_rename(&handle->lfs, oldpath, newpath);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int _lfs_mkdir(struct vfs_super_block_t *super_block, const char *path, int mode)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
     int ret = lfs_mkdir(&handle->lfs, path);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_rmdir(struct vfs_super_block_t *super_block, const char *path)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
     int ret = lfs_remove(&handle->lfs, path);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 static int lfs_opendir(struct vfs_file_t *file, const char *path)
@@ -316,14 +345,14 @@ static int lfs_opendir(struct vfs_file_t *file, const char *path)
     file->obj = sys_malloc(sizeof(lfs_dir_t));
     if (NULL == file->obj)
     {
-        sys_error("Out of memory.");
+        sys_info("Out of memory.");
         ret = SYS_ERROR_NOMEM;
         goto exception;
     }
     ret = lfs_dir_open(&handle->lfs, (lfs_dir_t *)file->obj, path);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         goto exception;
     }
     goto finally;
@@ -340,13 +369,13 @@ static int lfs_closedir(struct vfs_file_t *file)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     int ret = lfs_dir_close(&handle->lfs, (lfs_dir_t *)file->obj);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
     sys_free(file->obj);
-    return 0;
+    return ret;
 }
 
 static int lfs_readdir(struct vfs_file_t *file, struct vfs_dirent_t *dirent)
@@ -354,9 +383,9 @@ static int lfs_readdir(struct vfs_file_t *file, struct vfs_dirent_t *dirent)
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     struct lfs_info info;
     int ret = lfs_dir_read(&handle->lfs, (lfs_dir_t *)file->obj, &info);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
     memset(dirent, 0, sizeof(struct vfs_dirent_t));
@@ -372,19 +401,19 @@ static int lfs_readdir(struct vfs_file_t *file, struct vfs_dirent_t *dirent)
         break;
     }
     strcpy(dirent->d_name, info.name);
-    return 0;
+    return ret;
 }
 
 static int lfs_rewinddir(struct vfs_file_t *file)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     int ret = lfs_dir_rewind(&handle->lfs, (lfs_dir_t *)file->obj);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         return ret;
     }
-    return 0;
+    return ret;
 }
 
 #define BLOCK_SIZE 4096
@@ -422,7 +451,7 @@ static int _lfs_mount(struct vfs_super_block_t *super_block, const char *path, c
     super_block->obj = sys_malloc(sizeof(struct lfs_handle_t));
     if (NULL == super_block->obj)
     {
-        sys_error("Out of memory.");
+        sys_info("Out of memory.");
         ret = SYS_ERROR_NOMEM;
         goto exception;
     }
@@ -451,9 +480,9 @@ static int _lfs_mount(struct vfs_super_block_t *super_block, const char *path, c
         };
     handle->config = config;
     ret = lfs_mount(&handle->lfs, &handle->config);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         goto exception;
     }
     goto finally;
@@ -471,12 +500,35 @@ static int _lfs_unmount(struct vfs_super_block_t *super_block)
     int ret = 0;
     struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
     ret = lfs_unmount(&handle->lfs);
-    ret = parse_result(ret);
     if (ret < 0)
     {
+        ret = parse_result(ret);
         goto exception;
     }
     sys_free(handle);
+    goto finally;
+exception:
+finally:
+    return ret;
+}
+
+static int lfs_statfs(struct vfs_super_block_t *super_block, const char *path, struct vfs_statfs_t *statfs)
+{
+    int ret = 0;
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
+    struct lfs_fsinfo fsinfo;
+    ret = lfs_fs_stat(&handle->lfs, &fsinfo);
+    if (ret < 0)
+    {
+        ret = parse_result(ret);
+        goto exception;
+    }
+    memset(statfs, 0, sizeof(struct vfs_statfs_t));
+    statfs->f_bsize = fsinfo.block_size;
+    statfs->f_blocks = fsinfo.block_count;
+    statfs->f_bfree = statfs->f_blocks - lfs_fs_size(&handle->lfs);
+    statfs->f_bavail = statfs->f_bfree;
+    statfs->f_namelen = LFS_NAME_MAX;
     goto finally;
 exception:
 finally:
@@ -487,6 +539,7 @@ static void init_super_block(struct vfs_super_block_t *super_block, const char *
 {
     super_block->fs_operations.mount = _lfs_mount;
     super_block->fs_operations.unmount = _lfs_unmount;
+    super_block->fs_operations.statfs = lfs_statfs;
 
     super_block->node.node_operations.link = lfs_link;
     super_block->node.node_operations.unlink = lfs_unlink;
@@ -505,7 +558,7 @@ static void init_super_block(struct vfs_super_block_t *super_block, const char *
     super_block->node.file_operations.write = lfs_write;
     super_block->node.file_operations.lseek = lfs_lseek;
     super_block->node.file_operations.ftell = lfs_ftell;
-    super_block->node.file_operations.fstat = lfs_fstat;
+    super_block->node.node_operations.stat = _lfs_stat;
     super_block->node.file_operations.syncfs = lfs_syncfs;
     super_block->node.file_operations.ftruncate = lfs_ftruncate;
 

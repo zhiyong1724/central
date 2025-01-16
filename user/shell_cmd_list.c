@@ -32,12 +32,13 @@ extern void shellClear(void);
 extern long shellExecute(long argc, char *argv[]);
 #endif
 void shell_mount(long argc, char *argv[]);
-void shell_unmount(long argc, char *argv[]);
+void shell_umount(long argc, char *argv[]);
 void shell_pwd(long argc, char *argv[]);
 void shell_cd(long argc, char *argv[]);
 void shell_ls(long argc, char *argv[]);
 void shell_df(long argc, char *argv[]);
 void shell_mkdir(long argc, char *argv[]);
+void shell_rmdir(long argc, char *argv[]);
 void shell_touch(long argc, char *argv[]);
 void shell_mv(long argc, char *argv[]);
 void shell_rm(long argc, char *argv[]);
@@ -46,6 +47,8 @@ void shell_free(long argc, char *argv[]);
 void shell_ps(long argc, char *argv[]);
 void shell_rs(long argc, char *argv[]);
 void shell_uname(long argc, char *argv[]);
+void shell_echo(long argc, char *argv[]);
+void shell_cat(long argc, char *argv[]);
 SHELL_AGENCY_FUNC(shellRun, shellGetCurrent(), (const char *)p1);
 
 
@@ -109,7 +112,7 @@ const ShellCommand shellCommandList[] =
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        mount, shell_mount, mount),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
-                       umount, shell_unmount, umount),
+                       umount, shell_umount, umount),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        pwd, shell_pwd, pwd),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
@@ -120,6 +123,8 @@ const ShellCommand shellCommandList[] =
                        df, shell_df, df),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        mkdir, shell_mkdir, mkdir),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       rmdir, shell_rmdir, mkdir),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        touch, shell_touch, touch),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
@@ -134,6 +139,10 @@ const ShellCommand shellCommandList[] =
                        ps, shell_ps, ps),
         SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
                        rs, shell_rs, rs),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       echo, shell_echo, echo),
+        SHELL_CMD_ITEM(SHELL_CMD_PERMISSION(0) | SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN) | SHELL_CMD_DISABLE_RETURN,
+                       cat, shell_cat, cat),
 };
 
 /**

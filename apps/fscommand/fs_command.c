@@ -5,6 +5,7 @@
 #include "sys_error.h"
 #include "shellio.h"
 #include <time.h>
+#include "sys_kmp.h"
 static void print_fs_error(int error)
 {
     switch (error)
@@ -167,7 +168,7 @@ void shell_mount(long argc, char *argv[])
     }
 }
 
-void shell_unmount(long argc, char *argv[])
+void shell_umount(long argc, char *argv[])
 {
     if (argc >= 2)
     {
@@ -199,7 +200,7 @@ void shell_cd(long argc, char *argv[])
             print_fs_error(fd);
             return;
         }
-        set_shell_path(argv[1]);
+        set_shell_path(to_absolute_path(argv[1]));
         sys_closedir(fd);
     }
     else
@@ -308,7 +309,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     sprintf(temp, " %ld", file_info->st_size);
     strcat(buff, temp);
     struct tm *t = localtime((const time_t *)&file_info->st_mtim);
-    sprintf(temp, " %02d %02d %02d %02d:%02d", t->tm_year, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min);
+    sprintf(temp, " %d %02d %02d %02d:%02d ", 1900 + t->tm_year, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min);
     strcat(buff, temp);
     strcat(buff, name);
     printf("%s\n", buff);
@@ -336,22 +337,14 @@ void shell_ls(long argc, char *argv[])
         print_fs_error(fd);
         return;
     }
-    int result = 0;
     struct vfs_dirent_t dirent;
-    while ((result = sys_readdir(fd, &dirent)) > 0)
+    while (sys_readdir(fd, &dirent) > 0)
     {
         char file_path[VFS_MAX_FILE_PATH_LEN];
         strcpy(file_path, path);
         strcat(file_path, dirent.d_name);
-        int file = sys_open(file_path, VFS_FLAG_RDONLY, 0);
-        if (file < 0)
-        {
-            print_fs_error(fd);
-            break;
-        }
         struct vfs_stat_t stat;
-        sys_fstat(file, &stat);
-        sys_close(file);
+        sys_stat(file_path, &stat);
         show_file_info(&stat, dirent.d_name);
     }
     sys_closedir(fd);
@@ -392,6 +385,23 @@ void shell_mkdir(long argc, char *argv[])
     if (argc >= 2)
     {
         int result = sys_mkdir(to_absolute_path(argv[1]), VFS_MODE_IRUSR | VFS_MODE_IWUSR);
+        if (result < 0)
+        {
+            print_fs_error(result);
+            return;
+        }
+    }
+    else
+    {
+        printf("参数不足\n");
+    }
+}
+
+void shell_rmdir(long argc, char *argv[])
+{
+    if (argc >= 2)
+    {
+        int result = sys_rmdir(to_absolute_path(argv[1]));
         if (result < 0)
         {
             print_fs_error(result);
@@ -485,6 +495,68 @@ void shell_cp(long argc, char *argv[])
         }
         sys_close(new_file);
         sys_close(old_file);
+    }
+    else
+    {
+        printf("参数不足\n");
+    }
+}
+
+void shell_echo(long argc, char *argv[])
+{
+    if (argc >= 3)
+    {
+        int fd = -1;
+        if (sys_kmp(argv[2], ">>") == 0)
+        {
+            fd = sys_open(to_absolute_path(&argv[2][2]), VFS_FLAG_WRONLY|VFS_FLAG_APPEND, 0);
+        }
+        else if(sys_kmp(argv[2], ">") == 0)
+        {
+            fd = sys_open(to_absolute_path(&argv[2][1]), VFS_FLAG_WRONLY|VFS_FLAG_CREAT, 0);
+        }
+        else
+        {
+            printf("%s %s\n", argv[1], argv[2]);
+            return;
+        }
+        if (fd < 0)
+        {
+            print_fs_error(fd);
+            return;
+        }
+        sys_write(fd, argv[1], strlen(argv[1]));
+        sys_close(fd);
+    }
+    else if (argc >= 2)
+    {
+        printf("%s\n", argv[1]);
+    }
+    else
+    {
+        printf("参数不足\n");
+    }
+}
+
+void shell_cat(long argc, char *argv[])
+{
+    if (argc >= 2)
+    {
+        int fd = sys_open(to_absolute_path(argv[1]), VFS_FLAG_RDONLY, 0);
+        if (fd < 0)
+        {
+            print_fs_error(fd);
+            return;
+        }
+        char buff[1024];
+        int len = 0;
+        while ((len = sys_read(fd, buff, 1024 - 1)) > 0)
+        {
+            buff[len] = '\0';
+            printf("%s", buff);
+        }
+        printf("\n");
+        sys_close(fd);
     }
     else
     {
