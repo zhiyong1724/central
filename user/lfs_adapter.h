@@ -4,7 +4,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int lfs_format_ram();
+#define LFS_GET_PAGE_SIZE 0
+#define LFS_GET_BLOCK_SIZE 1
+#define LFS_GET_BLOCK_COUNT 2
+#define LFS_ERASE 3
 int register_lfs();
 #ifdef __cplusplus
 }

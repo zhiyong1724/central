@@ -3,10 +3,18 @@
 #include <string.h>
 #include "sys_mem.h"
 #include "sys_error.h"
+#include "sys_devfs.h"
 struct lfs_handle_t
 {
     lfs_t lfs;
     struct lfs_config config;
+    char device[DEVFS_MAX_DEVICE_NAME_LEN];
+    int64_t page_size;
+    int64_t block_size;
+    int64_t block_count;
+    void *read_buffer;
+    void *prog_buffer;
+    void *lookahead_buffer;
 };
 
 static int parse_result(int result)
@@ -66,7 +74,7 @@ static int parse_result(int result)
         ret = SYS_ERROR_NODATA;
         break;
     case LFS_ERR_NAMETOOLONG:
-        sys_info("File name too int64_t.");
+        sys_info("File name too long.");
         ret = SYS_ERROR_NAMETOOLONG;
         break;
     }
@@ -159,6 +167,7 @@ static int lfs_close(struct vfs_file_t *file)
     }
     sys_free(((lfs_file_t *)file->obj)->cache.buffer);
     sys_free(file->obj);
+    file->obj = NULL;
     return ret;
 }
 
@@ -186,7 +195,7 @@ static int lfs_write(struct vfs_file_t *file, const void *buff, int count)
     return ret;
 }
 
-static int lfs_lseek(struct vfs_file_t *file, int64_t offset, int whence)
+static int64_t lfs_lseek(struct vfs_file_t *file, int64_t offset, int whence)
 {
     struct lfs_handle_t *handle = (struct lfs_handle_t *)file->super_block->obj;
     int flag = 0;
@@ -204,7 +213,7 @@ static int lfs_lseek(struct vfs_file_t *file, int64_t offset, int whence)
     default:
         break;
     }
-    int ret = (int)lfs_file_seek(&handle->lfs, (lfs_file_t *)file->obj, offset, flag);
+    int64_t ret = (int)lfs_file_seek(&handle->lfs, (lfs_file_t *)file->obj, offset, flag);
     if (ret < 0)
     {
         ret = parse_result(ret);
@@ -276,6 +285,12 @@ static int lfs_ftruncate(struct vfs_file_t *file, int64_t length)
         return ret;
     }
     return ret;
+}
+
+static int lfs_ioctl(struct vfs_file_t *file, int cmd, int64_t arg)
+{
+    sys_info("The file system is nonsupport such operation.");
+    return SYS_ERROR_PERM;
 }
 
 static int lfs_link(struct vfs_super_block_t *super_block, const char *oldpath, const char *newpath)
@@ -416,69 +431,155 @@ static int lfs_rewinddir(struct vfs_file_t *file)
     return ret;
 }
 
-#define BLOCK_SIZE 4096
-#define PAGE_SIZE 512
-#define BLOCK_COUNT 256
-static unsigned int s_lfs_buffer[BLOCK_COUNT * BLOCK_SIZE / sizeof(unsigned int)];
-static unsigned int s_read_buffer[BLOCK_SIZE / sizeof(unsigned int)];
-static unsigned int s_prog_buffer[BLOCK_SIZE / sizeof(unsigned int)];
-static unsigned int s_lookahead_buffer[BLOCK_COUNT / 8 / sizeof(unsigned int)];
-static int read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
+static int dev_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
 {
-    memcpy(&((uint8_t *)buffer)[off % c->cache_size / sizeof(unsigned int)], &s_lfs_buffer[(block * BLOCK_SIZE + off) / sizeof(unsigned int)], size);
-    return LFS_ERR_OK;
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)c->context;
+    int fd = sys_open(handle->device, VFS_FLAG_RDONLY, 0);
+    if (fd < 0)
+    {
+        return LFS_ERR_IO;
+    }
+    sys_lseek(fd, block * handle->block_size + off, VFS_SEEK_SET);
+    int ret = sys_read(fd, &((char *)buffer)[off], size);
+    if (ret < 0)
+        ret = LFS_ERR_IO;
+    else
+        ret = 0;
+    sys_close(fd);
+    return ret;
 }
 
-static int prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
+static int dev_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
-    memcpy(&s_lfs_buffer[(block * BLOCK_SIZE + off) / sizeof(unsigned int)], &((uint8_t *)buffer)[off % c->cache_size / sizeof(unsigned int)], size);
-    return LFS_ERR_OK;
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)c->context;
+    int fd = sys_open(handle->device, VFS_FLAG_WRONLY, 0);
+    if (fd < 0)
+    {
+        return LFS_ERR_IO;
+    }
+    sys_lseek(fd, block * handle->block_size + off, VFS_SEEK_SET);
+    int ret = sys_write(fd, &((char *)buffer)[off], size);
+    if (ret < 0)
+        ret = LFS_ERR_IO;
+    else
+        ret = 0;
+    sys_close(fd);
+    return ret;
 }
 
-static int erase(const struct lfs_config *c, lfs_block_t block)
+static int dev_erase(const struct lfs_config *c, lfs_block_t block)
 {
-    return LFS_ERR_OK;
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)c->context;
+    int fd = sys_open(handle->device, VFS_FLAG_WRONLY, 0);
+    if (fd < 0)
+    {
+        return LFS_ERR_IO;
+    }
+    int ret = sys_iostl(fd, LFS_ERASE, block);
+    if (ret < 0)
+    {
+        ret = LFS_ERR_IO;
+    }
+    sys_close(fd);
+    return ret;
 }
 
-static int sync(const struct lfs_config *c)
+static int dev_sync(const struct lfs_config *c)
 {
-    return LFS_ERR_OK;
+    struct lfs_handle_t *handle = (struct lfs_handle_t *)c->context;
+    int fd = sys_open(handle->device, VFS_FLAG_WRONLY, 0);
+    if (fd < 0)
+    {
+        return LFS_ERR_IO;
+    }
+    int ret = sys_syncfs(fd);
+    if (ret < 0)
+    {
+        ret = LFS_ERR_IO;
+    }
+    sys_close(fd);
+    return ret;
 }
 
-static int _lfs_mount(struct vfs_super_block_t *super_block, const char *path, const char *device)
+static int _lfs_mount(struct vfs_super_block_t *super_block, const char *device)
 {
     int ret = 0;
-    super_block->obj = sys_malloc(sizeof(struct lfs_handle_t));
-    if (NULL == super_block->obj)
+    int fd = -1;
+    struct lfs_handle_t *handle = sys_malloc(sizeof(struct lfs_handle_t));
+    if (NULL == handle)
     {
         sys_info("Out of memory.");
         ret = SYS_ERROR_NOMEM;
         goto exception;
     }
-    memset(super_block->obj, 0, sizeof(struct lfs_handle_t));
-    struct lfs_handle_t *handle = (struct lfs_handle_t *)super_block->obj;
+    super_block->obj = handle;
+    memset(handle, 0, sizeof(struct lfs_handle_t));
+    fd = sys_open(device, VFS_FLAG_RDONLY, 0);
+    if (fd < 0)
+    {
+        ret = fd;
+        goto exception;
+    }
+    ret = sys_iostl(fd, LFS_GET_PAGE_SIZE, (int64_t)&handle->page_size);
+    if (NULL == super_block->obj)
+    {
+        goto exception;
+    }
+    ret = sys_iostl(fd, LFS_GET_BLOCK_SIZE, (int64_t)&handle->block_size);
+    if (NULL == super_block->obj)
+    {
+        goto exception;
+    }
+    ret = sys_iostl(fd, LFS_GET_BLOCK_COUNT, (int64_t)&handle->block_count);
+    if (NULL == super_block->obj)
+    {
+        goto exception;
+    }
+    handle->read_buffer = sys_malloc(handle->block_size);
+    if (NULL == handle->read_buffer)
+    {
+        sys_info("Out of memory.");
+        ret = SYS_ERROR_NOMEM;
+        goto exception;
+    }
+    handle->prog_buffer = sys_malloc(handle->block_size);
+    if (NULL == handle->prog_buffer)
+    {
+        sys_info("Out of memory.");
+        ret = SYS_ERROR_NOMEM;
+        goto exception;
+    }
+    handle->lookahead_buffer = sys_malloc(handle->block_count / 8);
+    if (NULL == handle->lookahead_buffer)
+    {
+        sys_info("Out of memory.");
+        ret = SYS_ERROR_NOMEM;
+        goto exception;
+    }
     const struct lfs_config config =
         {
-            .read = read,
-            .prog = prog,
-            .erase = erase,
-            .sync = sync,
-            .read_size = PAGE_SIZE,
-            .prog_size = PAGE_SIZE,
-            .block_size = BLOCK_SIZE,
-            .block_count = BLOCK_COUNT,
+            .context = handle,
+            .read = dev_read,
+            .prog = dev_prog,
+            .erase = dev_erase,
+            .sync = dev_sync,
+            .read_size = handle->page_size,
+            .prog_size = handle->page_size,
+            .block_size = handle->block_size,
+            .block_count = handle->block_count,
             .block_cycles = 100,
-            .cache_size = BLOCK_SIZE,
-            .lookahead_size = BLOCK_COUNT / 8,
-            .read_buffer = s_read_buffer,
-            .prog_buffer = s_prog_buffer,
-            .lookahead_buffer = s_lookahead_buffer,
+            .cache_size = handle->block_size,
+            .lookahead_size = handle->block_count / 8,
+            .read_buffer = handle->read_buffer,
+            .prog_buffer = handle->prog_buffer,
+            .lookahead_buffer = handle->lookahead_buffer,
             .name_max = 0,
             .file_max = 0,
             .attr_max = 0,
             .metadata_max = 0,
         };
     handle->config = config;
+    strcpy(handle->device, device);
     ret = lfs_mount(&handle->lfs, &handle->config);
     if (ret < 0)
     {
@@ -487,11 +588,27 @@ static int _lfs_mount(struct vfs_super_block_t *super_block, const char *path, c
     }
     goto finally;
 exception:
-    if (super_block->obj != NULL)
+    if (handle != NULL && handle->read_buffer != NULL)
     {
-        sys_free(super_block->obj);
+        sys_free(handle->read_buffer);
+    }
+    if (handle != NULL && handle->prog_buffer != NULL)
+    {
+        sys_free(handle->prog_buffer);
+    }
+    if (handle != NULL && handle->lookahead_buffer != NULL)
+    {
+        sys_free(handle->lookahead_buffer);
+    }
+    if (handle != NULL)
+    {
+        sys_free(handle);
     }
 finally:
+    if (fd >= 0)
+    {
+        sys_close(fd);
+    }
     return ret;
 }
 
@@ -505,6 +622,9 @@ static int _lfs_unmount(struct vfs_super_block_t *super_block)
         ret = parse_result(ret);
         goto exception;
     }
+    sys_free(handle->read_buffer);
+    sys_free(handle->prog_buffer);
+    sys_free(handle->lookahead_buffer);
     sys_free(handle);
     goto finally;
 exception:
@@ -561,9 +681,10 @@ static void init_super_block(struct vfs_super_block_t *super_block, const char *
     super_block->node.node_operations.stat = _lfs_stat;
     super_block->node.file_operations.syncfs = lfs_syncfs;
     super_block->node.file_operations.ftruncate = lfs_ftruncate;
+    super_block->node.file_operations.ioctl = lfs_ioctl;
 
-    super_block->block_size = BLOCK_SIZE;
-    super_block->block_count = BLOCK_COUNT;
+    super_block->block_size = 0;
+    super_block->block_count = 0;
     super_block->obj = NULL;
     strcpy(super_block->device, device);
 }
@@ -582,32 +703,4 @@ int register_lfs()
         .flags = VFS_FLAG_RDWR
     };
     return sys_registerfs(&s_fs);
-}
-
-int lfs_format_ram()
-{
-    const struct lfs_config config =
-        {
-            .read = read,
-            .prog = prog,
-            .erase = erase,
-            .sync = sync,
-            .read_size = PAGE_SIZE,
-            .prog_size = PAGE_SIZE,
-            .block_size = BLOCK_SIZE,
-            .block_count = BLOCK_COUNT,
-            .block_cycles = 100,
-            .cache_size = BLOCK_SIZE,
-            .lookahead_size = BLOCK_COUNT / 8,
-            .read_buffer = s_read_buffer,
-            .prog_buffer = s_prog_buffer,
-            .lookahead_buffer = s_lookahead_buffer,
-            .name_max = 0,
-            .file_max = 0,
-            .attr_max = 0,
-            .metadata_max = 0,
-        };
-    lfs_t lfs;
-
-    return lfs_format(&lfs, &config);
 }

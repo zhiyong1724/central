@@ -213,23 +213,23 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
 {
     char buff[256 + VFS_MAX_FILE_NAME_LEN];
     buff[0] = '\0';
-    if ((file_info->st_mode & VFS_MODE_ISDIR) == VFS_MODE_ISDIR)
+    if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISDIR)
     {
         strcat(buff, "d");
     }
-    else if ((file_info->st_mode & VFS_MODE_ISCHR) == VFS_MODE_ISCHR)
+    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISCHR)
     {
         strcat(buff, "c");
     }
-    else if ((file_info->st_mode & VFS_MODE_ISBLK) == VFS_MODE_ISBLK)
+    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISBLK)
     {
         strcat(buff, "b");
     }
-    else if ((file_info->st_mode & VFS_MODE_ISREG) == VFS_MODE_ISREG)
+    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISREG)
     {
         strcat(buff, "-");
     }
-    else if ((file_info->st_mode & VFS_MODE_ISLNK) == VFS_MODE_ISLNK)
+    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISLNK)
     {
         strcat(buff, "l");
     }
@@ -243,7 +243,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     }
     if ((file_info->st_mode & VFS_MODE_IWUSR) > 0)
     {
-        strcat(buff, "r");
+        strcat(buff, "w");
     }
     else
     {
@@ -251,7 +251,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     }
     if ((file_info->st_mode & VFS_MODE_IXUSR) > 0)
     {
-        strcat(buff, "r");
+        strcat(buff, "x");
     }
     else
     {
@@ -267,7 +267,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     }
     if ((file_info->st_mode & VFS_MODE_IWGRP) > 0)
     {
-        strcat(buff, "r");
+        strcat(buff, "w");
     }
     else
     {
@@ -275,7 +275,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     }
     if ((file_info->st_mode & VFS_MODE_IXGRP) > 0)
     {
-        strcat(buff, "r");
+        strcat(buff, "x");
     }
     else
     {
@@ -291,7 +291,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     }
     if ((file_info->st_mode & VFS_MODE_IWOTH) > 0)
     {
-        strcat(buff, "r");
+        strcat(buff, "w");
     }
     else
     {
@@ -299,7 +299,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
     }
     if ((file_info->st_mode & VFS_MODE_IXOTH) > 0)
     {
-        strcat(buff, "r");
+        strcat(buff, "x");
     }
     else
     {
@@ -342,6 +342,7 @@ void shell_ls(long argc, char *argv[])
     {
         char file_path[VFS_MAX_FILE_PATH_LEN];
         strcpy(file_path, path);
+        strcat(file_path, "/");
         strcat(file_path, dirent.d_name);
         struct vfs_stat_t stat;
         sys_stat(file_path, &stat);
@@ -350,34 +351,10 @@ void shell_ls(long argc, char *argv[])
     sys_closedir(fd);
 }
 
-// static void show_mount_info(const sys_mount_info_t *mount_info)
-// {
-//     printf("文件系统：%s  ", mount_info->driver);
-//     printf("挂载点：%s  ", mount_info->path);
-// }
-
+void dump_fs();
 void shell_df(long argc, char *argv[])
 {
-    // const sys_mount_info_t *mount_info = NULL;
-    // while (1)
-    // {
-    //     osFGetMountInfo(&mount_info);
-    //     if (mount_info != NULL)
-    //     {
-    //         show_mount_info(mount_info);
-    //         sys_fs_t fs;
-    //         sys_file_error_t result = osFStatFS(mount_info->path, &fs);
-    //         print_fs_error(result);
-    //         if (SYS_FILE_ERROR_OK == result)
-    //         {
-    //             show_fs_info(&fs);
-    //         }
-    //     }
-    //     else
-    //     {
-    //         break;
-    //     }
-    // }
+    dump_fs();
 }
 
 void shell_mkdir(long argc, char *argv[])

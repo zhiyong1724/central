@@ -18,6 +18,9 @@
 #include "lfs_adapter.h"
 #include "lfs.h"
 #include "lvglio.h"
+#include "ram_block.h"
+#include "ram_block1.h"
+#include "fatfs_adapter.h"
 extern const struct lfs_config g_lfs_config;
 extern lfs_t g_lfs;
 struct Test
@@ -1015,9 +1018,15 @@ int main()
     //sys_task_create(&tid, taskA, NULL, "task a", 20, 512);
     // sys_task_create(&tid, taskC, NULL, "task c", 20, 512);
     // sys_task_create_rt(&tid, taskG, NULL, "task g", 20, 512);
-    lfs_format_ram();
+    ram_block_format();
+    ram_block_create();
     register_lfs();
-    sys_mount("/", "");
+    sys_mount("/", "/dev/block");
+    ram_block1_create();
+    ram_block1_format();
+    register_fatfs();
+    sys_mkdir("/sd", VFS_MODE_IRUSR | VFS_MODE_IWUSR);
+    sys_mount("/sd", "/dev/block1");
     //register_fatfs(); 
     //lfs_format(&g_lfs, &g_lfs_config);
     //f_mkfs("0:", NULL, NULL, FF_MAX_SS);

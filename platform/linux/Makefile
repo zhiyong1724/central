@@ -24,7 +24,9 @@ CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 
 SRCS := lvglio.c \
 	main.c \
-	sys_port.c
+	sys_port.c \
+	ram_block.c \
+	ram_block1.c
 
 include ../../apps/Makefile
 include ../../user/Makefile

@@ -3,6 +3,11 @@
 #include "sys_string.h"
 #include "cregex.h"
 #include "sys_error.h"
+static void create_sys_files(struct vfs_dentry_t *dentry)
+{
+    dentry->super_block->node.node_operations.mkdir(dentry->super_block, "/dev", VFS_MODE_IWUSR);
+}
+
 static void delete_all_dentry(struct vfs_dentry_t *dentry)
 {
     sys_trace();
@@ -53,11 +58,19 @@ static void delete_invalid_dentry(struct vfs_t *vfs, struct vfs_dentry_t *dentry
     }
 }
 
-static int on_compare(void *key1, void *key2, void *arg)
+static int find_compare(void *key1, void *key2, void *arg)
 {
     sys_trace();
     struct vfs_dentry_t *dentry = (struct vfs_dentry_t *)key1;
-    return sys_strcmp(dentry->name, (const char *)key2);
+    return sys_strcmp((const char *)key2, dentry->name);
+}
+
+static int insert_compare(void *key1, void *key2, void *arg)
+{
+    sys_trace();
+    struct vfs_dentry_t *dentry1 = (struct vfs_dentry_t *)key1;
+    struct vfs_dentry_t *dentry2 = (struct vfs_dentry_t *)key2;
+    return sys_strcmp(dentry1->name, dentry2->name);
 }
 
 static void init_dentry(struct vfs_dentry_t *dentry)
@@ -80,7 +93,7 @@ static int create_dentry(struct vfs_dentry_t *parent, const char *name, struct v
     }
     init_dentry(*dentry);
     sys_strcpy((*dentry)->name, name, VFS_MAX_FILE_NAME_LEN);
-    if (sys_insert_node((sys_tree_node_t **)&parent->children, &(*dentry)->l, on_compare, NULL) < 0)
+    if (sys_insert_node((sys_tree_node_t **)&parent->children, &(*dentry)->l, insert_compare, NULL) < 0)
     {
         sys_free(*dentry);
         *dentry = NULL;
@@ -103,7 +116,7 @@ static int create_dentry(struct vfs_dentry_t *parent, const char *name, struct v
 static struct vfs_dentry_t *find_child(struct vfs_dentry_t *parent, const char *name)
 {
     sys_trace();
-    struct vfs_dentry_t *dentry = (struct vfs_dentry_t *)sys_find_node((sys_tree_node_t *)parent->children, (void *)name, on_compare, NULL);
+    struct vfs_dentry_t *dentry = (struct vfs_dentry_t *)sys_find_node((sys_tree_node_t *)parent->children, (void *)name, find_compare, NULL);
     return dentry;
 }
 
@@ -148,7 +161,7 @@ static int find_dentry(struct vfs_t *vfs, const char *path, struct vfs_dentry_t 
     }
     *dentry = vfs->root;
     *position = 0;
-    regex = cregex_compile("/+([^/]*)");
+    regex = cregex_compile("/+([^/]+)");
     if (NULL == regex)
     {
         sys_error("Out of memory.");
@@ -170,7 +183,7 @@ static int find_dentry(struct vfs_t *vfs, const char *path, struct vfs_dentry_t 
                 *dentry = (*dentry)->parent;
             }
         }
-        else if (name[0] != '\0')
+        else
         {
             struct vfs_dentry_t *child = find_child(*dentry, name);
             if (NULL == child)
@@ -202,7 +215,7 @@ finally:
     return ret;
 }
 
-static struct vfs_file_t *get_file_by_tid(struct vfs_t *vfs, int fd)
+static struct vfs_file_t *get_file_by_fd(struct vfs_t *vfs, int fd)
 {
     sys_trace();
     int size = sys_vector_size(&vfs->files);
@@ -234,12 +247,7 @@ int vfs_init(struct vfs_t *vfs)
 void vfs_free(struct vfs_t *vfs)
 {
     sys_trace();
-    while (vfs->fs != NULL)
-    {
-        struct vfs_fs_t *fs = (struct vfs_fs_t *)vfs->fs;
-        sys_remove_from_single_list((sys_single_list_node_t **)&vfs->fs);
-        sys_free(fs);
-    }
+    vfs->fs = NULL;
     delete_all_dentry(vfs->root);
     vfs->root = NULL;
     sys_id_manager_uninit(&vfs->id_manager);
@@ -257,7 +265,14 @@ void vfs_free(struct vfs_t *vfs)
 int vfs_registerfs(struct vfs_t *vfs, struct vfs_fs_t *fs)
 {
     sys_trace();
-    sys_insert_to_single_list((sys_single_list_node_t **)&vfs->fs, &fs->l);
+    sys_insert_to_back((sys_list_node_t **)&vfs->fs, &fs->l);
+    return 0;
+}
+
+int vfs_unregisterfs(struct vfs_t *vfs, struct vfs_fs_t *fs)
+{
+    sys_trace();
+    sys_remove_from_list((sys_list_node_t **)&vfs->fs, &fs->l);
     return 0;
 }
 
@@ -266,7 +281,7 @@ int vfs_mount(struct vfs_t *vfs, const char *path, const char *device)
     sys_trace();
     struct vfs_dentry_t *dentry = NULL;
     struct vfs_super_block_t *super_block = NULL;
-    int position = 0;
+    int position = 0;    
     int ret = find_dentry(vfs, path, &dentry, &position, 1);
     if (ret < 0)
     {
@@ -289,8 +304,18 @@ int vfs_mount(struct vfs_t *vfs, const char *path, const char *device)
     for (; fs != NULL; fs = (struct vfs_fs_t *)vfs->fs->l.next)
     {
         fs->init_super_block(super_block, device);
-        ret = super_block->fs_operations.mount(super_block, path, device);
+        if (NULL == super_block->fs_operations.mount)
+        {
+            sys_info("Invalid argument.");
+            ret = SYS_ERROR_INVAL;
+            goto exception;
+        }
+        ret = super_block->fs_operations.mount(super_block, device);
         if (0 == ret)
+        {
+            break;
+        }
+        if ((struct vfs_fs_t *)vfs->fs->l.next == vfs->fs)
         {
             break;
         }
@@ -304,11 +329,16 @@ int vfs_mount(struct vfs_t *vfs, const char *path, const char *device)
     super_block->fs = fs;
     sys_strcpy(super_block->device, device, VFS_MAX_FILE_PATH_LEN);
     super_block->ref_count = 1;
+    sys_mutex_create(&super_block->lock);
     if (dentry->super_block != NULL)
     {
         dentry->super_block->ref_count--;
     }
     dentry->super_block = super_block;
+    if (dentry == vfs->root)
+    {
+        create_sys_files(dentry);
+    }
 goto finally;
 exception:
     if (dentry != NULL)
@@ -345,7 +375,14 @@ int vfs_umount(struct vfs_t *vfs, const char *path)
         ret = SYS_ERROR_NOTDIR;
         goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (dentry->super_block->ref_count > 1)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    if (NULL == dentry->super_block->fs_operations.unmount)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
@@ -378,6 +415,7 @@ int vfs_umount(struct vfs_t *vfs, const char *path)
     }
     goto finally;
 exception:
+sys_mutex_unlock(&dentry->super_block->lock);
 finally:
     return ret;
 }
@@ -400,6 +438,7 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
         ret = SYS_ERROR_NOTDIR;
         goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (((flags + 1) & (dentry->super_block->fs->flags + 1) & VFS_FLAG_ACCMODE) != ((flags + 1) & VFS_FLAG_ACCMODE))
     {
         sys_info("Permission denied.");
@@ -419,7 +458,6 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
         ret = SYS_ERROR_NOMEM;
         goto exception;
     }
-    sys_mutex_create(&file->lock);
     int size = sys_vector_size(&vfs->files);
     if (fd >= size)
     {
@@ -434,7 +472,16 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
     }
     file->flags = flags;
     file->super_block = dentry->super_block;
-    ret = dentry->super_block->node.file_operations.open(file, &path[position], mode);
+    if (NULL == dentry->super_block->node.file_operations.open)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.file_operations.open(file, ppath, mode);
     if (ret < 0)
     {
         goto exception;
@@ -452,140 +499,222 @@ exception:
         sys_free(file);
     }
 finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
     return ret < 0 ? ret : fd;
 }
 
 int vfs_close(struct vfs_t *vfs, int fd)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_error("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.close(file);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.close)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.close(file);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
-    sys_mutex_destory(&file->lock);
+    sys_mutex_unlock(&file->super_block->lock);
     sys_id_free(&vfs->id_manager, fd);
     sys_free(file);
     void **pp = (void **)sys_vector_at(&vfs->files, fd);
     *pp = NULL;
-    return 0;
+    goto finally;
+exception:
+    sys_mutex_unlock(&file->super_block->lock);
+finally:
+    return ret;
 }
 
 int vfs_read(struct vfs_t *vfs, int fd, void *buff, int count)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_error("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
     if (((file->flags + 1) & (VFS_FLAG_RDONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.read(file, buff, count);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.read)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.read(file, buff, count);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
 int vfs_write(struct vfs_t *vfs, int fd, const void *buff, int count)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_error("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
     if (((file->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.write(file, buff, count);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.write)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.write(file, buff, count);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
 int64_t vfs_lseek(struct vfs_t *vfs, int fd, int64_t offset, int whence)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_info("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.lseek(file, offset, whence);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.lseek)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.lseek(file, offset, whence);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
 int64_t vfs_ftell(struct vfs_t *vfs, int fd)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_info("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.ftell(file);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.ftell)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.ftell(file);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
 int vfs_syncfs(struct vfs_t *vfs, int fd)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_info("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
     if (((file->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.syncfs(file);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.syncfs)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.syncfs(file);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
 int vfs_ftruncate(struct vfs_t *vfs, int fd, int64_t length)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_info("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
     if (((file->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.file_operations.ftruncate(file, length);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.ftruncate)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.ftruncate(file, length);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -597,19 +726,36 @@ int vfs_stat(struct vfs_t *vfs, const char *path, struct vfs_stat_t *stat)
     int ret = find_dentry(vfs, path, &dentry, &position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (((dentry->super_block->fs->flags + 1) & (VFS_FLAG_RDONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    return dentry->super_block->node.node_operations.stat(dentry->super_block, &path[position], stat);
+    if (NULL == dentry->super_block->node.node_operations.stat)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.node_operations.stat(dentry->super_block, ppath, stat);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_link(struct vfs_t *vfs, const char *oldpath, const char *newpath)
@@ -620,36 +766,58 @@ int vfs_link(struct vfs_t *vfs, const char *oldpath, const char *newpath)
     int ret = find_dentry(vfs, oldpath, &old_dentry, &old_position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == old_dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
     struct vfs_dentry_t *new_dentry = NULL;
     int new_position = 0;
     ret = find_dentry(vfs, newpath, &new_dentry, &new_position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == new_dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
     if (old_dentry != new_dentry)
     {
         sys_info("Cross-device link.");
-        return SYS_ERROR_XDEV;
+        ret = SYS_ERROR_XDEV;
+        goto exception;
     }
+    sys_mutex_lock(&old_dentry->super_block->lock);
     if (((old_dentry->super_block->fs->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    return old_dentry->super_block->node.node_operations.link(old_dentry->super_block, &oldpath[old_position], &newpath[new_position]);
+    if (NULL == old_dentry->super_block->node.node_operations.link)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *poldpath = "/";
+    if (oldpath[old_position] != '\0')
+        poldpath = &oldpath[old_position];
+    const char *pnewpath = "/";
+    if (newpath[new_position] != '\0')
+        pnewpath = &newpath[new_position];
+    ret = old_dentry->super_block->node.node_operations.link(old_dentry->super_block, poldpath, pnewpath);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&old_dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_unlink(struct vfs_t *vfs, const char *path)
@@ -660,19 +828,36 @@ int vfs_unlink(struct vfs_t *vfs, const char *path)
     int ret = find_dentry(vfs, path, &dentry, &position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (((dentry->super_block->fs->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    return dentry->super_block->node.node_operations.unlink(dentry->super_block, &path[position]);
+    if (NULL == dentry->super_block->node.node_operations.unlink)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.node_operations.unlink(dentry->super_block, ppath);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_chmod(struct vfs_t *vfs, const char *path, int mode)
@@ -683,14 +868,30 @@ int vfs_chmod(struct vfs_t *vfs, const char *path, int mode)
     int ret = find_dentry(vfs, path, &dentry, &position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
-    return dentry->super_block->node.node_operations.chmod(dentry->super_block, &path[position], mode);
+    sys_mutex_lock(&dentry->super_block->lock);
+    if (NULL == dentry->super_block->node.node_operations.chmod)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.node_operations.chmod(dentry->super_block, ppath, mode);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_rename(struct vfs_t *vfs, const char *oldpath, const char *newpath)
@@ -701,36 +902,58 @@ int vfs_rename(struct vfs_t *vfs, const char *oldpath, const char *newpath)
     int ret = find_dentry(vfs, oldpath, &old_dentry, &old_position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == old_dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
     struct vfs_dentry_t *new_dentry = NULL;
     int new_position = 0;
     ret = find_dentry(vfs, newpath, &new_dentry, &new_position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == new_dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
     if (old_dentry != new_dentry)
     {
         sys_info("Cross-device link.");
-        return SYS_ERROR_XDEV;
+        ret = SYS_ERROR_XDEV;
+        goto exception;
     }
+    sys_mutex_lock(&old_dentry->super_block->lock);
     if (((old_dentry->super_block->fs->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    return old_dentry->super_block->node.node_operations.rename(old_dentry->super_block, &oldpath[old_position], &newpath[new_position]);
+    if (NULL == old_dentry->super_block->node.node_operations.rename)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *poldpath = "/";
+    if (oldpath[old_position] != '\0')
+        poldpath = &oldpath[old_position];
+    const char *pnewpath = "/";
+    if (newpath[new_position] != '\0')
+        pnewpath = &newpath[new_position];
+    ret = old_dentry->super_block->node.node_operations.rename(old_dentry->super_block, poldpath, pnewpath);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&old_dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_mkdir(struct vfs_t *vfs, const char *path, int mode)
@@ -741,19 +964,36 @@ int vfs_mkdir(struct vfs_t *vfs, const char *path, int mode)
     int ret = find_dentry(vfs, path, &dentry, &position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (((dentry->super_block->fs->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    return dentry->super_block->node.node_operations.mkdir(dentry->super_block, &path[position], mode);
+    if (NULL == dentry->super_block->node.node_operations.mkdir)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.node_operations.mkdir(dentry->super_block, ppath, mode);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_rmdir(struct vfs_t *vfs, const char *path)
@@ -764,19 +1004,36 @@ int vfs_rmdir(struct vfs_t *vfs, const char *path)
     int ret = find_dentry(vfs, path, &dentry, &position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (((dentry->super_block->fs->flags + 1) & (VFS_FLAG_WRONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    return dentry->super_block->node.node_operations.rmdir(dentry->super_block, &path[position]);
+    if (NULL == dentry->super_block->node.node_operations.rmdir)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.node_operations.rmdir(dentry->super_block, ppath);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
+    return ret;
 }
 
 int vfs_opendir(struct vfs_t *vfs, const char *path)
@@ -794,12 +1051,15 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
+    sys_mutex_lock(&dentry->super_block->lock);
     if (((dentry->super_block->fs->flags + 1) & (VFS_FLAG_RDONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
     fd = sys_id_alloc(&vfs->id_manager);
     if (fd < 0)
@@ -814,7 +1074,6 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
         ret = SYS_ERROR_NOMEM;
         goto exception;
     }
-    sys_mutex_create(&file->lock);
     int size = sys_vector_size(&vfs->files);
     if (fd >= size)
     {
@@ -829,7 +1088,16 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
     }
     file->flags = VFS_FLAG_RDONLY;
     file->super_block = dentry->super_block;
-    ret = dentry->super_block->node.node_operations.opendir(file, &path[position]);
+    if (NULL == dentry->super_block->node.node_operations.opendir)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->node.node_operations.opendir(file, ppath);
     if (ret < 0)
     {
         goto exception;
@@ -847,65 +1115,100 @@ exception:
         sys_free(file);
     }
 finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
     return ret < 0 ? ret : fd;
 }
 
 int vfs_closedir(struct vfs_t *vfs, int fd)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_error("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.node_operations.closedir(file);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.node_operations.closedir)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.node_operations.closedir(file);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
-    sys_mutex_destory(&file->lock);
+    sys_mutex_unlock(&file->super_block->lock);
     sys_id_free(&vfs->id_manager, fd);
     sys_free(file);
     void **pp = (void **)sys_vector_at(&vfs->files, fd);
     *pp = NULL;
-    return 0;
+    goto finally;
+exception:
+    sys_mutex_unlock(&file->super_block->lock);
+finally:
+    return ret;
 }
 
 int vfs_readdir(struct vfs_t *vfs, int fd, struct vfs_dirent_t *dirent)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_error("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
     if (((file->flags + 1) & (VFS_FLAG_RDONLY + 1)) == 0)
     {
         sys_info("Permission denied.");
-        return SYS_ERROR_ACCES;
+        ret = SYS_ERROR_ACCES;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.node_operations.readdir(file, dirent);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.node_operations.readdir)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.node_operations.readdir(file, dirent);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
 int vfs_rewinddir(struct vfs_t *vfs, int fd)
 {
     sys_trace();
-    struct vfs_file_t *file = get_file_by_tid(vfs, fd);
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
     if (NULL == file)
     {
         sys_error("Bad file number.");
-        return SYS_ERROR_BADF;
+        ret = SYS_ERROR_BADF;
+        goto exception;
     }
-    sys_mutex_lock(&file->lock);
-    int ret = file->super_block->node.node_operations.rewinddir(file);
-    sys_mutex_unlock(&file->lock);
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.node_operations.rewinddir)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.node_operations.rewinddir(file);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -917,12 +1220,54 @@ int vfs_statfs(struct vfs_t *vfs, const char *path, struct vfs_statfs_t *statfs)
     int ret = find_dentry(vfs, path, &dentry, &position, 0);
     if (ret < 0)
     {
-        return ret;
+        goto exception;
     }
     if (NULL == dentry->super_block)
     {
         sys_info("Not a directory.");
-        return SYS_ERROR_NOTDIR;
+        ret = SYS_ERROR_NOTDIR;
+        goto exception;
     }
-    return dentry->super_block->fs_operations.statfs(dentry->super_block, &path[position], statfs);
+    sys_mutex_lock(&dentry->super_block->lock);
+    if (NULL == dentry->super_block->fs_operations.statfs)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    const char *ppath = "/";
+    if (path[position] != '\0')
+        ppath = &path[position];
+    ret = dentry->super_block->fs_operations.statfs(dentry->super_block, ppath, statfs);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&dentry->super_block->lock);
+    return ret;
+}
+
+int vfs_iostl(struct vfs_t *vfs, int fd,  int cmd, int64_t arg)
+{
+    sys_trace();
+    int ret = 0;
+    struct vfs_file_t *file = get_file_by_fd(vfs, fd);
+    if (NULL == file)
+    {
+        sys_error("Bad file number.");
+        ret = SYS_ERROR_BADF;
+        goto exception;
+    }
+    sys_mutex_lock(&file->super_block->lock);
+    if (NULL == file->super_block->node.file_operations.ioctl)
+    {
+        sys_info("Invalid argument.");
+        ret = SYS_ERROR_INVAL;
+        goto exception;
+    }
+    ret = file->super_block->node.file_operations.ioctl(file, cmd, arg);
+    goto finally;
+exception:
+finally:
+    sys_mutex_unlock(&file->super_block->lock);
+    return ret;
 }

@@ -7,4 +7,5 @@ SRCS += central.c
 include $(CURRENT_DIR)/base/Makefile \
 	$(CURRENT_DIR)/mem/Makefile \
 	$(CURRENT_DIR)/task/Makefile \
-	$(CURRENT_DIR)/vfs/Makefile 
+	$(CURRENT_DIR)/vfs/Makefile \
+	$(CURRENT_DIR)/fs/Makefile

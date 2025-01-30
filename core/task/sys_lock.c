@@ -48,16 +48,12 @@ int sys_recursive_lock_lock(sys_recursive_lock_t *lock)
     sys_trace();
     int ret = 0;
     int state = port_disable_interrupts();
-    if (sys_task_get_running_task() == lock->owner)
-    {
-        lock->recursive_count++;
-    }
-    else
+    if (sys_task_get_running_task() != lock->owner)
     {
         ret = sys_semaphore_wait1(&lock->semaphore, SYS_SEMAPHORE_MAX_WAIT_TIME);
         lock->owner = sys_task_get_running_task();
-        lock->recursive_count++;
     }
+    lock->recursive_count++;
     port_recovery_interrupts(state);
     return ret;
 }
@@ -83,15 +79,14 @@ int sys_recursive_lock_unlock(sys_recursive_lock_t *lock)
 int sys_rwlock_create(sys_rwlock_t *lock)
 {
     sys_trace();
-    lock->owner = NULL;
     lock->read_count = 0;
-    return sys_semaphore_create(&lock->semaphore, 1, 1);
+    return sys_recursive_lock_create(&lock->lock);
 }
 
 int sys_rwlock_destory(sys_rwlock_t *lock)
 {
     sys_trace();
-    return sys_semaphore_destory(&lock->semaphore);
+    return sys_recursive_lock_destory(&lock->lock);
 }
 
 int sys_rwlock_rdlock(sys_rwlock_t *lock)
@@ -99,9 +94,9 @@ int sys_rwlock_rdlock(sys_rwlock_t *lock)
     sys_trace();
     int ret = 0;
     int state = port_disable_interrupts();
-    if (lock->owner != NULL || 0 == lock->read_count)
+    if (0 == lock->read_count)
     {
-        ret = sys_semaphore_wait1(&lock->semaphore, SYS_SEMAPHORE_MAX_WAIT_TIME);
+        ret = sys_recursive_lock_lock(&lock->lock);
     }
     lock->read_count++;
     port_recovery_interrupts(state);
@@ -111,31 +106,36 @@ int sys_rwlock_rdlock(sys_rwlock_t *lock)
 int sys_rwlock_wrlock(sys_rwlock_t *lock)
 {
     sys_trace();
+    int ret = 0;
     int state = port_disable_interrupts();
-    int ret = sys_semaphore_wait1(&lock->semaphore, SYS_SEMAPHORE_MAX_WAIT_TIME);
-    lock->owner = sys_task_get_running_task();
+    ret = sys_recursive_lock_lock(&lock->lock);
     port_recovery_interrupts(state);
     return ret;
 }
 
-int sys_rwlock_unlock(sys_rwlock_t *lock)
+int sys_rwlock_rdunlock(sys_rwlock_t *lock)
 {
     sys_trace();
     int ret = 0;
     int state = port_disable_interrupts();
-    if (lock->owner == sys_task_get_running_task())
-    {
-        lock->owner = NULL;
-        ret = sys_semaphore_post(&lock->semaphore);
-    }
-    else if (lock->read_count > 0)    
+    if(lock->read_count > 0)
     {
         lock->read_count--;
         if (0 == lock->read_count)
         {
-            ret = sys_semaphore_post(&lock->semaphore);
+            ret = sys_recursive_lock_unlock(&lock->lock);
         }
     }
+    port_recovery_interrupts(state);
+    return ret;
+}
+
+int sys_rwlock_wrunlock(sys_rwlock_t *lock)
+{
+    sys_trace();
+    int ret = 0;
+    int state = port_disable_interrupts();
+    ret = sys_recursive_lock_unlock(&lock->lock);
     port_recovery_interrupts(state);
     return ret;
 }

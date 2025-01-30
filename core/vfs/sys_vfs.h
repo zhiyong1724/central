@@ -10,7 +10,7 @@
 extern "C"
 {
 #endif
-#define VFS_MAX_FS_NAME_LEN 16
+#define VFS_MAX_FS_NAME_LEN 32
 
 enum vfs_mode_t
 {
@@ -96,12 +96,11 @@ struct vfs_file_t
     void *obj;
     int flags;
     struct vfs_super_block_t *super_block;
-    sys_mutex_t lock;
 };
 
 struct vfs_fs_operations_t
 {
-    int (*mount)(struct vfs_super_block_t *super_block, const char *path, const char *device);
+    int (*mount)(struct vfs_super_block_t *super_block, const char *device);
     int (*unmount)(struct vfs_super_block_t *super_block);
     int (*statfs)(struct vfs_super_block_t *super_block, const char *path, struct vfs_statfs_t *statfs);
 };
@@ -127,10 +126,11 @@ struct vfs_file_operations_t
     int (*close)(struct vfs_file_t *file);
     int (*read)(struct vfs_file_t *file, void *buff, int count);
     int (*write)(struct vfs_file_t *file, const void *buff, int count);
-    int (*lseek)(struct vfs_file_t *file, int64_t offset, int whence);
+    int64_t (*lseek)(struct vfs_file_t *file, int64_t offset, int whence);
     int64_t (*ftell)(struct vfs_file_t *file);
     int (*syncfs)(struct vfs_file_t *file);
     int (*ftruncate)(struct vfs_file_t *file, int64_t length);
+    int (*ioctl)(struct vfs_file_t *file, int cmd, int64_t arg);
 };
 
 struct vfs_node_t
@@ -152,11 +152,12 @@ struct vfs_super_block_t
     //内部使用
     struct vfs_fs_t *fs;
     int ref_count;
+    sys_mutex_t lock;
 };
 
 struct vfs_fs_t
 {
-    sys_single_list_node_t l;
+    sys_list_node_t l;
     char name[VFS_MAX_FS_NAME_LEN];
     void (*init_super_block)(struct vfs_super_block_t *super_block, const char *device);
     void (*release)(struct vfs_super_block_t *super_block);
@@ -178,6 +179,12 @@ struct vfs_dentry_t
 * return：sys_error_t
 *********************************************************************************************************************/
 int sys_registerfs(struct vfs_fs_t *fs);
+/*********************************************************************************************************************
+* 移除文件系统
+* fs：文件系统接口对象
+* return：sys_error_t
+*********************************************************************************************************************/
+int sys_unregisterfs(struct vfs_fs_t *fs);
 /*********************************************************************************************************************
 * 挂载文件系统
 * path：挂载路径
@@ -327,6 +334,14 @@ int sys_rewinddir(int fd);
 * return：sys_error_t
 *********************************************************************************************************************/
 int sys_statfs(const char *path, struct vfs_statfs_t *statfs);
+/*********************************************************************************************************************
+* IO口控制
+* fd：文件句柄
+* cmd：命令
+* arg：参数
+* return：sys_error_t
+*********************************************************************************************************************/
+int sys_iostl(int fd,  int cmd, int64_t arg);
 #ifdef __cplusplus
 }
 #endif

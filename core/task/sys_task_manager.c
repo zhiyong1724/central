@@ -2,6 +2,7 @@
 #include "sys_mem.h"
 #include "sys_string.h"
 #include "sys_error.h"
+#include "sys_vfs.h"
 #define SYS_TASK_MAX_SIZE (int)(((unsigned int)~0) >> 1)
 static int check_stack(sys_task_manager_t *task_manager)
 {

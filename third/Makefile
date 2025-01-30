@@ -6,4 +6,5 @@ SRCS +=
 
 include $(CURRENT_DIR)/letter_shell/src/Makefile \
 	$(CURRENT_DIR)/littlefs/Makefile \
-	$(CURRENT_DIR)/utilities/Makefile
+	$(CURRENT_DIR)/utilities/Makefile \
+	$(CURRENT_DIR)/fatfs/source/Makefile
