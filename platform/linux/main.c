@@ -17,7 +17,6 @@
 #include "sys_vfs.h"
 #include "lfs_adapter.h"
 #include "lfs.h"
-#include "lvglio.h"
 #include "ram_block.h"
 #include "ram_block1.h"
 #include "fatfs_adapter.h"

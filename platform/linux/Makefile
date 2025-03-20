@@ -18,12 +18,11 @@ INCLUDES := -I. \
 
 LIBS_DIR := -L.
 
-LIBS := -lpthread -lrt -lSDL2 -llvgl
+LIBS := -lpthread -lrt
 
 CFLAGS := -Wall -Werror -g -Wl,-Map=$(MAP_FILE)
 
-SRCS := lvglio.c \
-	main.c \
+SRCS := main.c \
 	sys_port.c \
 	ram_block.c \
 	ram_block1.c

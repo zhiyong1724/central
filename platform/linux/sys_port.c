@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <pthread.h>
 #include "sys_external_cfg.h"
-#include "lvgl.h"
 #include <unistd.h>
 char _heap[SYS_HEAP_SIZE];
 typedef struct thread_t
@@ -90,7 +89,6 @@ static void handleTimerTick(int arg)
 {
     static uint64_t ns = 1000 * 1000;
     int state = port_disable_interrupts();
-    lv_tick_inc(ns / 1000 / 1000);
     sys_task_tick(&ns);
     struct itimerspec timerSpec;
     timerSpec.it_interval.tv_sec = 0;
