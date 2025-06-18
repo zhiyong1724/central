@@ -2,7 +2,7 @@
 #define __SYS_CFG_H__
 #include "sys_external_cfg.h"
 //版本号
-#define SYS_VERSION "1.0.0"
+#define SYS_VERSION "1.1.0"
 //空指针定义
 #ifndef NULL
 #define NULL (void *)0
@@ -65,14 +65,14 @@
 #define SYS_HEAP_ADDRESS                heap                                      //堆空间指针
 #endif
 #ifndef SYS_HEAP_SIZE
-#define SYS_HEAP_SIZE                   (1024 * 1024)                             //堆空间大小
+#define SYS_HEAP_SIZE                   (64 * 1024 * 1024)                        //堆空间大小
 #endif
 #ifndef SYS_BUDDY_PAGE_SIZE
 #define SYS_BUDDY_PAGE_SIZE             4096                                      //伙伴算法页面大小
 #endif
-//调度器相关
-#ifndef SYS_MAX_SCHEDULER_COUNT
-#define SYS_MAX_SCHEDULER_COUNT 3                                                 //最大调度器数量
+//调度相关
+#ifndef SYS_FIFOSCHED_MIN_SWITCH_INTERVAL_NS
+#define SYS_FIFOSCHED_MIN_SWITCH_INTERVAL_NS            (1 * 1000 * 1000)        //FIFO调度器最小切换间隔ns
 #endif
 
 #ifndef SYS_RTSCHED_MIN_SWITCH_INTERVAL_NS
@@ -89,19 +89,15 @@
 
 //任务相关
 #ifndef SYS_TASK_MAX_NAME_LEN
-#define SYS_TASK_MAX_NAME_LEN                        32                 //最大任务名称长度
+#define SYS_TASK_MAX_NAME_LEN                        256                //最大任务名称长度
 #endif
 
 #ifndef SYS_TASK_STACK_GROWTH
 #define SYS_TASK_STACK_GROWTH                        1                  //堆栈生长方向，1表示往下生长，0表示往上生长
 #endif
 
-#ifndef SYS_TASK_STACK_MAGIC
-#define SYS_TASK_STACK_MAGIC                         0xaa5555aa         //用户堆栈魔术数
-#endif
-
 #ifndef SYS_DEFAULT_TASK_STACK_SIZE
-#define SYS_DEFAULT_TASK_STACK_SIZE                  4096               //堆栈大小
+#define SYS_DEFAULT_TASK_STACK_SIZE                  4096 * 1024               //堆栈大小
 #endif
 
 #ifndef SYS_DEFAULT_TASK_PRIORITY
@@ -111,19 +107,49 @@
 #ifndef SYS_DEFAULT_RTTASK_PRIORITY
 #define SYS_DEFAULT_RTTASK_PRIORITY                  32               //默认实时任务优先级
 #endif
-//信号量相关
-#ifndef SYS_MAX_SEMAPHORE_COUNT
-#define SYS_MAX_SEMAPHORE_COUNT                      1024              //最大信号个数
-#endif
-//队列相关
-#ifndef SYS_MAX_QUEUE_LENGTH
-#define SYS_MAX_QUEUE_LENGTH                         1024              //最大队列长度
-#endif
 //虚拟文件系统相关
 #ifndef VFS_MAX_FILE_NAME_LEN
 #define VFS_MAX_FILE_NAME_LEN                       256                //最大文件名长度
 #endif
 #ifndef VFS_MAX_FILE_PATH_LEN
 #define VFS_MAX_FILE_PATH_LEN                       1024               //最大文件名长度
+#endif
+//原子变量相关
+#ifndef sys_arch_atomic_store
+#define sys_arch_atomic_store(atomic, va) atomic_store((atomic_int *)atomic, va)
+#endif
+#ifndef sys_arch_atomic_load
+#define sys_arch_atomic_load(atomic) atomic_load((atomic_int *)atomic)
+#endif
+#ifndef sys_arch_atomic_exchange
+#define sys_arch_atomic_exchange(atomic, desired) atomic_exchange((atomic_int *)atomic, desired)
+#endif
+#ifndef sys_arch_atomic_compare_exchange
+#define sys_arch_atomic_compare_exchange(atomic, expected, desired) atomic_compare_exchange_strong((atomic_int *)atomic, expected, desired)
+#endif
+#ifndef sys_arch_atomic_fetch_add
+#define sys_arch_atomic_fetch_add(atomic, va) atomic_fetch_add((atomic_int *)atomic, va)
+#endif
+#ifndef sys_arch_atomic_fetch_and
+#define sys_arch_atomic_fetch_and(atomic, va) atomic_fetch_and((atomic_int *)atomic, va)
+#endif
+#ifndef sys_arch_atomic_fetch_or
+#define sys_arch_atomic_fetch_or(atomic, va) atomic_fetch_or((atomic_int *)atomic, va)
+#endif
+#ifndef sys_arch_atomic_fetch_xor
+#define sys_arch_atomic_fetch_xor(atomic, va) atomic_fetch_xor((atomic_int *)atomic, va)
+#endif
+//CPU相关
+#ifndef SYS_CPU_MAX_NAME_LEN
+#define SYS_CPU_MAX_NAME_LEN                        256                 //最大cpu名称长度
+#endif
+#ifndef sys_get_cpu
+#define sys_get_cpu get_cpu
+#endif
+#ifndef sys_local_irq_save
+#define sys_local_irq_save local_irq_save
+#endif
+#ifndef sys_local_irq_restore
+#define sys_local_irq_restore local_irq_restore
 #endif
 #endif

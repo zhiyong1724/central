@@ -258,6 +258,7 @@ static int _lfs_stat(struct vfs_super_block_t *super_block, const char *path, st
         ret = parse_result(ret);
         return ret;
     }
+    memset(stat, 0, sizeof(struct vfs_stat_t));
     stat->st_mode = lfs_mode_to_vfs_mode(info.type);
     stat->st_size = info.size;
     return ret;

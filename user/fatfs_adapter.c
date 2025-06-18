@@ -260,6 +260,7 @@ static int fatfs_stat(struct vfs_super_block_t *super_block, const char *path, s
         ret = parse_result(ret);
         return ret;
     }
+    memset(stat, 0, sizeof(struct vfs_stat_t));
     stat->st_mode = fatfs_mode_to_vfs_mode(info.fattrib);
     stat->st_size = info.fsize;
     return ret;

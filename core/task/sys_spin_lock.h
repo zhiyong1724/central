@@ -1,63 +1,55 @@
-#ifndef __SYS_MSG_QUEUE_H__
-#define __SYS_MSG_QUEUE_H__
-#include "sys_semaphore.h"
+#ifndef __SYS_SPIN_LOCK_H__
+#define __SYS_SPIN_LOCK_H__
+#include "sys_atomic.h"
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-typedef struct sys_msg_queue_t
+typedef struct sys_spin_lock_t
 {
-    int message_size;
-    int message_count;
-    int length;
-    uint8_t *buffer;
-    int write_index;
-    int read_index;
-    sys_semaphore_t semaphore;
-    sys_spin_lock_t lock;
-} sys_msg_queue_t;
-#define SYS_MESSAGE_MAX_WAIT_TIME SYS_SEMAPHORE_MAX_WAIT_TIME
+    sys_atomic_t locked;
+} sys_spin_lock_t;
 /*********************************************************************************************************************
-* 创建队列
-* queue：队列对象
-* queue_length：队列长度，能容纳多少个消息
-* message_size：消息大小
-* return：0：调用成功
+* 静态初始化自旋锁
+* return：自旋锁对象
 *********************************************************************************************************************/
-int sys_msg_queue_create(sys_msg_queue_t *queue, int queue_length, int message_size);
+#define SYS_SPIN_LOCK_INIT() \
+{ \
+.locked.value = 0, \
+}
 /*********************************************************************************************************************
-* 删除一个队列，如果有任务正在阻塞，会删除失败
-* queue：队列对象
-* return：0：调用成功
+* 静态定义自旋锁
+* lock：自旋锁对象
 *********************************************************************************************************************/
-int sys_msg_queue_destory(sys_msg_queue_t *queue);
+#define SYS_SPIN_LOCK_DEFINE(lock) \
+sys_spin_lock_t lock = SYS_SPIN_LOCK_INIT()
 /*********************************************************************************************************************
-* 发送消息
-* queue：队列对象
-* message：消息
-* return：0：调用成功
+* 初始化自旋锁
+* lock：自旋锁对象
 *********************************************************************************************************************/
-int sys_msg_queue_send(sys_msg_queue_t *queue, void *message);
+void sys_spin_lock_init(sys_spin_lock_t *lock);
 /*********************************************************************************************************************
-* 接收消息
-* queue：队列对象
-* message：消息
-* wait：等待时间，0表示马上返回，SYS_MESSAGE_MAX_WAIT_TIME表示永久等待
-* return：0：正常返回，1：超时返回；<0：错误返回
+* 获得锁
+* lock：自旋锁对象
 *********************************************************************************************************************/
-int sys_msg_queue_receive(sys_msg_queue_t *queue, void *message, uint64_t wait);
+void sys_spin_lock_lock(sys_spin_lock_t *lock);
 /*********************************************************************************************************************
-* 获取消息数量
-* queue：sys_msg_queue_t对象
-* return：消息数量
+* 释放锁
+* lock：自旋锁对象
 *********************************************************************************************************************/
-int sys_msg_queue_get_message_count(sys_msg_queue_t *queue);
+void sys_spin_lock_unlock(sys_spin_lock_t *lock);
 /*********************************************************************************************************************
-* 获取队列长度
-* queue：sys_msg_queue_t对象
-* return：队列长度
+* 获得锁并关闭和保存本地中断，该函数不能在中断上下文中使用
+* lock：自旋锁对象
+* return：中断状态
 *********************************************************************************************************************/
-int sys_msg_queue_get_queue_length(sys_msg_queue_t *queue);
+int sys_spin_lock_lock_and_irq_save(sys_spin_lock_t *lock);
+/*********************************************************************************************************************
+* 释放锁并恢复本地中断，该函数不能在中断上下文中使用
+* lock：自旋锁对象
+* state：中断状态
+*********************************************************************************************************************/
+void sys_spin_lock_unlock_and_irq_restore(sys_spin_lock_t *lock, int state);
 #ifdef __cplusplus
 }
 #endif

@@ -88,7 +88,7 @@ static int expand_table(sys_id_manager_t *id_manager)
 	return 0;
 }
 
-static int lookup_table(unsigned char *table, int id, int offset, int level)
+static int search_table(unsigned char *table, int id, int offset, int level)
 {
 	sys_trace();
 	int va = g_bitmap_index[table[offset + id]];
@@ -102,7 +102,7 @@ static int lookup_table(unsigned char *table, int id, int offset, int level)
 		}
 		else
 		{
-			return lookup_table(table, id, (offset << 3) + 1, level);
+			return search_table(table, id, (offset << 3) + 1, level);
 		}
 	}
 	return -1;
@@ -111,7 +111,7 @@ static int lookup_table(unsigned char *table, int id, int offset, int level)
 int sys_id_alloc(sys_id_manager_t *id_manager)
 {
 	sys_trace();
-	int ret = lookup_table(id_manager->id_table, 0, 0, id_manager->table_level);
+	int ret = search_table(id_manager->id_table, 0, 0, id_manager->table_level);
 	if (ret < 0)
 	{
 		ret = expand_table(id_manager);
@@ -119,7 +119,7 @@ int sys_id_alloc(sys_id_manager_t *id_manager)
 		{
 			return ret;
 		}
-		ret = lookup_table(id_manager->id_table, 0, 0, id_manager->table_level);
+		ret = search_table(id_manager->id_table, 0, 0, id_manager->table_level);
 	}
 	if (ret >= 0)
 	{

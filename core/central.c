@@ -1,21 +1,15 @@
 #include "central.h"
 #include "sys_mem.h"
-#include "sys_task_manager.h"
-#include "sys_semaphore_manager.h"
-#include "sys_queue_manager.h"
+#include "sys_task_scheduler.h"
 #include "sys_error.h"
 #include "sys_cfg.h"
 #include "vfs.h"
 #include "devfs.h"
-static sys_task_manager_t s_task_manager;
-static sys_semaphore_manager_t s_semaphore_manager;
-static sys_queue_manager_t s_queue_manager;
+static sys_task_scheduler_t s_task_scheduler;
 static struct vfs_t s_vfs;
 static struct devfs_t s_devfs;
 long sys_mem_init(void *start_address, long size);
-int sys_task_init(sys_task_manager_t *task_manager);
-int sys_semaphore_init(sys_semaphore_manager_t *semaphore_manager, sys_task_manager_t *task_manager);
-int sys_msg_queue_init(sys_queue_manager_t *queue_manager, sys_task_manager_t *task_manager);
+int sys_task_init(sys_task_scheduler_t *scheduler);
 int sys_vfs_init(struct vfs_t *vfs);
 int sys_devfs_init(struct devfs_t *devfs);
 void register_devfs();
@@ -28,22 +22,10 @@ int sys_init()
         sys_error("Initialize mem manager fail.");
         return SYS_ERROR_NOMEM;
     }
-    int ret = sys_task_init(&s_task_manager);
+    int ret = sys_task_init(&s_task_scheduler);
     if (ret < 0)
     {
         sys_error("Initialize task manager fail.");
-        return ret;
-    }
-    ret = sys_semaphore_init(&s_semaphore_manager, &s_task_manager);
-    if (ret < 0)
-    {
-        sys_error("Initialize semaphore manager fail.");
-        return ret;
-    }
-    ret = sys_msg_queue_init(&s_queue_manager, &s_task_manager);
-    if (ret < 0)
-    {
-        sys_error("Initialize queue manager fail.");
         return ret;
     }
     ret = sys_vfs_init(&s_vfs);

@@ -329,7 +329,7 @@ int vfs_mount(struct vfs_t *vfs, const char *path, const char *device)
     super_block->fs = fs;
     sys_strcpy(super_block->device, device, VFS_MAX_FILE_PATH_LEN);
     super_block->ref_count = 1;
-    sys_mutex_create(&super_block->lock);
+    sys_mutex_init(&super_block->lock);
     if (dentry->super_block != NULL)
     {
         dentry->super_block->ref_count--;
@@ -380,15 +380,18 @@ int vfs_umount(struct vfs_t *vfs, const char *path)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     if (NULL == dentry->super_block->fs_operations.unmount)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     ret = dentry->super_block->fs_operations.unmount(dentry->super_block);
+    sys_mutex_unlock(&dentry->super_block->lock);
     if (ret < 0)
     {
         goto exception;
@@ -415,7 +418,6 @@ int vfs_umount(struct vfs_t *vfs, const char *path)
     }
     goto finally;
 exception:
-sys_mutex_unlock(&dentry->super_block->lock);
 finally:
     return ret;
 }
@@ -443,12 +445,14 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     fd = sys_id_alloc(&vfs->id_manager);
     if (fd < 0)
     {
         ret = fd;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     file = (struct vfs_file_t *)sys_malloc(sizeof(struct vfs_file_t));
@@ -456,6 +460,7 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
     {
         sys_error("Out of memory.");
         ret = SYS_ERROR_NOMEM;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     int size = sys_vector_size(&vfs->files);
@@ -467,6 +472,7 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
         {
             sys_error("Out of memory.");
             ret = SYS_ERROR_NOMEM;
+            sys_mutex_unlock(&dentry->super_block->lock);
             goto exception;
         }
     }
@@ -476,12 +482,14 @@ int vfs_open(struct vfs_t *vfs, const char *path, int flags, int mode)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.file_operations.open(file, ppath, mode);
+    sys_mutex_unlock(&dentry->super_block->lock);
     if (ret < 0)
     {
         goto exception;
@@ -499,7 +507,6 @@ exception:
         sys_free(file);
     }
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret < 0 ? ret : fd;
 }
 
@@ -519,21 +526,21 @@ int vfs_close(struct vfs_t *vfs, int fd)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.close(file);
+    sys_mutex_unlock(&file->super_block->lock);
     if (ret < 0)
     {
         goto exception;
     }
-    sys_mutex_unlock(&file->super_block->lock);
     sys_id_free(&vfs->id_manager, fd);
     sys_free(file);
     void **pp = (void **)sys_vector_at(&vfs->files, fd);
     *pp = NULL;
     goto finally;
 exception:
-    sys_mutex_unlock(&file->super_block->lock);
 finally:
     return ret;
 }
@@ -560,13 +567,14 @@ int vfs_read(struct vfs_t *vfs, int fd, void *buff, int count)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.read(file, buff, count);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -592,13 +600,14 @@ int vfs_write(struct vfs_t *vfs, int fd, const void *buff, int count)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.write(file, buff, count);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -618,13 +627,14 @@ int64_t vfs_lseek(struct vfs_t *vfs, int fd, int64_t offset, int whence)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.lseek(file, offset, whence);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -644,13 +654,14 @@ int64_t vfs_ftell(struct vfs_t *vfs, int fd)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.ftell(file);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -676,13 +687,14 @@ int vfs_syncfs(struct vfs_t *vfs, int fd)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.syncfs(file);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -708,13 +720,14 @@ int vfs_ftruncate(struct vfs_t *vfs, int fd, int64_t length)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.ftruncate(file, length);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -739,22 +752,24 @@ int vfs_stat(struct vfs_t *vfs, const char *path, struct vfs_stat_t *stat)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     if (NULL == dentry->super_block->node.node_operations.stat)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.node_operations.stat(dentry->super_block, ppath, stat);
+    sys_mutex_unlock(&dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret;
 }
 
@@ -798,12 +813,14 @@ int vfs_link(struct vfs_t *vfs, const char *oldpath, const char *newpath)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&old_dentry->super_block->lock);
         goto exception;
     }
     if (NULL == old_dentry->super_block->node.node_operations.link)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&old_dentry->super_block->lock);
         goto exception;
     }
     const char *poldpath = "/";
@@ -813,10 +830,10 @@ int vfs_link(struct vfs_t *vfs, const char *oldpath, const char *newpath)
     if (newpath[new_position] != '\0')
         pnewpath = &newpath[new_position];
     ret = old_dentry->super_block->node.node_operations.link(old_dentry->super_block, poldpath, pnewpath);
+    sys_mutex_unlock(&old_dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&old_dentry->super_block->lock);
     return ret;
 }
 
@@ -841,22 +858,24 @@ int vfs_unlink(struct vfs_t *vfs, const char *path)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     if (NULL == dentry->super_block->node.node_operations.unlink)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.node_operations.unlink(dentry->super_block, ppath);
+    sys_mutex_unlock(&dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret;
 }
 
@@ -881,16 +900,17 @@ int vfs_chmod(struct vfs_t *vfs, const char *path, int mode)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.node_operations.chmod(dentry->super_block, ppath, mode);
+    sys_mutex_unlock(&dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret;
 }
 
@@ -934,12 +954,14 @@ int vfs_rename(struct vfs_t *vfs, const char *oldpath, const char *newpath)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&old_dentry->super_block->lock);
         goto exception;
     }
     if (NULL == old_dentry->super_block->node.node_operations.rename)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&old_dentry->super_block->lock);
         goto exception;
     }
     const char *poldpath = "/";
@@ -949,10 +971,10 @@ int vfs_rename(struct vfs_t *vfs, const char *oldpath, const char *newpath)
     if (newpath[new_position] != '\0')
         pnewpath = &newpath[new_position];
     ret = old_dentry->super_block->node.node_operations.rename(old_dentry->super_block, poldpath, pnewpath);
+    sys_mutex_unlock(&old_dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&old_dentry->super_block->lock);
     return ret;
 }
 
@@ -977,22 +999,24 @@ int vfs_mkdir(struct vfs_t *vfs, const char *path, int mode)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     if (NULL == dentry->super_block->node.node_operations.mkdir)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.node_operations.mkdir(dentry->super_block, ppath, mode);
+    sys_mutex_unlock(&dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret;
 }
 
@@ -1017,22 +1041,24 @@ int vfs_rmdir(struct vfs_t *vfs, const char *path)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     if (NULL == dentry->super_block->node.node_operations.rmdir)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.node_operations.rmdir(dentry->super_block, ppath);
+    sys_mutex_unlock(&dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret;
 }
 
@@ -1059,12 +1085,14 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
     {
         sys_info("Permission denied.");
         ret = SYS_ERROR_ACCES;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     fd = sys_id_alloc(&vfs->id_manager);
     if (fd < 0)
     {
         ret = fd;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     file = (struct vfs_file_t *)sys_malloc(sizeof(struct vfs_file_t));
@@ -1072,6 +1100,7 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
     {
         sys_error("Out of memory.");
         ret = SYS_ERROR_NOMEM;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     int size = sys_vector_size(&vfs->files);
@@ -1083,6 +1112,7 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
         {
             sys_error("Out of memory.");
             ret = SYS_ERROR_NOMEM;
+            sys_mutex_unlock(&dentry->super_block->lock);
             goto exception;
         }
     }
@@ -1092,12 +1122,14 @@ int vfs_opendir(struct vfs_t *vfs, const char *path)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->node.node_operations.opendir(file, ppath);
+    sys_mutex_unlock(&dentry->super_block->lock);
     if (ret < 0)
     {
         goto exception;
@@ -1115,7 +1147,6 @@ exception:
         sys_free(file);
     }
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret < 0 ? ret : fd;
 }
 
@@ -1135,21 +1166,21 @@ int vfs_closedir(struct vfs_t *vfs, int fd)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.node_operations.closedir(file);
+    sys_mutex_unlock(&file->super_block->lock);
     if (ret < 0)
     {
         goto exception;
     }
-    sys_mutex_unlock(&file->super_block->lock);
     sys_id_free(&vfs->id_manager, fd);
     sys_free(file);
     void **pp = (void **)sys_vector_at(&vfs->files, fd);
     *pp = NULL;
     goto finally;
 exception:
-    sys_mutex_unlock(&file->super_block->lock);
 finally:
     return ret;
 }
@@ -1176,13 +1207,14 @@ int vfs_readdir(struct vfs_t *vfs, int fd, struct vfs_dirent_t *dirent)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.node_operations.readdir(file, dirent);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -1202,13 +1234,14 @@ int vfs_rewinddir(struct vfs_t *vfs, int fd)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.node_operations.rewinddir(file);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }
 
@@ -1233,16 +1266,17 @@ int vfs_statfs(struct vfs_t *vfs, const char *path, struct vfs_statfs_t *statfs)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&dentry->super_block->lock);
         goto exception;
     }
     const char *ppath = "/";
     if (path[position] != '\0')
         ppath = &path[position];
     ret = dentry->super_block->fs_operations.statfs(dentry->super_block, ppath, statfs);
+    sys_mutex_unlock(&dentry->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&dentry->super_block->lock);
     return ret;
 }
 
@@ -1262,12 +1296,13 @@ int vfs_iostl(struct vfs_t *vfs, int fd,  int cmd, int64_t arg)
     {
         sys_info("Invalid argument.");
         ret = SYS_ERROR_INVAL;
+        sys_mutex_unlock(&file->super_block->lock);
         goto exception;
     }
     ret = file->super_block->node.file_operations.ioctl(file, cmd, arg);
+    sys_mutex_unlock(&file->super_block->lock);
     goto finally;
 exception:
 finally:
-    sys_mutex_unlock(&file->super_block->lock);
     return ret;
 }

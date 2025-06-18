@@ -5,7 +5,7 @@ int sys_vfs_init(struct vfs_t *vfs)
 {
     sys_trace();
     s_vfs = vfs;
-    sys_rwlock_create(&s_vfs->lock);
+    sys_rwlock_init(&s_vfs->lock);
     return vfs_init(s_vfs);
 }
 
@@ -15,7 +15,6 @@ void sys_vfs_free()
     sys_rwlock_wrlock(&s_vfs->lock);
     vfs_free(s_vfs);
     sys_rwlock_wrunlock(&s_vfs->lock);
-    sys_rwlock_destory(&s_vfs->lock);
     s_vfs = NULL;
 }
 

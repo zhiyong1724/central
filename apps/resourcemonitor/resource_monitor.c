@@ -6,17 +6,23 @@ static int s_running = 0;
 static sys_tid_t s_tid = 0;
 static void *monitor_task(void *arg)
 {
+    int cpus = sys_task_get_cpu_thread_count();
     while (s_running)
     {
         printf("\033[2J\033[0;0H");
-        printf("cpu used: %d%%    mem used: %ld%%    task count: %d\n", sys_task_get_cpu_usage(), (sys_total_mem() - sys_free_mem()) * 100 / sys_total_mem(), sys_task_get_task_count());
+        for (int i = 0; i < cpus; i++)
+        {
+            printf("cpu%d: %d%%\n", i, sys_task_get_cpu_usage(i));
+        }
+        
+        printf("mem used: %ld%%    task count: %d\n", (sys_total_mem() - sys_free_mem()) * 100 / sys_total_mem(), sys_task_get_task_count());
         sys_task_ptr ptr;
         sys_task_info_t task_info;
         int result = sys_task_find_first(&ptr, &task_info);
         while (0 == result)
         {
-            printf("tid: %d  ptid: %d  stack: %p  stack size: %d  state: %d  type: %d  priority: %d  name: %s\n",
-                   task_info.tid, task_info.ptid, task_info.stack, task_info.stack_size, task_info.task_state, task_info.task_type, task_info.priority, task_info.name);
+            printf("tid: %d  ptid: %d  cpu: %d  stack size: %d  state: %d  type: %d  priority: %d  name: %s\n",
+                   task_info.tid, task_info.ptid, task_info.cpu, task_info.stack_size, task_info.task_state, task_info.task_type, task_info.priority, task_info.name);
             result = sys_task_find_next(&ptr, &task_info);
         }
         sys_task_sleep(1000);

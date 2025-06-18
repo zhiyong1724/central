@@ -4,7 +4,7 @@
 #include "sys_list.h"
 #include "sys_tree.h"
 #include "sys_vector.h"
-#include "sys_lock.h"
+#include "sys_mutex.h"
 #include <sys/statfs.h>
 #ifdef __cplusplus
 extern "C"

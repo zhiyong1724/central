@@ -5,6 +5,8 @@
 extern "C"
 {
 #endif
+#define sys_offsetof(type, member) ((size_t)&((type *)0)->member)
+#define sys_container_of(ptr, type, member) (ptr != NULL ? (type *)((char *)(ptr) - sys_offsetof(type, member)) : NULL)
 typedef struct sys_list_node_t
 {
 	struct sys_list_node_t *pre;

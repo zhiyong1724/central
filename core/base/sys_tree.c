@@ -378,6 +378,21 @@ sys_tree_node_t *sys_get_left_most_node(sys_tree_node_t *handle)
 	return cur_node;
 }
 
+sys_tree_node_t *sys_get_right_most_node(sys_tree_node_t *handle)
+{
+	sys_trace();
+	sys_tree_node_t *cur_node = NULL;
+	if (handle != NULL)
+	{
+		cur_node = handle;
+		while (cur_node->right != &g_leaf_node)
+		{
+			cur_node = cur_node->right;
+		}
+	}
+	return cur_node;
+}
+
 sys_tree_node_t *sys_find_node(sys_tree_node_t *handle, void *key, sys_tree_on_compare_t callback, void *arg)
 {
 	sys_trace();

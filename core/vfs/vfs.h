@@ -2,7 +2,7 @@
 #define __VFS_H__
 #include "sys_id_manager.h"
 #include "sys_vfs.h"
-#include "sys_lock.h"
+#include "sys_rwlock.h"
 #ifdef __cplusplus
 extern "C"
 {

@@ -1,77 +1,57 @@
-#ifndef __SYS_SEMAPHORE_H__
-#define __SYS_SEMAPHORE_H__
-#include "sys_tree.h"
-#include "sys_list.h"
-#include "sys_spin_lock.h"
+#ifndef __SYS_RWLOCK_H__
+#define __SYS_RWLOCK_H__
+#include "sys_recursive_mutex.h"
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-#define SYS_SEMAPHORE_MAX_WAIT_TIME ((uint64_t)-1 / 1000 / 1000)
-typedef struct sys_semaphore_t
+typedef struct sys_rwlock_t
 {
-    int count;
-    int max_count;
-    sys_list_node_t *wait_fifo_task_list;
-    sys_tree_node_t *wait_rt_task_list;
-    sys_list_node_t *wait_task_list;
+    sys_recursive_mutex_t mutex;
+    int read_count;
     sys_spin_lock_t lock;
-} sys_semaphore_t;
+} sys_rwlock_t;
 /*********************************************************************************************************************
-* 静态初始化信号量
-* count：初始值
-* max_count：最大信号个数
-* return：信号量对象
+* 静态初始化读写锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-#define SYS_SEMAPHORE_INIT(_count, _max_count) \
+#define SYS_RWLOCK_INIT() \
 { \
-.count = _count, \
-.max_count = _max_count, \
-.wait_fifo_task_list = NULL, \
-.wait_rt_task_list = NULL, \
-.wait_task_list = NULL, \
+.mutex = SYS_RECURSIVE_MUTEX_INIT(), \
+.read_count = 0, \
 .lock = SYS_SPIN_LOCK_INIT() \
 }
 /*********************************************************************************************************************
-* 静态定义信号量
-* semaphore：信号量对象
-* count：初始值
-* max_count：最大信号个数
+* 静态定义读写锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-#define SYS_SEMAPHORE_DEFINE(semaphore, count, max_count) \
-sys_semaphore_t semaphore = SYS_SEMAPHORE_INIT(count, max_count)
+#define SYS_RWLOCK_DEFINE(lock) \
+sys_rwlock_t lock = SYS_RWLOCK_INIT()
 /*********************************************************************************************************************
-* 初始化信号量
-* semaphore：信号量对象
-* count：初始值
-* max_count：最大信号个数
+* 初始化读写锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-void sys_semaphore_init(sys_semaphore_t *semaphore, int count, int max_count);
+void sys_rwlock_init(sys_rwlock_t *lock);
 /*********************************************************************************************************************
-* 释放一个信号
-* semaphore：信号量对象
-* return：0：调用成功
+* 获得读锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-int sys_semaphore_post(sys_semaphore_t *semaphore);
+void sys_rwlock_rdlock(sys_rwlock_t *lock);
 /*********************************************************************************************************************
-* 等待信号
-* semaphore：信号量对象
-* wait：等待时间ms，0表示马上返回，SYS_SEMAPHORE_MAX_WAIT_TIME表示永久等待
-* return：0：正常返回，1：超时返回；<0：错误返回
+* 获得写锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-int sys_semaphore_wait(sys_semaphore_t *semaphore, uint64_t wait);
+void sys_rwlock_wrlock(sys_rwlock_t *lock);
 /*********************************************************************************************************************
-* 获取信号数量
-* semaphore：信号量对象
-* return：信号数量
+* 释放读锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-int sys_semaphore_get_semaphore_count(sys_semaphore_t *semaphore);
+void sys_rwlock_rdunlock(sys_rwlock_t *lock);
 /*********************************************************************************************************************
-* 获取最大信号数量
-* semaphore：信号量对象
-* return：最大信号数量
+* 释放写锁
+* lock：读写锁对象
 *********************************************************************************************************************/
-int sys_semaphore_get_max_semaphore_count(sys_semaphore_t *semaphore);
+void sys_rwlock_wrunlock(sys_rwlock_t *lock);
 #ifdef __cplusplus
 }
 #endif

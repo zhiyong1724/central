@@ -35,14 +35,13 @@ static void *shell_task(void *arg)
     while (1)
     {
         shellTask(arg);
-        sys_task_sleep(10);
+        sys_task_sleep(50);
     }
     return NULL;
 }
 
 int shell_io_init()
 {
-
     s_shell.read = shell_read;
     s_shell.write = shell_write;
     shellInit(&s_shell, s_shell_buffer, 1024);

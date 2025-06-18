@@ -1,126 +1,87 @@
 #include "sys_msg_queue.h"
-#include "sys_queue_manager.h"
 #include "sys_mem.h"
 #include "sys_string.h"
-int port_yield(stack_size_t **stack_top);
-int port_disable_interrupts();
-int port_recovery_interrupts(int state);
-sys_task_t *sys_task_get_running_task();
-static sys_queue_manager_t *s_queue_manager;
-int sys_msg_queue_init(sys_queue_manager_t *queue_manager, sys_task_manager_t *task_manager)
-{
-    sys_trace();
-    s_queue_manager = queue_manager;
-    return sys_queue_manager_init(s_queue_manager, task_manager);
-}
-
+#include "sys_error.h"
 int sys_msg_queue_create(sys_msg_queue_t *queue, int queue_length, int message_size)
 {
     sys_trace();
-    if (0 == queue_length)
+    queue->message_size = message_size;
+    queue->message_count = 0;
+    queue->length = queue_length;
+    queue->buffer = (uint8_t *)sys_malloc(queue_length * message_size);
+    if (NULL == queue->buffer)
     {
-        queue_length = SYS_MAX_QUEUE_LENGTH;
+        return SYS_ERROR_NOMEM;
     }
-    return sys_queue_manager_queue_init(s_queue_manager, queue, queue_length, message_size);
+    queue->write_index = 0;
+    queue->read_index = 0;
+    sys_semaphore_init(&queue->semaphore, 0, queue_length);
+    sys_spin_lock_init(&queue->lock);
+    return 0;
 }
 
 int sys_msg_queue_destory(sys_msg_queue_t *queue)
 {
     sys_trace();
     int ret = -1;
-    int state = port_disable_interrupts();
-    if (NULL == queue->wait_task_list && NULL == queue->wait_task_list)
+    int state = sys_spin_lock_lock_and_irq_save(&queue->lock);
+    if (NULL == queue->semaphore.wait_fifo_task_list && NULL == queue->semaphore.wait_rt_task_list && NULL == queue->semaphore.wait_task_list)
     {
-        sys_queue_manager_queue_uninit(s_queue_manager, queue);
+        sys_free(queue->buffer);
         ret = 0;
     }
-    port_recovery_interrupts(state);
+    sys_spin_lock_unlock_and_irq_restore(&queue->lock, state);
     return ret;
-}
-
-void sys_msg_queue_reset(sys_msg_queue_t *queue)
-{
-    sys_trace();
-    int state = port_disable_interrupts();
-    sys_queue_manager_reset(s_queue_manager, queue);
-    port_recovery_interrupts(state);
 }
 
 int sys_msg_queue_send(sys_msg_queue_t *queue, void *message)
 {
     sys_trace();
     int ret = -1;
-    sys_task_t *task = NULL;
-    int state = port_disable_interrupts();
-    ret = sys_queue_manager_send(s_queue_manager, queue, message, &task);
-    if (0 == ret)
+    int state = sys_spin_lock_lock_and_irq_save(&queue->lock);
+    if (queue->message_count < queue->length)
     {
-        if (task != NULL)
+        sys_memcpy(&queue->buffer[queue->write_index * queue->message_size], message, queue->message_size);
+        queue->write_index++;
+        if (queue->write_index >= queue->length)
         {
-            port_yield(&task->stack_top);
+            queue->write_index = 0;
         }
+        queue->message_count++;
+        sys_semaphore_post(&queue->semaphore);
+        ret = 0;
     }
-    port_recovery_interrupts(state);
-    return ret;
-}
-
-int sys_msg_queue_send_to_front(sys_msg_queue_t *queue, void *message)
-{
-    sys_trace();
-    int ret = -1;
-    sys_task_t *task = NULL;
-    int state = port_disable_interrupts();
-    ret = sys_queue_manager_send_to_front(s_queue_manager, queue, message, &task);
-    if (0 == ret)
-    {
-        if (task != NULL)
-        {
-            port_yield(&task->stack_top);
-        }
-    }
-    port_recovery_interrupts(state);
+    sys_spin_lock_unlock_and_irq_restore(&queue->lock, state);
     return ret;
 }
 
 int sys_msg_queue_receive(sys_msg_queue_t *queue, void *message, uint64_t wait)
 {
     sys_trace();
-    int ret = -1;
-    sys_task_t *task = NULL;
-    int state = port_disable_interrupts();
-    ret = sys_queue_manager_receive(s_queue_manager, message, &task, queue, wait);
+    int ret = sys_semaphore_wait(&queue->semaphore, wait);
+    int state = sys_spin_lock_lock_and_irq_save(&queue->lock);
     if (0 == ret)
     {
-        if (task != NULL)
+        sys_memcpy(message, &queue->buffer[queue->read_index * queue->message_size], queue->message_size);
+        queue->read_index++;
+        if (queue->read_index >= queue->length)
         {
-            port_yield(&task->stack_top);
-            port_recovery_interrupts(state);
-            state = port_disable_interrupts();
-            task = sys_task_get_running_task();
-            if (task->arg != NULL)
-            {
-                task->arg = NULL;
-                ret = sys_msg_queue_receive(queue, message, wait);
-            }
-            else
-            {
-                sys_queue_manager_remove_task(s_queue_manager, queue, task);
-                ret = -1;
-            }
+            queue->read_index = 0;
         }
+        queue->message_count--;
     }
-    port_recovery_interrupts(state);
+    sys_spin_lock_unlock_and_irq_restore(&queue->lock, state);
     return ret;
 }
 
 int sys_msg_queue_get_message_count(sys_msg_queue_t *queue)
 {
     sys_trace();
-    return sys_queue_manager_get_message_count(s_queue_manager, queue);
+    return queue->message_count;
 }
 
 int sys_msg_queue_get_queue_length(sys_msg_queue_t *queue)
 {
     sys_trace();
-    return sys_queue_manager_get_queue_length(s_queue_manager, queue);
+    return queue->length;
 }

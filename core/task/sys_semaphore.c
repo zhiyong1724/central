@@ -1,112 +1,150 @@
 #include "sys_semaphore.h"
-#include "sys_semaphore_manager.h"
-int port_yield(stack_size_t **stack_top);
-int port_disable_interrupts();
-int port_recovery_interrupts(int state);
-sys_task_t *sys_task_get_running_task();
-static sys_semaphore_manager_t *s_semaphore_manager;
-int sys_semaphore_init(sys_semaphore_manager_t *semaphore_manager, sys_task_manager_t *task_manager)
+#include "sys_task_scheduler.h"
+sys_task_t *sys_task_sleep_inner(uint64_t ms, void (*wakeup_callback)(struct sys_task_control_block_t *task, void *arg), void *arg);
+int sys_task_wakeup_inner(sys_task_t *task);
+sys_task_t *sys_task_supend_inner();
+int sys_task_resume_inner(sys_task_t *task);
+void sys_semaphore_init(sys_semaphore_t *semaphore, int count, int max_count)
 {
     sys_trace();
-    s_semaphore_manager = semaphore_manager;
-    return sys_semaphore_manager_init(s_semaphore_manager, task_manager);
-}
-
-int sys_semaphore_create(sys_semaphore_t *semaphore, int count, int max_count)
-{
-    sys_trace();
-    if (0 == max_count)
-    {
-        max_count = SYS_MAX_SEMAPHORE_COUNT;
-    }
-    return sys_semaphore_manager_semaphore_init(s_semaphore_manager, semaphore, count, max_count);
-}
-
-int sys_semaphore_destory(sys_semaphore_t *semaphore)
-{
-    sys_trace();
-    int ret = -1;
-    int state = port_disable_interrupts();
-    if (NULL == semaphore->wait_rt_task_list && NULL == semaphore->wait_task_list)
-    {
-        sys_semaphore_reset(semaphore);
-        ret = 0;
-    }
-    port_recovery_interrupts(state);
-    return ret;
-}
-
-void sys_semaphore_reset(sys_semaphore_t *semaphore)
-{
-    sys_trace();
-    int state = port_disable_interrupts();
-    sys_semaphore_manager_reset(s_semaphore_manager, semaphore);
-    port_recovery_interrupts(state);
+    semaphore->count = count;
+    semaphore->max_count = max_count;
+    semaphore->wait_fifo_task_list = NULL;
+    semaphore->wait_rt_task_list = NULL;
+    semaphore->wait_task_list = NULL;
+    sys_spin_lock_init(&semaphore->lock);
 }
 
 int sys_semaphore_post(sys_semaphore_t *semaphore)
 {
     sys_trace();
-    int ret = -1;
+    int ret = 0;
+    int state = sys_spin_lock_lock_and_irq_save(&semaphore->lock);
     sys_task_t *task = NULL;
-    int state = port_disable_interrupts();
-    ret = sys_semaphore_manager_post(s_semaphore_manager, &task, semaphore);
-    if (0 == ret)
+    if (semaphore->wait_fifo_task_list != NULL)
     {
-        if (task != NULL)
+        task = sys_container_of(semaphore->wait_fifo_task_list, sys_task_t, exnode);
+        sys_remove_from_list(&semaphore->wait_fifo_task_list, &task->exnode.list_node);
+    }
+    else if (semaphore->wait_rt_task_list != NULL)
+    {
+        task = sys_container_of(sys_get_left_most_node(semaphore->wait_rt_task_list), sys_task_t, exnode);
+        sys_delete_node(&semaphore->wait_rt_task_list, &task->exnode.tree_node);
+    }
+    else if (semaphore->wait_task_list != NULL)
+    {
+        task = sys_container_of(semaphore->wait_task_list, sys_task_t, exnode);
+        sys_remove_from_list(&semaphore->wait_task_list, &task->exnode.list_node);
+    }
+    if (task != NULL)
+    {
+        task->task_control_block.wait = 0;
+        if (task->task_control_block.sleep_time < SYS_SEMAPHORE_MAX_WAIT_TIME)
         {
-            port_yield(&task->stack_top);
+            sys_task_wakeup_inner(task);
+        }
+        else
+        {
+            sys_task_resume_inner(task);
         }
     }
-    port_recovery_interrupts(state);
+    else
+    {
+        if (semaphore->count < semaphore->max_count)
+        {
+            semaphore->count++;
+        }
+        else
+        {
+            ret = -1;
+        }
+    }
+    sys_spin_lock_unlock_and_irq_restore(&semaphore->lock, state);
     return ret;
 }
 
-int sys_semaphore_wait1(sys_semaphore_t *semaphore, uint64_t wait)
+static int on_compare(void *key1, void *key2, void *arg)
 {
     sys_trace();
-    int ret = -1;
-    sys_task_t *task = NULL;
-    ret = sys_semaphore_manager_wait(s_semaphore_manager, &task, semaphore, wait);
-    if (0 == ret)
+    sys_task_t *task1 = sys_container_of(key1, sys_task_t, exnode);
+    sys_task_t *task2 = sys_container_of(key2, sys_task_t, exnode);
+    if (task1->task_control_block.real_task_control_block.rt_task_control_block.priority < task2->task_control_block.real_task_control_block.rt_task_control_block.priority)
     {
-        if (task != NULL)
-        {
-            port_yield(&task->stack_top);
-            port_recovery_interrupts(1);
-            port_disable_interrupts();
-            task = sys_task_get_running_task();
-            if (task->arg != NULL)
-            {
-                task->arg = NULL;
-            }
-            else
-            {
-                sys_semaphore_manager_remove_task(s_semaphore_manager, semaphore, task);
-                ret = -1;
-            }
-        }
+        return -1;
     }
-    return ret;
+    else
+    {
+        return 1;
+    }
+}
+
+static void wakeup_callback(sys_task_control_block_t *task_control_block, void *arg)
+{
+    sys_trace();
+    sys_semaphore_t *semaphore = (sys_semaphore_t *)arg;
+    sys_task_t *task = sys_container_of(task_control_block, sys_task_t, task_control_block);
+    int state = sys_spin_lock_lock_and_irq_save(&semaphore->lock);
+    if (SYS_TASK_TYPE_RT == task_control_block->vtask_control_block.scheduler_id)
+    {
+        sys_delete_node(&semaphore->wait_rt_task_list, &task->exnode.tree_node);
+    }
+    else
+    {
+        sys_remove_from_list(&semaphore->wait_task_list, &task->exnode.list_node);
+    }
+    sys_spin_lock_unlock_and_irq_restore(&semaphore->lock, state);
 }
 
 int sys_semaphore_wait(sys_semaphore_t *semaphore, uint64_t wait)
 {
     sys_trace();
-    int state = port_disable_interrupts();
-    int ret = sys_semaphore_wait1(semaphore, wait);
-    port_recovery_interrupts(state);
+    int ret = 0;
+    sys_task_t *task = NULL;
+    int state = sys_spin_lock_lock_and_irq_save(&semaphore->lock);
+    if (semaphore->count > 0)
+    {
+        semaphore->count--;
+    }
+    else
+    {
+        if (wait < SYS_SEMAPHORE_MAX_WAIT_TIME)
+        {
+            task = sys_task_sleep_inner(wait, wakeup_callback, semaphore);
+        }
+        else
+        {
+            task = sys_task_supend_inner();
+            task->task_control_block.sleep_time = SYS_SEMAPHORE_MAX_WAIT_TIME;
+        }
+        if (SYS_TASK_TYPE_FIFO == task->task_control_block.vtask_control_block.scheduler_id)
+        {
+            sys_insert_to_back(&semaphore->wait_fifo_task_list, &task->exnode.list_node);
+        }
+        else if (SYS_TASK_TYPE_RT == task->task_control_block.vtask_control_block.scheduler_id)
+        {
+            sys_insert_node(&semaphore->wait_rt_task_list, &task->exnode.tree_node, on_compare, NULL);
+        }
+        else
+        {
+            sys_insert_to_back(&semaphore->wait_task_list, &task->exnode.list_node);
+        }
+    }
+    sys_spin_lock_unlock_and_irq_restore(&semaphore->lock, state);
+    if (task != NULL)
+    {
+        ret = task->task_control_block.wait;
+    }
     return ret;
 }
 
 int sys_semaphore_get_semaphore_count(sys_semaphore_t *semaphore)
 {
     sys_trace();
-    return sys_semaphore_manager_get_semaphore_count(s_semaphore_manager, semaphore);
+    return semaphore->count;
 }
 
 int sys_semaphore_get_max_semaphore_count(sys_semaphore_t *semaphore)
 {
     sys_trace();
-    return sys_semaphore_manager_get_max_semaphore_count(s_semaphore_manager, semaphore);
+    return semaphore->max_count;
 }

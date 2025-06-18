@@ -129,7 +129,7 @@
  *        定义此宏为获取系统Tick，如`HAL_GetTick()`
  * @note 此宏不定义时无法使用双击tab补全命令help，无法使用shell超时锁定
  */
-#define     SHELL_GET_TICK()            sys_task_get_tick_count()
+#define     SHELL_GET_TICK()            (sys_task_get_clock() / 1000000)
 
 /**
  * @brief 使用锁
