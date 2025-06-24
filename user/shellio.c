@@ -47,9 +47,11 @@ int shell_io_init()
     shellInit(&s_shell, s_shell_buffer, 1024);
     shellSetPath(&s_shell, s_shell_path_buffer);
     sys_tid_t tid;
-    sys_task_create(&tid, shell_task, &s_shell, "shell", SYS_DEFAULT_TASK_PRIORITY, 4096 * 1024);
-    system("stty -echo");
-    system("stty -icanon");
+    sys_task_create(&tid, shell_task, &s_shell, "shell", SYS_DEFAULT_TASK_PRIORITY, 8 * 1024);
+    int result = system("stty -echo");
+    (void)result;
+    result = system("stty -icanon");
+    (void)result;
     return 0;
 }
 

@@ -125,7 +125,7 @@ static void print_fs_error(int error)
     }
 }
 
-const char *to_absolute_path(const char *path)
+static const char *to_absolute_path(const char *path)
 {
     static char s_absolute_path_a[VFS_MAX_FILE_PATH_LEN];
     static char s_absolute_path_b[VFS_MAX_FILE_PATH_LEN];
@@ -155,7 +155,7 @@ void shell_mount(long argc, char *argv[])
 {
     if (argc >= 3)
     {
-        int result = sys_mount(to_absolute_path(argv[1]), to_absolute_path(argv[2]));
+        int result = sys_mount(to_absolute_path(argv[2]), to_absolute_path(argv[1]));
         if (result < 0)
         {
             print_fs_error(result);

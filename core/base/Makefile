@@ -11,4 +11,5 @@ SRCS += sys_bitmap_index.c \
 	sys_stack.c \
 	sys_kmp.c \
 	sys_id_manager.c \
-	cregex.c
+	cregex.c \
+	sys_rand.c

@@ -97,7 +97,7 @@
 #endif
 
 #ifndef SYS_DEFAULT_TASK_STACK_SIZE
-#define SYS_DEFAULT_TASK_STACK_SIZE                  4096 * 1024               //堆栈大小
+#define SYS_DEFAULT_TASK_STACK_SIZE                  4096               //堆栈大小
 #endif
 
 #ifndef SYS_DEFAULT_TASK_PRIORITY

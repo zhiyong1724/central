@@ -1,8 +1,9 @@
 #include "sys_dt_scheduler.h"
 #include "sys_string.h"
 #include "sys_error.h"
+#include "sys_rand.h"
 #define SYS_DTSCHED_MAX_PRIORITY                     40
-#define SYS_MEAN_LOAD_CAL_CYCLE                     (1 * 1000 * 1000 * 1000l)
+#define SYS_MIN_MEAN_LOAD_CAL_CYCLE                     (1 * 1000 * 1000 * 1000l)
 static const int s_weighting_table[] = 
 {
     10,    11,    12,    13,    15,    16,    18,     19,                    //0-7
@@ -25,6 +26,7 @@ void sys_dt_scheduler_init(sys_dt_scheduler_t *dt_scheduler)
     dt_scheduler->acc_load = 0;
     dt_scheduler->mean_load = 0;
     dt_scheduler->mean_load_cal_interval = 0;
+    dt_scheduler->mean_load_cal_cycle = SYS_MIN_MEAN_LOAD_CAL_CYCLE + sys_rand() % 1000000001;
     dt_scheduler->load_leveling_flag = 0;
 }
 
@@ -61,10 +63,11 @@ sys_dt_task_control_block_t *sys_dt_scheduler_tick(sys_dt_scheduler_t *dt_schedu
     //sys_trace();
     dt_scheduler->acc_load += dt_scheduler->load * ns;
     dt_scheduler->mean_load_cal_interval += ns;
-    if (dt_scheduler->mean_load_cal_interval >= SYS_MEAN_LOAD_CAL_CYCLE)
+    if (dt_scheduler->mean_load_cal_interval >= dt_scheduler->mean_load_cal_cycle)
     {
         dt_scheduler->mean_load = dt_scheduler->acc_load / dt_scheduler->mean_load_cal_interval;
         dt_scheduler->mean_load_cal_interval = 0;
+        dt_scheduler->mean_load_cal_cycle = SYS_MIN_MEAN_LOAD_CAL_CYCLE + sys_rand() % 1000000001;
         dt_scheduler->acc_load = 0;
         dt_scheduler->load_leveling_flag = 1;
     }

@@ -256,16 +256,20 @@ static void enable_cpu1()
 
 static void timer_tick()
 {
+    pthread_mutex_lock(&cpu0.mutex);
     if (cpu0.cur_task != NULL)
     {
         thread_t *cur_thread = (thread_t *)*cpu0.cur_task;
         pthread_kill(cur_thread->thread, __SIGRTMIN + 10);
     }
+    pthread_mutex_unlock(&cpu0.mutex);
+    pthread_mutex_lock(&cpu1.mutex);
     if (cpu1.cur_task != NULL)
     {
         thread_t *cur_thread = (thread_t *)*cpu1.cur_task;
         pthread_kill(cur_thread->thread, __SIGRTMIN + 20);
     }
+    pthread_mutex_unlock(&cpu1.mutex);
 }
 
 void sys_port_init()

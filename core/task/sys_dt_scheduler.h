@@ -25,6 +25,7 @@ typedef struct sys_dt_scheduler_t
     uint64_t acc_load;
     uint64_t mean_load;
     uint64_t mean_load_cal_interval;
+    uint64_t mean_load_cal_cycle;
     int load_leveling_flag;
 } sys_dt_scheduler_t;
 /*********************************************************************************************************************

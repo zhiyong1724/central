@@ -228,7 +228,7 @@ static unsigned long shellExtParseNumber(char *string)
     if (type == NUM_TYPE_FLOAT && devide != 0)
     {
         valueFloat = (float)valuelong / devide * sign;
-        return *(unsigned long *)(&valueFloat);
+        return (unsigned long)valueFloat;
     }
     else
     {
