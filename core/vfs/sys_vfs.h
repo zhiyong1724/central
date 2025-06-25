@@ -341,7 +341,7 @@ int sys_statfs(const char *path, struct vfs_statfs_t *statfs);
 * arg：参数
 * return：sys_error_t
 *********************************************************************************************************************/
-int sys_iostl(int fd,  int cmd, int64_t arg);
+int sys_ioctl(int fd,  int cmd, int64_t arg);
 #ifdef __cplusplus
 }
 #endif

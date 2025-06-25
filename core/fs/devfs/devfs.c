@@ -247,7 +247,7 @@ int64_t devfs_ftell(struct devfs_t *devfs, struct devfs_file_t *file)
     return file->offset;
 }
 
-int devfs_iostl(struct devfs_t *devfs, struct devfs_file_t *file,  int cmd, int64_t arg)
+int devfs_ioctl(struct devfs_t *devfs, struct devfs_file_t *file,  int cmd, int64_t arg)
 {
     sys_trace();
     if (NULL == file->driver->operations.ioctl)

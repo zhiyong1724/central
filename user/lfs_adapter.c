@@ -476,7 +476,7 @@ static int dev_erase(const struct lfs_config *c, lfs_block_t block)
     {
         return LFS_ERR_IO;
     }
-    int ret = sys_iostl(fd, LFS_ERASE, block);
+    int ret = sys_ioctl(fd, LFS_ERASE, block);
     if (ret < 0)
     {
         ret = LFS_ERR_IO;
@@ -521,17 +521,17 @@ static int _lfs_mount(struct vfs_super_block_t *super_block, const char *device)
         ret = fd;
         goto exception;
     }
-    ret = sys_iostl(fd, LFS_GET_PAGE_SIZE, (int64_t)&handle->page_size);
+    ret = sys_ioctl(fd, LFS_GET_PAGE_SIZE, (int64_t)&handle->page_size);
     if (NULL == super_block->obj)
     {
         goto exception;
     }
-    ret = sys_iostl(fd, LFS_GET_BLOCK_SIZE, (int64_t)&handle->block_size);
+    ret = sys_ioctl(fd, LFS_GET_BLOCK_SIZE, (int64_t)&handle->block_size);
     if (NULL == super_block->obj)
     {
         goto exception;
     }
-    ret = sys_iostl(fd, LFS_GET_BLOCK_COUNT, (int64_t)&handle->block_count);
+    ret = sys_ioctl(fd, LFS_GET_BLOCK_COUNT, (int64_t)&handle->block_count);
     if (NULL == super_block->obj)
     {
         goto exception;

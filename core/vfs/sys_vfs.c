@@ -234,11 +234,11 @@ int sys_statfs(const char *path, struct vfs_statfs_t *statfs)
     return ret;
 }
 
-int sys_iostl(int fd,  int cmd, int64_t arg)
+int sys_ioctl(int fd,  int cmd, int64_t arg)
 {
     sys_trace();
     sys_rwlock_rdlock(&s_vfs->lock);
-    int ret = vfs_iostl(s_vfs, fd, cmd, arg);
+    int ret = vfs_ioctl(s_vfs, fd, cmd, arg);
     sys_rwlock_rdunlock(&s_vfs->lock);
     return ret;
 }

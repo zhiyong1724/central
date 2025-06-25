@@ -220,7 +220,7 @@ int vfs_statfs(struct vfs_t *vfs, const char *path, struct vfs_statfs_t *statfs)
 * arg：参数
 * return：sys_error_t
 *********************************************************************************************************************/
-int vfs_iostl(struct vfs_t *vfs, int fd,  int cmd, int64_t arg);
+int vfs_ioctl(struct vfs_t *vfs, int fd,  int cmd, int64_t arg);
 #ifdef __cplusplus
 }
 #endif

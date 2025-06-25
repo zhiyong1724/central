@@ -286,7 +286,7 @@ static int fs_ioctl(struct vfs_file_t *file, int cmd, int64_t arg)
 {
     sys_trace();
     struct devfs_file_t *devfs_file = (struct devfs_file_t *)file->obj;
-    int ret = sys_devfs_iostl(devfs_file, cmd, arg);
+    int ret = sys_devfs_ioctl(devfs_file, cmd, arg);
     if (ret < 0)
     {
         return ret;
@@ -420,10 +420,10 @@ int64_t sys_devfs_ftell(struct devfs_file_t *file)
     return devfs_ftell(s_devfs, file);
 }
 
-int sys_devfs_iostl(struct devfs_file_t *file,  int cmd, int64_t arg)
+int sys_devfs_ioctl(struct devfs_file_t *file,  int cmd, int64_t arg)
 {
     sys_trace();
-    return devfs_iostl(s_devfs, file, cmd, arg);
+    return devfs_ioctl(s_devfs, file, cmd, arg);
 }
 
 int sys_devfs_syncfs(struct devfs_file_t *file)

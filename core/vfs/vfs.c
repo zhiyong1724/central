@@ -1280,7 +1280,7 @@ finally:
     return ret;
 }
 
-int vfs_iostl(struct vfs_t *vfs, int fd,  int cmd, int64_t arg)
+int vfs_ioctl(struct vfs_t *vfs, int fd,  int cmd, int64_t arg)
 {
     sys_trace();
     int ret = 0;

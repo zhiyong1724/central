@@ -101,7 +101,7 @@ int64_t devfs_ftell(struct devfs_t *devfs, struct devfs_file_t *file);
 * arg：参数
 * return：sys_error_t
 *********************************************************************************************************************/
-int devfs_iostl(struct devfs_t *devfs, struct devfs_file_t *file,  int cmd, int64_t arg);
+int devfs_ioctl(struct devfs_t *devfs, struct devfs_file_t *file,  int cmd, int64_t arg);
 /*********************************************************************************************************************
 * 把缓存数据写入到存储设备
 * devfs：设备文件系统对象
