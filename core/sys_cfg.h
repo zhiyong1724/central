@@ -2,7 +2,7 @@
 #define __SYS_CFG_H__
 #include "sys_external_cfg.h"
 //版本号
-#define SYS_VERSION "1.1.1"
+#define SYS_VERSION "1.1.2"
 //空指针定义
 #ifndef NULL
 #define NULL (void *)0

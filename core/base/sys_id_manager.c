@@ -69,19 +69,19 @@ static int expand_table(sys_id_manager_t *id_manager)
 {
 	sys_trace();
 	int new_size = (id_manager->table_size << 3) + 1;
-	unsigned char *newTable = (unsigned char *)sys_malloc(new_size);
-	if (NULL == newTable)
+	unsigned char *new_table = (unsigned char *)sys_malloc(new_size);
+	if (NULL == new_table)
 	{
 		sys_error("Out of memory.");
 		return SYS_ERROR_NOMEM;
 	}
-	sys_memset(newTable, 0, new_size);
+	sys_memset(new_table, 0, new_size);
 	for (int i = 0; i < id_manager->max_id_count; i++)
 	{
-		set_table(newTable, i, 1, 0, id_manager->table_level + 1);
+		set_table(new_table, i, 1, 0, id_manager->table_level + 1);
 	}
 	sys_free(id_manager->id_table);
-	id_manager->id_table = newTable;
+	id_manager->id_table = new_table;
 	id_manager->table_size = new_size;
 	id_manager->table_level++;
 	id_manager->max_id_count <<= 3;

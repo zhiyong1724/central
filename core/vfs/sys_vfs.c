@@ -1,5 +1,6 @@
 #include "sys_vfs.h"
 #include "vfs.h"
+#include "sys_string.h"
 static struct vfs_t *s_vfs;
 int sys_vfs_init(struct vfs_t *vfs)
 {
@@ -256,7 +257,9 @@ static void do_dump_fs(struct vfs_dentry_t *dentry)
         printf("%-20ld", (statfs.f_blocks - statfs.f_bfree) * statfs.f_bsize);
         printf("%-20ld", statfs.f_bfree * statfs.f_bsize);
         printf("%ld%-12s", statfs.f_blocks > 0 ? (statfs.f_blocks - statfs.f_bfree) / statfs.f_blocks : 0, "%");
-        printf("%s/", dentry->dir);
+        printf("%s", dentry->dir);
+        if (sys_strcmp(dentry->dir, "/") != 0)
+            printf("/");
         printf("%s\n", dentry->name);
     }
 }

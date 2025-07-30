@@ -21,12 +21,8 @@ static void delete_all_dentry(struct vfs_dentry_t *dentry)
         }
         if (dentry->super_block != NULL)
         {
-            dentry->super_block->ref_count--;
-            if (0 == dentry->super_block->ref_count)
-            {
-                dentry->super_block->fs->release(dentry->super_block);
-                sys_free(dentry->super_block);
-            }
+            dentry->super_block->fs->release(dentry->super_block);
+            sys_free(dentry->super_block);
         }
         sys_free(dentry);
     }
@@ -37,12 +33,8 @@ static void delete_invalid_dentry(struct vfs_t *vfs, struct vfs_dentry_t *dentry
     sys_trace();
     if (dentry != NULL)
     {
-        if (NULL == dentry->children && (NULL == dentry->super_block || dentry->super_block->ref_count > 1))
+        if (NULL == dentry->children && NULL == dentry->super_block)
         {
-            if (dentry->super_block != NULL)
-            {
-                dentry->super_block->ref_count--;
-            }
             struct vfs_dentry_t *parent = dentry->parent;
             if (parent != NULL)
             {
@@ -102,14 +94,10 @@ static int create_dentry(struct vfs_dentry_t *parent, const char *name, struct v
     }
     (*dentry)->parent = parent;
     sys_strcpy((*dentry)->dir, parent->dir, VFS_MAX_FILE_PATH_LEN);
-    sys_strcat((*dentry)->dir, "/", VFS_MAX_FILE_PATH_LEN);
-    sys_strcpy((*dentry)->dir, parent->name, VFS_MAX_FILE_PATH_LEN);
+    if (sys_strcmp(parent->dir, "/") != 0)
+        sys_strcat((*dentry)->dir, "/", VFS_MAX_FILE_PATH_LEN);
+    sys_strcat((*dentry)->dir, parent->name, VFS_MAX_FILE_PATH_LEN);
     sys_strcpy((*dentry)->name, name, VFS_MAX_FILE_NAME_LEN);
-    (*dentry)->super_block = parent->super_block;
-    if (parent->super_block != NULL)
-    {
-        parent->super_block->ref_count++;
-    }
     return 0;
 }
 
@@ -133,6 +121,8 @@ static int find_dentry(struct vfs_t *vfs, const char *path, struct vfs_dentry_t 
     sys_trace();
     int ret = 0;
     cregex_t *regex = NULL;
+    struct vfs_dentry_t *save_dentry = NULL;
+    int save_position = 0;
     if (path[0] != '/')
     {
         sys_info("Not a directory.");
@@ -161,6 +151,8 @@ static int find_dentry(struct vfs_t *vfs, const char *path, struct vfs_dentry_t 
     }
     *dentry = vfs->root;
     *position = 0;
+    save_dentry = *dentry;
+    save_position = *position;
     regex = cregex_compile("/+([^/]+)");
     if (NULL == regex)
     {
@@ -193,6 +185,8 @@ static int find_dentry(struct vfs_t *vfs, const char *path, struct vfs_dentry_t 
                     ret = create_dentry(*dentry, name, &child);
                     if (ret < 0)
                     {
+                        sys_error("Out of memory.");
+                        ret = SYS_ERROR_NOMEM;
                         goto exception;
                     }
                 }
@@ -200,6 +194,11 @@ static int find_dentry(struct vfs_t *vfs, const char *path, struct vfs_dentry_t 
                 {
                     goto finally;
                 }
+            }
+            else if (child->super_block != NULL)
+            {
+                save_dentry = child;
+                save_position = matchs[0].begin + matchs[0].len;
             }
             *dentry = child;
         }
@@ -211,6 +210,11 @@ finally:
     if (regex != NULL)
     {
         cregex_free(regex);
+    }
+    if (!create)
+    {
+        *dentry = save_dentry;
+        *position = save_position;
     }
     return ret;
 }
@@ -287,7 +291,7 @@ int vfs_mount(struct vfs_t *vfs, const char *path, const char *device)
     {
         goto exception;
     }
-    if (dentry->super_block != NULL && 1 == dentry->super_block->ref_count)
+    if (dentry->super_block != NULL)
     {
         sys_info("File exists.");
         ret = SYS_ERROR_EXIST;
@@ -328,12 +332,7 @@ int vfs_mount(struct vfs_t *vfs, const char *path, const char *device)
     }
     super_block->fs = fs;
     sys_strcpy(super_block->device, device, VFS_MAX_FILE_PATH_LEN);
-    super_block->ref_count = 1;
     sys_mutex_init(&super_block->lock);
-    if (dentry->super_block != NULL)
-    {
-        dentry->super_block->ref_count--;
-    }
     dentry->super_block = super_block;
     if (dentry == vfs->root)
     {
@@ -376,13 +375,6 @@ int vfs_umount(struct vfs_t *vfs, const char *path)
         goto exception;
     }
     sys_mutex_lock(&dentry->super_block->lock);
-    if (dentry->super_block->ref_count > 1)
-    {
-        sys_info("Invalid argument.");
-        ret = SYS_ERROR_INVAL;
-        sys_mutex_unlock(&dentry->super_block->lock);
-        goto exception;
-    }
     if (NULL == dentry->super_block->fs_operations.unmount)
     {
         sys_info("Invalid argument.");

@@ -151,7 +151,6 @@ struct vfs_super_block_t
     char device[VFS_MAX_FILE_PATH_LEN];
     //内部使用
     struct vfs_fs_t *fs;
-    int ref_count;
     sys_mutex_t lock;
 };
 
