@@ -70,7 +70,7 @@ static void check_stack(sys_cpu_thread_t *sys_cpu_thread)
     }
 }
 
-void sys_cpu_thread_init(sys_cpu_thread_t *sys_cpu_thread, sys_cpu_info_t *cpu_info, sys_cpu_operations_t *operations)
+void sys_cpu_thread_init(sys_cpu_thread_t *sys_cpu_thread, const sys_cpu_info_t *cpu_info, const sys_cpu_operations_t *operations)
 {
     sys_trace();
     sys_cpu_thread->info = *cpu_info;

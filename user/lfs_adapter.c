@@ -239,11 +239,11 @@ static int lfs_mode_to_vfs_mode(int lfs_mode)
     int mode = 0;
     if ((lfs_mode & LFS_TYPE_REG) == LFS_TYPE_REG)
     {
-        mode |= VFS_MODE_ISREG;
+        mode |= VFS_MODE_IFREG;
     }
     else if ((lfs_mode & LFS_TYPE_DIR) == LFS_TYPE_DIR)
     {
-        mode |= VFS_MODE_ISDIR;
+        mode |= VFS_MODE_IFDIR;
     }
     return mode;
 }
@@ -408,10 +408,10 @@ static int lfs_readdir(struct vfs_file_t *file, struct vfs_dirent_t *dirent)
     switch (info.type)
     {
     case LFS_TYPE_REG:
-        dirent->d_type |= VFS_MODE_ISREG;
+        dirent->d_type |= VFS_MODE_IFREG;
         break;
     case LFS_TYPE_DIR:
-        dirent->d_type |= VFS_MODE_ISDIR;
+        dirent->d_type |= VFS_MODE_IFDIR;
         break;
     default:
         break;
@@ -521,17 +521,17 @@ static int _lfs_mount(struct vfs_super_block_t *super_block, const char *device)
         ret = fd;
         goto exception;
     }
-    ret = sys_ioctl(fd, LFS_GET_PAGE_SIZE, (int64_t)&handle->page_size);
+    ret = sys_ioctl(fd, LFS_GET_PAGE_SIZE, (long)&handle->page_size);
     if (NULL == super_block->obj)
     {
         goto exception;
     }
-    ret = sys_ioctl(fd, LFS_GET_BLOCK_SIZE, (int64_t)&handle->block_size);
+    ret = sys_ioctl(fd, LFS_GET_BLOCK_SIZE, (long)&handle->block_size);
     if (NULL == super_block->obj)
     {
         goto exception;
     }
-    ret = sys_ioctl(fd, LFS_GET_BLOCK_COUNT, (int64_t)&handle->block_count);
+    ret = sys_ioctl(fd, LFS_GET_BLOCK_COUNT, (long)&handle->block_count);
     if (NULL == super_block->obj)
     {
         goto exception;

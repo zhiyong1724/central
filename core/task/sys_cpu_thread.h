@@ -74,7 +74,7 @@ typedef struct sys_cpu_thread_t
 * cpu_info：cpu信息
 * operations：线程操作
 *********************************************************************************************************************/
-void sys_cpu_thread_init(sys_cpu_thread_t *sys_cpu_thread, sys_cpu_info_t *cpu_info, sys_cpu_operations_t *operations);
+void sys_cpu_thread_init(sys_cpu_thread_t *sys_cpu_thread, const sys_cpu_info_t *cpu_info, const sys_cpu_operations_t *operations);
 /*********************************************************************************************************************
 * 增加任务
 * sys_cpu_thread：sys_cpu_thread_t对象

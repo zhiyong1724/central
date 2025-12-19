@@ -470,7 +470,7 @@ finally:
     return ret;
 }
 
-sys_task_t *sys_task_scheduler_supend_inner(sys_task_scheduler_t *scheduler)
+sys_task_t *sys_task_scheduler_suspend_inner(sys_task_scheduler_t *scheduler)
 {
     sys_trace();
     int state = sys_spin_lock_lock_and_irq_save(&scheduler->lock);
@@ -480,7 +480,7 @@ sys_task_t *sys_task_scheduler_supend_inner(sys_task_scheduler_t *scheduler)
     return task;
 }
 
-int sys_task_scheduler_supend(sys_task_scheduler_t *scheduler, sys_tid_t tid)
+int sys_task_scheduler_suspend(sys_task_scheduler_t *scheduler, sys_tid_t tid)
 {
     sys_trace();
     int ret = 0;

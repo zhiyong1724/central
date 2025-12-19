@@ -14,6 +14,8 @@ extern "C"
 #define SYS_WARN_ENABLE 1
 #define SYS_ERROR_ENABLE 1
 #define SYS_ASSERT_ENABLE 1
+//shell
+#define SHELL_STACK_SIZE 32 * 1024
 //栈类型
 typedef unsigned long stack_size_t;                      
 //堆空间

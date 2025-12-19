@@ -93,7 +93,7 @@ int sys_task_scheduler_wakeup(sys_task_scheduler_t *scheduler, sys_tid_t tid);
 * tid：要挂起的任务tid
 * return：0：调用成功
 *********************************************************************************************************************/
-int sys_task_scheduler_supend(sys_task_scheduler_t *scheduler, sys_tid_t tid);
+int sys_task_scheduler_suspend(sys_task_scheduler_t *scheduler, sys_tid_t tid);
 /*********************************************************************************************************************
 * 恢复一个任务
 * scheduler：sys_task_scheduler_t对象

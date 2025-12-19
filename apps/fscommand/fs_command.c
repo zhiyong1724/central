@@ -213,23 +213,23 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
 {
     char buff[256 + VFS_MAX_FILE_NAME_LEN];
     buff[0] = '\0';
-    if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISDIR)
+    if ((file_info->st_mode & 0xfffff000) == VFS_MODE_IFDIR)
     {
         strcat(buff, "d");
     }
-    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISCHR)
+    else if ((file_info->st_mode & 0xfffff000) == VFS_MODE_IFCHR)
     {
         strcat(buff, "c");
     }
-    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISBLK)
+    else if ((file_info->st_mode & 0xfffff000) == VFS_MODE_IFBLK)
     {
         strcat(buff, "b");
     }
-    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISREG)
+    else if ((file_info->st_mode & 0xfffff000) == VFS_MODE_IFREG)
     {
         strcat(buff, "-");
     }
-    else if ((file_info->st_mode & (7 << 9)) == VFS_MODE_ISLNK)
+    else if ((file_info->st_mode & 0xfffff000) == VFS_MODE_IFLNK)
     {
         strcat(buff, "l");
     }
@@ -306,7 +306,7 @@ static void show_file_info(struct vfs_stat_t *file_info, const char *name)
         strcat(buff, "-");
     }
     char temp[64];
-    sprintf(temp, " %ld", file_info->st_size);
+    sprintf(temp, " %lld", (long long)file_info->st_size);
     strcat(buff, temp);
     struct tm *t = localtime((const time_t *)&file_info->st_mtim);
     sprintf(temp, " %d %02d %02d %02d:%02d ", 1900 + t->tm_year, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min);

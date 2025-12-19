@@ -71,17 +71,17 @@ int sys_task_wakeup(sys_tid_t tid)
     return ret;
 }
 
-sys_task_t *sys_task_scheduler_supend_inner(sys_task_scheduler_t *scheduler);
-sys_task_t *sys_task_supend_inner()
+sys_task_t *sys_task_scheduler_suspend_inner(sys_task_scheduler_t *scheduler);
+sys_task_t *sys_task_suspend_inner()
 {
     sys_trace();
-    return sys_task_scheduler_supend_inner(s_task_scheduler);
+    return sys_task_scheduler_suspend_inner(s_task_scheduler);
 }
 
-int sys_task_supend(sys_tid_t tid)
+int sys_task_suspend(sys_tid_t tid)
 {
     sys_trace();
-    int ret = sys_task_scheduler_supend(s_task_scheduler, tid);
+    int ret = sys_task_scheduler_suspend(s_task_scheduler, tid);
     return ret;
 }
 

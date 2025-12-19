@@ -104,7 +104,7 @@ int devfs_create_device(struct devfs_t *devfs, const char *driver_name, const ch
     sys_strcpy(device->driver_name, driver_name, DEVFS_MAX_DRIVER_NAME_LEN);
     sys_strcpy(device->name, name, DEVFS_MAX_DEVICE_NAME_LEN);
     device->data = data;
-    device->mode = mode | VFS_MODE_ISCHR;
+    device->mode = mode | VFS_MODE_IFCHR;
     device->ref_count = 0;
     sys_insert_node((sys_tree_node_t **)&devfs->devices, &device->l, device_insert_compare, NULL);
     goto finally;

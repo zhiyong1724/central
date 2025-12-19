@@ -2,5 +2,5 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(patsubst %/, %, $(dir $(MAKEFILE_PATH)))
 INCLUDES += -I$(CURRENT_DIR)
 vpath %.c $(CURRENT_DIR)
-SRCS += lfs.c \
+C_SRCS-y += lfs.c \
 	lfs_util.c 

@@ -2,7 +2,7 @@
 #define __SYS_CFG_H__
 #include "sys_external_cfg.h"
 //版本号
-#define SYS_VERSION "1.1.2"
+#define SYS_VERSION "1.2.0"
 //空指针定义
 #ifndef NULL
 #define NULL (void *)0
@@ -124,8 +124,8 @@
 #ifndef sys_arch_atomic_exchange
 #define sys_arch_atomic_exchange(atomic, desired) atomic_exchange((atomic_int *)atomic, desired)
 #endif
-#ifndef sys_arch_atomic_compare_exchange
-#define sys_arch_atomic_compare_exchange(atomic, expected, desired) atomic_compare_exchange_strong((atomic_int *)atomic, expected, desired)
+#ifndef sys_arch_atomic_compare_exchange_weak
+#define sys_arch_atomic_compare_exchange_weak(atomic, expected, desired) atomic_compare_exchange_weak((atomic_int *)atomic, expected, desired)
 #endif
 #ifndef sys_arch_atomic_fetch_add
 #define sys_arch_atomic_fetch_add(atomic, va) atomic_fetch_add((atomic_int *)atomic, va)

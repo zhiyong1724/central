@@ -254,9 +254,9 @@ static void do_dump_fs(struct vfs_dentry_t *dentry)
         dentry->super_block->fs_operations.statfs(dentry->super_block, "/", &statfs);
         sys_mutex_unlock(&dentry->super_block->lock);
         printf("%-24s", dentry->super_block->fs->name);
-        printf("%-20ld", (statfs.f_blocks - statfs.f_bfree) * statfs.f_bsize);
-        printf("%-20ld", statfs.f_bfree * statfs.f_bsize);
-        printf("%ld%-12s", statfs.f_blocks > 0 ? (statfs.f_blocks - statfs.f_bfree) / statfs.f_blocks : 0, "%");
+        printf("%-20lld", (long long)((statfs.f_blocks - statfs.f_bfree) * statfs.f_bsize));
+        printf("%-20lld", (long long)(statfs.f_bfree * statfs.f_bsize));
+        printf("%lld%-12s", statfs.f_blocks > 0 ? (long long)((statfs.f_blocks - statfs.f_bfree) / statfs.f_blocks) : 0, "%");
         printf("%s", dentry->dir);
         if (sys_strcmp(dentry->dir, "/") != 0)
             printf("/");

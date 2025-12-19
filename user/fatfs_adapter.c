@@ -242,11 +242,11 @@ static int fatfs_mode_to_vfs_mode(int fatfs_mode)
     int mode = 0;
     if ((fatfs_mode & AM_DIR) == AM_DIR)
     {
-        mode |= VFS_MODE_ISDIR;
+        mode |= VFS_MODE_IFDIR;
     }
     else
     {
-        mode |= VFS_MODE_ISREG;
+        mode |= VFS_MODE_IFREG;
     }
     return mode;
 }

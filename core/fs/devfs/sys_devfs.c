@@ -40,7 +40,7 @@ static int fs_stat(struct vfs_super_block_t *super_block, const char *path, stru
         return ret;
     }
     sys_memset(stat, 0, sizeof(struct vfs_stat_t));
-    stat->st_mode = VFS_MODE_ISBLK | VFS_MODE_IRUSR | VFS_MODE_IWUSR;
+    stat->st_mode = VFS_MODE_IFBLK | VFS_MODE_IRUSR | VFS_MODE_IWUSR;
     stat->st_size = devfs_stat.st_size;
     stat->st_blksize = devfs_stat.st_blksize;
     stat->st_blocks = devfs_stat.st_blocks;
@@ -128,14 +128,14 @@ static int fs_opendir(struct vfs_file_t *file, const char *path)
     file->obj = dir;
     goto finally;
 exception:
-if (0 == ret)
-{
-    sys_vector_free(&dir->files);
-}
-if (dir != NULL)
-{
-    sys_free(dir);
-}
+    if (0 == ret)
+    {
+        sys_vector_free(&dir->files);
+    }
+    if (dir != NULL)
+    {
+        sys_free(dir);
+    }
 finally:
     return ret;
 }

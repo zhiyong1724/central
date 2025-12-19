@@ -9,7 +9,7 @@ void sys_spin_lock_init(sys_spin_lock_t *lock)
 void sys_spin_lock_lock(sys_spin_lock_t *lock)
 {
     sys_trace();
-    for (int expected = 0; !sys_atomic_compare_exchange(&lock->locked, &expected, 1); expected = 0)
+    for (int expected = 0; !sys_atomic_compare_exchange_weak(&lock->locked, &expected, 1); expected = 0)
     {
     }
 }

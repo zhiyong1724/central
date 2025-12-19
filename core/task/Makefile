@@ -2,7 +2,7 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(patsubst %/, %, $(dir $(MAKEFILE_PATH)))
 INCLUDES += -I$(CURRENT_DIR)
 vpath %.c $(CURRENT_DIR)
-SRCS += sys_idle_scheduler.c \
+C_SRCS-y += sys_idle_scheduler.c \
 	sys_dt_scheduler.c \
 	sys_rt_scheduler.c \
 	sys_vscheduler.c \

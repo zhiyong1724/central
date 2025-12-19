@@ -2,7 +2,7 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(patsubst %/, %, $(dir $(MAKEFILE_PATH)))
 INCLUDES += -I$(CURRENT_DIR)
 vpath %.c $(CURRENT_DIR)
-SRCS += ff.c \
+C_SRCS-y += ff.c \
 	diskio.c \
 	ffsystem.c \
 	ffunicode.c

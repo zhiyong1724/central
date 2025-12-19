@@ -89,7 +89,7 @@ void shell_lscpu(long argc, char *argv[])
         }
         else
         {
-            printf("frequency:   %ld Hz\n", infos[i].frequency);
+            printf("frequency:   %lld Hz\n", (long long)infos[i].frequency);
         }
         printf("\n");
     }

@@ -1010,8 +1010,8 @@ long shellGetVarValue(Shell *shell, ShellCommand *command)
         break;
     case SHELL_TYPE_VAR_NODE:
         value = ((ShellNodeVarAttr *)command->data.var.value)->get ?
-                    ((ShellNodeVarAttr *)command->data.var.value)
-                        ->get(((ShellNodeVarAttr *)command->data.var.value)->var) : 0;
+                    ((long (*)(ShellNodeVarAttr *))((ShellNodeVarAttr *)command->data.var.value)
+                        ->get)(((ShellNodeVarAttr *)command->data.var.value)->var) : 0;
         break;
     default:
         break;
@@ -1058,12 +1058,12 @@ long shellSetVarValue(Shell *shell, ShellCommand *command, long value)
             {
                 if (((ShellNodeVarAttr *)command->data.var.value)->var)
                 {
-                    ((ShellNodeVarAttr *)command->data.var.value)
-                        ->set(((ShellNodeVarAttr *)command->data.var.value)->var, value);
+                    ((long (*)(void *, long))((ShellNodeVarAttr *)command->data.var.value)
+                        ->set)(((ShellNodeVarAttr *)command->data.var.value)->var, value);
                 }
                 else
                 {
-                    ((ShellNodeVarAttr *)command->data.var.value)->set(value);
+                    ((long (*)(long))((ShellNodeVarAttr *)command->data.var.value)->set)(value);
                 }
             }
             break;
@@ -1170,7 +1170,7 @@ unsigned long shellRunCommand(Shell *shell, ShellCommand *command)
     if (command->attr.attrs.type == SHELL_TYPE_CMD_MAIN)
     {
         shellRemoveParamQuotes(shell);
-        returnValue = command->data.cmd.function(shell->parser.paramCount,
+        returnValue = ((long (*)(unsigned short, char **))command->data.cmd.function)(shell->parser.paramCount,
                                                  shell->parser.param);
         if (!command->attr.attrs.disableReturn)
         {

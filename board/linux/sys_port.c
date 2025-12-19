@@ -9,6 +9,7 @@
 #include "sys_task.h"
 #include "sys_cpu_thread.h"
 #include <errno.h>
+#include <execinfo.h>
 /* Get thread name visible in the kernel and its interfaces.  */
 extern int pthread_getname_np (pthread_t __target_thread, char *__buf,
 			       size_t __buflen)
@@ -344,4 +345,9 @@ void sys_port_init()
     sys_cpu_thread_init(&cpu1.cpu_thread, &cpu1_info, &cpu1_operations);
     cpu1.irq = 1;
     sys_task_add_cpu_thread(&cpu1.cpu_thread);
+}
+
+int sys_backtrace(void **array, int size)
+{
+    return backtrace(array, size);
 }

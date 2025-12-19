@@ -5,7 +5,6 @@
 #include "sys_tree.h"
 #include "sys_vector.h"
 #include "sys_mutex.h"
-#include <sys/statfs.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -14,11 +13,11 @@ extern "C"
 
 enum vfs_mode_t
 {
-    VFS_MODE_ISDIR = (1 << 9),         //目录文件
-    VFS_MODE_ISCHR = (2 << 9),         //字符文件
-    VFS_MODE_ISBLK = (3 << 9),         //块文件
-    VFS_MODE_ISREG = (4 << 9),         //普通文件
-    VFS_MODE_ISLNK = (5 << 9),         //链接文件
+    VFS_MODE_IFDIR = 0040000,          //目录文件
+    VFS_MODE_IFCHR = 0020000,          //字符文件
+    VFS_MODE_IFBLK = 0060000,          //块文件
+    VFS_MODE_IFREG = 0100000,          //普通文件
+    VFS_MODE_IFLNK = 0120000,          //链接文件
     VFS_MODE_IRUSR = (1 << 8),         //读权限，拥有者
     VFS_MODE_IWUSR = (1 << 7),         //写权限，拥有者
     VFS_MODE_IXUSR = (1 << 6),         //执行权限，拥有者
@@ -42,7 +41,6 @@ enum vfs_flags_t
     VFS_FLAG_TRUNC = 01000,            //文件截断
     VFS_FLAG_APPEND = 02000,           //添加新内容
     VFS_FLAG_NONBLOCK = 04000,         //非阻塞模式
-    VFS_FLAG_SYNC = 04010000,          //文件同步
 };
 
 enum vfs_seek_t

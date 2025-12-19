@@ -2,7 +2,7 @@
 #include "sys_task_scheduler.h"
 sys_task_t *sys_task_sleep_inner(uint64_t ms, void (*wakeup_callback)(struct sys_task_control_block_t *task, void *arg), void *arg);
 int sys_task_wakeup_inner(sys_task_t *task);
-sys_task_t *sys_task_supend_inner();
+sys_task_t *sys_task_suspend_inner();
 int sys_task_resume_inner(sys_task_t *task);
 void sys_semaphore_init(sys_semaphore_t *semaphore, int count, int max_count)
 {
@@ -113,7 +113,7 @@ int sys_semaphore_wait(sys_semaphore_t *semaphore, uint64_t wait)
         }
         else
         {
-            task = sys_task_supend_inner();
+            task = sys_task_suspend_inner();
             task->task_control_block.sleep_time = SYS_SEMAPHORE_MAX_WAIT_TIME;
         }
         if (SYS_TASK_TYPE_FIFO == task->task_control_block.vtask_control_block.scheduler_id)
