@@ -40,7 +40,7 @@ static sys_tree_node_t *get_sibling(sys_tree_node_t *node)
 		return parent->left;
 }
 
-static void rotate_left(sys_tree_node_t **handle, sys_tree_node_t *node)
+static void rotate_left(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_rotate_t on_rotate, void *arg)
 {
 	sys_trace();
 	sys_tree_node_t *parent = node->parent;
@@ -63,9 +63,13 @@ static void rotate_left(sys_tree_node_t **handle, sys_tree_node_t *node)
 	
 	right->left = node;
 	node->parent = right;
+	if (on_rotate != NULL)
+	{
+		on_rotate(node, right, arg);
+	}
 }
 
-static void rotate_right(sys_tree_node_t **handle, sys_tree_node_t *node)
+static void rotate_right(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_rotate_t on_rotate, void *arg)
 {
 	sys_trace();
 	sys_tree_node_t *parent = node->parent;
@@ -88,9 +92,13 @@ static void rotate_right(sys_tree_node_t **handle, sys_tree_node_t *node)
 
 	left->right = node;
 	node->parent = left;
+	if (on_rotate != NULL)
+	{
+		on_rotate(node, left, arg);
+	}
 }
 
-static void insert_case(sys_tree_node_t **handle, sys_tree_node_t *node)
+static void insert_case(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_rotate_t on_rotate, void *rotate_arg)
 {
 	sys_trace();
 	sys_tree_node_t *parent = node->parent;
@@ -109,7 +117,7 @@ static void insert_case(sys_tree_node_t **handle, sys_tree_node_t *node)
 			parent->color = BLACK;
 			uncle->color = BLACK;
 			grandparent->color = RED;
-			insert_case(handle, grandparent);
+			insert_case(handle, grandparent, on_rotate, rotate_arg);
 		}
 		else
 		{
@@ -117,35 +125,35 @@ static void insert_case(sys_tree_node_t **handle, sys_tree_node_t *node)
 			{
 				if (parent->right == node)
 				{
-					rotate_left(handle, parent);
-					insert_case(handle, parent);
+					rotate_left(handle, parent, on_rotate, rotate_arg);
+					insert_case(handle, parent, on_rotate, rotate_arg);
 				}
 				else
 				{
 					parent->color = BLACK;
 					grandparent->color = RED;
-					rotate_right(handle, grandparent);
+					rotate_right(handle, grandparent, on_rotate, rotate_arg);
 				}
 			}
 			else
 			{
 				if (parent->left == node)
 				{
-					rotate_right(handle, parent);
-					insert_case(handle, parent);
+					rotate_right(handle, parent, on_rotate, rotate_arg);
+					insert_case(handle, parent, on_rotate, rotate_arg);
 				}
 				else
 				{
 					parent->color = BLACK;
 					grandparent->color = RED;
-					rotate_left(handle, grandparent);
+					rotate_left(handle, grandparent, on_rotate, rotate_arg);
 				}
 			}
 		}
 	}
 }
 
-int sys_insert_node(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_compare_t callback, void *arg)
+int sys_insert_node_ex(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_compare_t callback, void *arg, sys_tree_on_rotate_t on_rotate, void *rotate_arg)
 {
 	sys_trace();
 	init_node(node);
@@ -187,11 +195,16 @@ int sys_insert_node(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on
 		else if (cmp > 0)
 			cur_node->right = node;
 	}
-	insert_case(handle, node);
+	insert_case(handle, node, on_rotate, rotate_arg);
 	return 0;
 }
 
-static void delete_case(sys_tree_node_t **handle, sys_tree_node_t *node)
+int sys_insert_node(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_compare_t callback, void *arg)
+{
+	return sys_insert_node_ex(handle, node, callback, arg, NULL, NULL);
+}
+
+static void delete_case(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_rotate_t on_rotate, void *rotate_arg)
 {
 	sys_trace();
 	sys_tree_node_t *parent = node->parent;
@@ -200,65 +213,65 @@ static void delete_case(sys_tree_node_t **handle, sys_tree_node_t *node)
 		sys_tree_node_t *sibling = get_sibling(node);
 		if (parent->left == node)
 		{
-			if (RED == sibling->color)
-			{
-				parent->color = RED;
-				sibling->color = BLACK;
-				rotate_left(handle, parent);
-				delete_case(handle, node);
-			}
+				if (RED == sibling->color)
+				{
+					parent->color = RED;
+					sibling->color = BLACK;
+					rotate_left(handle, parent, on_rotate, rotate_arg);
+					delete_case(handle, node, on_rotate, rotate_arg);
+				}
 			else
 			{
 				if (RED == sibling->right->color)
 				{
-					sibling->color = parent->color;
-					parent->color = BLACK;
-					sibling->right->color = BLACK;
-					rotate_left(handle, parent);
-				}
-				else if (RED == sibling->left->color)
-				{
-					sibling->color = RED;
-					sibling->left->color = BLACK;
-					rotate_right(handle, sibling);
-					delete_case(handle, node);
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						sibling->right->color = BLACK;
+						rotate_left(handle, parent, on_rotate, rotate_arg);
+					}
+					else if (RED == sibling->left->color)
+					{
+						sibling->color = RED;
+						sibling->left->color = BLACK;
+						rotate_right(handle, sibling, on_rotate, rotate_arg);
+						delete_case(handle, node, on_rotate, rotate_arg);
 				}
 				else
 				{
 					sibling->color = RED;
-					delete_case(handle, parent);
+					delete_case(handle, parent, on_rotate, rotate_arg);
 				}
 			}
 		}
 		else
 		{
-			if (RED == sibling->color)
-			{
-				parent->color = RED;
-				sibling->color = BLACK;
-				rotate_right(handle, parent);
-				delete_case(handle, node);
-			}
+				if (RED == sibling->color)
+				{
+					parent->color = RED;
+					sibling->color = BLACK;
+					rotate_right(handle, parent, on_rotate, rotate_arg);
+					delete_case(handle, node, on_rotate, rotate_arg);
+				}
 			else
 			{
 				if (RED == sibling->left->color)
 				{
-					sibling->color = parent->color;
-					parent->color = BLACK;
-					sibling->left->color = BLACK;
-					rotate_right(handle, parent);
-				}
-				else if (RED == sibling->right->color)
-				{
-					sibling->color = RED;
-					sibling->right->color = BLACK;
-					rotate_left(handle, sibling);
-					delete_case(handle, node);
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						sibling->left->color = BLACK;
+						rotate_right(handle, parent, on_rotate, rotate_arg);
+					}
+					else if (RED == sibling->right->color)
+					{
+						sibling->color = RED;
+						sibling->right->color = BLACK;
+						rotate_left(handle, sibling, on_rotate, rotate_arg);
+						delete_case(handle, node, on_rotate, rotate_arg);
 				}
 				else
 				{
 					sibling->color = RED;
-					delete_case(handle, parent);
+					delete_case(handle, parent, on_rotate, rotate_arg);
 				}
 			}
 		}
@@ -269,7 +282,7 @@ static void delete_case(sys_tree_node_t **handle, sys_tree_node_t *node)
 	}
 }
 
-void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
+void sys_delete_node_ex(sys_tree_node_t **handle, sys_tree_node_t *node, sys_tree_on_rotate_t on_rotate, void *rotate_arg)
 {
 	sys_trace();
 	sys_tree_node_t *left = node->left;
@@ -279,7 +292,7 @@ void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
 		if (right != &g_leaf_node)
 		{
 			sys_tree_node_t *after_node = sys_get_left_most_node(right);
-			sys_delete_node(handle, after_node);
+			sys_delete_node_ex(handle, after_node, on_rotate, rotate_arg);
 			after_node->color = node->color;
 			sys_tree_node_t *parent = node->parent;
 			sys_tree_node_t *left = node->left;
@@ -305,7 +318,7 @@ void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
 		}
 		else
 		{
-			delete_case(handle, node);
+			delete_case(handle, node, on_rotate, rotate_arg);
 			sys_tree_node_t *parent = node->parent;
 			if (parent != NULL)
 			{
@@ -325,7 +338,7 @@ void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
 	{
 		if (right != &g_leaf_node)
 		{
-			delete_case(handle, node);
+			delete_case(handle, node, on_rotate, rotate_arg);
 			sys_tree_node_t *parent = node->parent;
 			if (parent != NULL)
 			{
@@ -342,7 +355,7 @@ void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
 		}
 		else
 		{
-			delete_case(handle, node);
+			delete_case(handle, node, on_rotate, rotate_arg);
 			sys_tree_node_t *parent = node->parent;
 			if (parent != NULL)
 			{
@@ -363,11 +376,16 @@ void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
 	}
 }
 
+void sys_delete_node(sys_tree_node_t **handle, sys_tree_node_t *node)
+{
+	sys_delete_node_ex(handle, node, NULL, NULL);
+}
+
 sys_tree_node_t *sys_get_left_most_node(sys_tree_node_t *handle)
 {
 	sys_trace();
 	sys_tree_node_t *cur_node = NULL;
-	if (handle != NULL)
+	if (handle != NULL && handle != &g_leaf_node)
 	{
 		cur_node = handle;
 		while (cur_node->left != &g_leaf_node)
@@ -382,7 +400,7 @@ sys_tree_node_t *sys_get_right_most_node(sys_tree_node_t *handle)
 {
 	sys_trace();
 	sys_tree_node_t *cur_node = NULL;
-	if (handle != NULL)
+	if (handle != NULL && handle != &g_leaf_node)
 	{
 		cur_node = handle;
 		while (cur_node->right != &g_leaf_node)
@@ -391,6 +409,34 @@ sys_tree_node_t *sys_get_right_most_node(sys_tree_node_t *handle)
 		}
 	}
 	return cur_node;
+}
+
+sys_tree_node_t *sys_get_prev_node(sys_tree_node_t *node)
+{
+    if (node->left != &g_leaf_node)
+        return sys_get_right_most_node(node->left);
+
+    sys_tree_node_t *parent = node->parent;
+    while (parent != NULL && node == parent->left)
+    {
+        node = parent;
+        parent = parent->parent;
+    }
+    return parent;
+}
+
+sys_tree_node_t *sys_get_next_node(sys_tree_node_t *node)
+{
+    if (node->right != &g_leaf_node)
+        return sys_get_left_most_node(node->right);
+
+    sys_tree_node_t *parent = node->parent;
+    while (parent != NULL && node == parent->right)
+    {
+        node = parent;
+        parent = parent->parent;
+    }
+    return parent;
 }
 
 sys_tree_node_t *sys_find_node(sys_tree_node_t *handle, void *key, sys_tree_on_compare_t callback, void *arg)

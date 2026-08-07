@@ -5,10 +5,10 @@
 #include <signal.h>
 void shell_free(long argc, char *argv[])
 {
-    printf("所有内存：%ld\n", sys_total_mem());
-    printf("可用内存：%ld\n", sys_free_mem());
-    printf("所有页：%ld\n", sys_total_page());
-    printf("可用页：%ld\n", sys_free_page());
+    printf("所有内存：%zu\n", sys_total_mem());
+    printf("可用内存：%zu\n", sys_free_mem());
+    printf("所有页：%zu\n", sys_total_page());
+    printf("可用页：%zu\n", sys_free_page());
 }
 
 void shell_ps(long argc, char *argv[])

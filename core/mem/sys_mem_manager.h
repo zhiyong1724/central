@@ -2,6 +2,7 @@
 #define __SYS_MEM_MANAGER_H__
 #include "sys_buddy.h"
 #include "sys_tree.h"
+#include <stddef.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -9,8 +10,8 @@ extern "C"
 typedef struct sys_mem_manager_t
 {
 	sys_buddy_t page_factory;
-	long total_mem;
-	long free_mem;
+	size_t total_mem;
+	size_t free_mem;
 	sys_tree_node_t *root;
 } sys_mem_manager_t;
 
@@ -21,14 +22,14 @@ typedef struct sys_mem_manager_t
 * size：内存大小
 * return：成功初始化的内存大小
 *********************************************************************************************************************/
-long sys_mem_manager_init(sys_mem_manager_t *mem_manager, void *start_address, long size);
+size_t sys_mem_manager_init(sys_mem_manager_t *mem_manager, void *start_address, size_t size);
 /*********************************************************************************************************************
 * 申请内存
 * mem_manager：内存管理器对象
 * size：要分配的内存大小
 * return：NULL：分配失败：否则返回内存首地址
 *********************************************************************************************************************/
-void *sys_mem_manager_alloc(sys_mem_manager_t *mem_manager, long size);
+void *sys_mem_manager_alloc(sys_mem_manager_t *mem_manager, size_t size);
 /*********************************************************************************************************************
 * 重新分配内存
 * mem_manager：内存管理器对象
@@ -36,7 +37,7 @@ void *sys_mem_manager_alloc(sys_mem_manager_t *mem_manager, long size);
 * size：重新分配的内存地址
 * return：NULL：分配失败：否则返回内存首地址
 *********************************************************************************************************************/
-void *sys_mem_manager_realloc(sys_mem_manager_t *mem_manager, void *address, long new_size);
+void *sys_mem_manager_realloc(sys_mem_manager_t *mem_manager, void *address, size_t new_size);
 /*********************************************************************************************************************
 * 释放内存
 * mem_manager：内存管理器对象
@@ -49,14 +50,14 @@ void sys_mem_manager_free(sys_mem_manager_t *mem_manager, void *address);
 * address：要获取的地址
 * return：指定地址占用的内存大小
 *********************************************************************************************************************/
-long sys_mem_manager_usable_size(sys_mem_manager_t *mem_manager, const void *address);
+size_t sys_mem_manager_usable_size(sys_mem_manager_t *mem_manager, void *address);
 /*********************************************************************************************************************
 * 申请页面
 * mem_manager：内存管理器对象
 * n：页面个数
 * return：NULL：分配失败：否则返回页面首地址
 *********************************************************************************************************************/
-void *sys_mem_manager_alloc_pages(sys_mem_manager_t *mem_manager, long n);
+void *sys_mem_manager_alloc_pages(sys_mem_manager_t *mem_manager, size_t n);
 /*********************************************************************************************************************
 * 释放页面
 * mem_manager：内存管理器对象
@@ -68,25 +69,25 @@ void sys_mem_manager_free_pages(sys_mem_manager_t *mem_manager, void *pages);
 * mem_manager：内存管理器对象
 * return：所有堆空间
 *********************************************************************************************************************/
-long sys_mem_manager_total_mem(sys_mem_manager_t *mem_manager);
+size_t sys_mem_manager_total_mem(sys_mem_manager_t *mem_manager);
 /*********************************************************************************************************************
 * 获取可用内存
 * mem_manager：内存管理器对象
 * return：可用内存
 *********************************************************************************************************************/
-long sys_mem_manager_free_mem(sys_mem_manager_t *mem_manager);
+size_t sys_mem_manager_free_mem(sys_mem_manager_t *mem_manager);
 /*********************************************************************************************************************
 * 获取所有页面数量
 * mem_manager：内存管理器对象
 * return：所有页面数量
 *********************************************************************************************************************/
-long sys_mem_manager_total_page(sys_mem_manager_t *mem_manager);
+size_t sys_mem_manager_total_page(sys_mem_manager_t *mem_manager);
 /*********************************************************************************************************************
 * 获取可用页面数量
 * mem_manager：内存管理器对象
 * return：可用页面数量
 *********************************************************************************************************************/
-long sys_mem_manager_free_page(sys_mem_manager_t *mem_manager);
+size_t sys_mem_manager_free_page(sys_mem_manager_t *mem_manager);
 
 #ifdef __cplusplus
 }

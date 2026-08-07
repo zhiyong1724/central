@@ -68,7 +68,13 @@
 #define SYS_HEAP_SIZE                   (64 * 1024 * 1024)                        //堆空间大小
 #endif
 #ifndef SYS_BUDDY_PAGE_SIZE
-#define SYS_BUDDY_PAGE_SIZE             4096                                      //伙伴算法页面大小
+#define SYS_BUDDY_PAGE_SIZE             4096                                      //伙伴算法页面大小，必须是2的幂
+#endif
+#ifndef SYS_BUDDY_ADDRESS_ALIGNMENT
+#define SYS_BUDDY_ADDRESS_ALIGNMENT     SYS_BUDDY_PAGE_SIZE                       //伙伴算法页面地址对齐
+#endif
+#if SYS_BUDDY_ADDRESS_ALIGNMENT == 0 || SYS_BUDDY_PAGE_SIZE % SYS_BUDDY_ADDRESS_ALIGNMENT != 0
+#error "SYS_BUDDY_ADDRESS_ALIGNMENT must be non-zero and divide SYS_BUDDY_PAGE_SIZE"
 #endif
 //调度相关
 #ifndef SYS_FIFOSCHED_MIN_SWITCH_INTERVAL_NS

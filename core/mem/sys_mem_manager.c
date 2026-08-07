@@ -1,341 +1,670 @@
 #include "sys_mem_manager.h"
 #include "sys_string.h"
-typedef struct sys_mem_block_header_t
-{
-	void *header;
-	long size;
-} sys_mem_block_header_t;
-
-typedef struct sys_mem_block_t
+#define PAGE_MAGIC 0x50414745  /* "PAGE" */
+#define MEM_ALLOC 0x05ul
+#define MEM_SIZE_MASK 0x07ul
+struct page_header_t
 {
 	sys_tree_node_t node;
-	sys_mem_block_header_t header;
-} sys_mem_block_t;
+	uint32_t magic;
+	size_t alloc_count;
+	size_t max_block_size;
+	size_t self_max_block_size;
+	sys_tree_node_t *root;
+};
 
-typedef struct sys_page_header_t
+struct mem_header_t
 {
-	long total_mem;
-	long used_mem;
-} sys_page_header_t;
+	size_t size;
+	struct page_header_t *header;
+};
 
-long sys_mem_manager_init(sys_mem_manager_t *mem_manager, void *start_address, long size)
+struct block_header_t
+{
+	size_t size;
+	sys_tree_node_t node;
+	size_t max_block_size;
+};
+
+static size_t size_align(size_t size)
 {
 	sys_trace();
-	long ret = sys_buddy_init(&mem_manager->page_factory, start_address, size) * SYS_BUDDY_PAGE_SIZE;
-	if (ret < 0)
+	size_t offset = size % (sizeof(long) * 2);
+	if (offset > 0)
 	{
-		return ret;
+		size_t add = (sizeof(long) * 2) - offset;
+		if (size > SIZE_MAX - add)
+		{
+			return 0;
+		}
+		size += add;
 	}
-	mem_manager->total_mem = ret;
+	return size;
+}
+
+static size_t alloc_size(size_t size)
+{
+	sys_trace();
+	size_t header_size = size_align(sizeof(struct mem_header_t));
+	if (header_size == 0 || size > SIZE_MAX - header_size)
+	{
+		return 0;
+	}
+	size_t new_size = header_size + size;
+	if (new_size < sizeof(struct block_header_t))
+	{
+		new_size = sizeof(struct block_header_t);
+	}
+	return size_align(new_size);
+}
+
+size_t sys_mem_manager_init(sys_mem_manager_t *mem_manager, void *start_address, size_t size)
+{
+	sys_trace();
+	size_t total_mem = sys_buddy_init(&mem_manager->page_factory, start_address, size) * SYS_BUDDY_PAGE_SIZE;
+	if (total_mem == 0)
+	{
+		return total_mem;
+	}
+	mem_manager->total_mem = total_mem;
 	mem_manager->free_mem = mem_manager->total_mem;
 	mem_manager->root = NULL;
 	return mem_manager->free_mem;
 }
 
-static sys_mem_block_t *find_suitable_block(sys_mem_manager_t *mem_manager, long size)
+static struct page_header_t *find_fit_page(struct page_header_t *page_header, size_t size)
 {
 	sys_trace();
-	sys_mem_block_t *ret = NULL;
-	sys_tree_node_t *next_node = mem_manager->root;
-	if (next_node != NULL)
+	if (page_header != NULL)
 	{
-		for (; next_node != &g_leaf_node;)
+		if (page_header->node.right != &g_leaf_node)
 		{
-			sys_mem_block_t *mem_block = (sys_mem_block_t *)next_node;
-			if (size > mem_block->header.size)
+			struct page_header_t *page = sys_container_of(page_header->node.right, struct page_header_t, node);
+			if (size <= page->max_block_size)
 			{
-				next_node = next_node->right;
+				return find_fit_page(page, size);
 			}
-			else if (size < mem_block->header.size)
+		}
+		if (size <= page_header->self_max_block_size)
+		{
+			return page_header;
+		}
+		if (page_header->node.left != &g_leaf_node)
+		{
+			struct page_header_t *page = sys_container_of(page_header->node.left, struct page_header_t, node);
+			if (size <= page->max_block_size)
 			{
-				ret = mem_block;
-				next_node = next_node->left;
-			}
-			else
-			{
-				ret = mem_block;
-				break;
+				return find_fit_page(page, size);
 			}
 		}
 	}
-	return ret;
+	return NULL;
 }
 
-static long size_align(long size)
+static struct block_header_t *find_fit_block(struct block_header_t *block_header, size_t size)
 {
 	sys_trace();
-	long offset = size % sizeof(long long);
-	if (offset > 0)
+	if (block_header != NULL)
 	{
-		size += sizeof(long long) - offset;
+		if (size <= block_header->size)
+		{
+			return block_header;
+		}
+		if (block_header->node.left != &g_leaf_node)
+		{
+			struct block_header_t *block = sys_container_of(block_header->node.left, struct block_header_t, node);
+			if (size <= block->max_block_size)
+			{
+				return find_fit_block(block, size);
+			}
+		}
+		if (block_header->node.right != &g_leaf_node)
+		{
+			struct block_header_t *block = sys_container_of(block_header->node.right, struct block_header_t, node);
+			if (size <= block->max_block_size)
+			{
+				return find_fit_block(block, size);
+			}
+		}
 	}
-	return size;
+	return NULL;
 }
 
-static int on_compare(void *key1, void *key2, void *arg)
+static int on_compare_block(void *key1, void *key2, void *arg)
 {
 	sys_trace();
-	sys_mem_block_t *mem_block1 = (sys_mem_block_t *)key1;
-	sys_mem_block_t *mem_block2 = (sys_mem_block_t *)key2;
-	if (mem_block1->header.size < mem_block2->header.size)
+	struct block_header_t *block1 = sys_container_of(key1, struct block_header_t, node);
+	struct block_header_t *block2 = sys_container_of(key2, struct block_header_t, node);
+	if (block1 < block2)
 	{
 		return -1;
 	}
-	else
+	else if (block1 > block2)
 	{
 		return 1;
 	}
+	return 0;
 }
 
-static void *block_to_mem(sys_mem_block_t *mem_block)
+static struct page_header_t *alloc_page(sys_mem_manager_t *mem_manager, size_t size)
 {
 	sys_trace();
-	sys_mem_block_header_t *header = (sys_mem_block_header_t *)mem_block;            //这里是树节点区域，所以不会被覆盖
-	header->header = mem_block->header.header;
-	header->size = mem_block->header.size | 0x01;
-	return header + 1;
-}
-
-static void *split_block(sys_mem_manager_t *mem_manager, sys_mem_block_t *mem_block, long size)
-{
-	sys_trace();
-	unsigned char *block_b = (unsigned char *)mem_block;
-	block_b += size;
-	sys_mem_block_t *new_block = (sys_mem_block_t *)block_b;
-	new_block->header.header = mem_block->header.header;
-	new_block->header.size = mem_block->header.size - size;
-	sys_insert_node(&mem_manager->root, &new_block->node, on_compare, NULL);
-	mem_block->header.size = size;
-	return mem_block;
-}
-
-void *sys_mem_manager_alloc(sys_mem_manager_t *mem_manager, long size)
-{
-	sys_trace();
-	void *ret = NULL;
-	long new_size = size_align(size);
-	new_size += sizeof(sys_mem_block_header_t);
-	if (new_size < sizeof(sys_mem_block_t))
+	size_t page_count = 1;
+	for (size_t i = 0; i < mem_manager->page_factory.group_count; i++)
 	{
-		new_size = sizeof(sys_mem_block_t);
+		if (size + size_align(sizeof(struct page_header_t)) <= page_count * SYS_BUDDY_PAGE_SIZE)
+		{
+			break;
+		}
+		page_count <<= 1;
 	}
-	if (new_size > size && new_size <= mem_manager->free_mem)
+	struct page_header_t *buddy_page = (struct page_header_t *)sys_buddy_alloc_pages(&mem_manager->page_factory, page_count);
+	if (buddy_page != NULL)
 	{
-		sys_mem_block_t *mem_block = find_suitable_block(mem_manager, new_size);
-		if (mem_block != NULL)
-		{
-			sys_delete_node(&mem_manager->root, &mem_block->node);
-		}
-		else
-		{
-			long page_count = 1;
-			for (long i = 0; i < mem_manager->page_factory.group_count; i++)
-			{
-				if (new_size + sizeof(sys_page_header_t) <= page_count * SYS_BUDDY_PAGE_SIZE)
-				{
-					break;
-				}
-				page_count <<= 1;
-			}
-			unsigned char *buddy_page = (unsigned char *)sys_buddy_alloc_pages(&mem_manager->page_factory, page_count);
-			if (buddy_page != NULL)
-			{
-				sys_page_header_t *page_header = (sys_page_header_t *)buddy_page;
-				page_header->used_mem = 0;
-				buddy_page += sizeof(sys_page_header_t);
-				mem_manager->free_mem -= sizeof(sys_page_header_t);
-				mem_block = (sys_mem_block_t *)buddy_page;
-				mem_block->header.header = page_header;
-				mem_block->header.size = page_count * SYS_BUDDY_PAGE_SIZE - sizeof(sys_page_header_t);
-				page_header->total_mem = mem_block->header.size;
-			}
-		}
-		if (mem_block != NULL)
-		{
-			if (mem_block->header.size >= new_size + sizeof(sys_mem_block_t))
-			{
-				mem_manager->free_mem -= new_size;
-				sys_page_header_t *page_header = (sys_page_header_t *)mem_block->header.header;
-				page_header->used_mem += new_size;
-				ret = block_to_mem((sys_mem_block_t *)split_block(mem_manager, mem_block, new_size));
-			}
-			else
-			{
-				mem_manager->free_mem -= mem_block->header.size;
-				sys_page_header_t *page_header = (sys_page_header_t *)mem_block->header.header;
-				page_header->used_mem += mem_block->header.size;
-				ret = block_to_mem(mem_block);
-			}
-		}
+		buddy_page->magic = PAGE_MAGIC;
+		buddy_page->alloc_count = 0;
+		buddy_page->max_block_size = page_count * SYS_BUDDY_PAGE_SIZE - size_align(sizeof(struct page_header_t));
+		buddy_page->self_max_block_size = buddy_page->max_block_size;
+		buddy_page->root = NULL;
+		struct block_header_t *block = (struct block_header_t *)((int8_t *)buddy_page + size_align(sizeof(struct page_header_t)));
+		block->size = buddy_page->self_max_block_size;
+		block->max_block_size = block->size;
+		sys_insert_node(&buddy_page->root, &block->node, on_compare_block, NULL);
+		mem_manager->free_mem -= size_align(sizeof(struct page_header_t));
+		return buddy_page;
 	}
-	return ret;
+	return NULL;
 }
 
-void *sys_mem_manager_realloc(sys_mem_manager_t *mem_manager, void *address, long new_size)
+static void update_page_max(struct page_header_t *page)
 {
 	sys_trace();
-	void *ret = NULL;
-	if (address != NULL)
+    size_t max = page->self_max_block_size;
+
+    if (page->node.left != &g_leaf_node)
+    {
+        struct page_header_t *left =
+            sys_container_of(page->node.left, struct page_header_t, node);
+        if (left->max_block_size > max)
+            max = left->max_block_size;
+    }
+
+    if (page->node.right != &g_leaf_node)
+    {
+        struct page_header_t *right =
+            sys_container_of(page->node.right, struct page_header_t, node);
+        if (right->max_block_size > max)
+            max = right->max_block_size;
+    }
+
+    page->max_block_size = max;
+}
+
+static void update_page_to_root(struct page_header_t *page)
+{
+	sys_trace();
+    while (page != NULL)
+    {
+        update_page_max(page);
+        if (page->node.parent == NULL)
+            break;
+
+        page = sys_container_of(page->node.parent, struct page_header_t, node);
+    }
+}
+
+static void on_page_rotate(sys_tree_node_t *old_root, sys_tree_node_t *new_root, void *arg)
+{
+    update_page_max(sys_container_of(old_root, struct page_header_t, node));
+    update_page_max(sys_container_of(new_root, struct page_header_t, node));
+}
+
+static void delete_page(sys_mem_manager_t *mem_manager, struct page_header_t *page)
+{
+	sys_trace();
+	struct page_header_t *parent_page = NULL;
+	struct page_header_t *after_page = NULL;
+	struct page_header_t *after_parent_page = NULL;
+
+	if (page->node.parent != NULL)
 	{
-		if (new_size > 0)
+		parent_page = sys_container_of(page->node.parent, struct page_header_t, node);
+	}
+
+	if (page->node.left != &g_leaf_node && page->node.right != &g_leaf_node)
+	{
+		sys_tree_node_t *after = sys_get_left_most_node(page->node.right);
+		after_page = sys_container_of(after, struct page_header_t, node);
+
+		if (after->parent != NULL && after->parent != &page->node)
 		{
-			sys_assert(address >= mem_manager->page_factory.start_address);
-			if (address >= mem_manager->page_factory.start_address)
-			{
-				sys_assert(((char *)address - (char *)mem_manager->page_factory.start_address) / (long)SYS_BUDDY_PAGE_SIZE < mem_manager->page_factory.total_page_num);
-				if (((char *)address - (char *)mem_manager->page_factory.start_address) / (long)SYS_BUDDY_PAGE_SIZE < mem_manager->page_factory.total_page_num)
-				{
-					sys_mem_block_header_t *header = (sys_mem_block_header_t *)address;
-					header -= 1;
-					long mark = (long)sizeof(long long) - 1;
-					sys_assert((header->size & mark) == 0x01);
-					if ((header->size & mark) == 0x01)
-					{
-						ret = sys_mem_manager_alloc(mem_manager, new_size);
-						sys_assert(ret != NULL);
-						if (ret != NULL)
-						{
-							long size = (header->size & ~(long)0x01) - sizeof(sys_mem_block_header_t);
-							if (new_size < size)
-							{
-								size = new_size;
-							}
-							sys_memcpy(ret, address, size);
-						}
-						sys_mem_manager_free(mem_manager, address);
-					}
-				}
-			}
+			after_parent_page = sys_container_of(after->parent, struct page_header_t, node);
 		}
-		else
-		{
-			sys_mem_manager_free(mem_manager, address);
-		}
+	}
+
+	sys_delete_node_ex(&mem_manager->root, &page->node, on_page_rotate, NULL);
+
+	if (after_parent_page != NULL)
+	{
+		update_page_to_root(after_parent_page);
+	}
+	else if (after_page != NULL)
+	{
+		update_page_to_root(after_page);
+	}
+	else if (parent_page != NULL)
+	{
+		update_page_to_root(parent_page);
+	}
+}
+
+static void update_page(struct page_header_t *page)
+{
+	sys_trace();
+	struct block_header_t *block = sys_container_of(page->root, struct block_header_t, node);
+	if (block != NULL)
+	{
+		page->self_max_block_size = block->max_block_size;
 	}
 	else
 	{
-		ret = sys_mem_manager_alloc(mem_manager, new_size);
+		page->self_max_block_size = 0;
 	}
-	return ret;
+	page->max_block_size = page->self_max_block_size;
 }
 
-static void free_all_nodes(sys_mem_manager_t *mem_manager, sys_page_header_t *header, sys_mem_block_t *mask)
+static void update_block_max(struct block_header_t *block)
 {
 	sys_trace();
-	sys_mem_block_t *cur_block = (sys_mem_block_t *)(header + 1);
-	for (long i = 0; i < header->total_mem; )
+    size_t max = block->size;
+
+    if (block->node.left != &g_leaf_node)
+    {
+        struct block_header_t *left =
+            sys_container_of(block->node.left, struct block_header_t, node);
+        if (left->max_block_size > max)
+            max = left->max_block_size;
+    }
+
+    if (block->node.right != &g_leaf_node)
+    {
+        struct block_header_t *right =
+            sys_container_of(block->node.right, struct block_header_t, node);
+        if (right->max_block_size > max)
+            max = right->max_block_size;
+    }
+
+    block->max_block_size = max;
+}
+
+static void update_block_to_root(struct block_header_t *block)
+{
+	sys_trace();
+    while (block != NULL)
+    {
+        update_block_max(block);
+        if (block->node.parent == NULL)
+            break;
+
+        block = sys_container_of(block->node.parent, struct block_header_t, node);
+    }
+}
+
+static void on_block_rotate(sys_tree_node_t *old_root, sys_tree_node_t *new_root, void *arg)
+{
+    update_block_max(sys_container_of(old_root, struct block_header_t, node));
+    update_block_max(sys_container_of(new_root, struct block_header_t, node));
+}
+
+static void insert_block(struct page_header_t *page, struct block_header_t *block)
+{
+	sys_trace();
+	sys_insert_node_ex(&page->root, &block->node, on_compare_block, NULL, on_block_rotate, NULL);
+	update_block_to_root(block);
+}
+
+static void delete_block(struct page_header_t *page, struct block_header_t *block)
+{
+	sys_trace();
+	struct block_header_t *parent_block = NULL;
+	struct block_header_t *after_block = NULL;
+	struct block_header_t *after_parent_block = NULL;
+
+	if (block->node.parent != NULL)
 	{
-		if (cur_block != mask)
+		parent_block = sys_container_of(block->node.parent, struct block_header_t, node);
+	}
+
+	if (block->node.left != &g_leaf_node && block->node.right != &g_leaf_node)
+	{
+		sys_tree_node_t *after = sys_get_left_most_node(block->node.right);
+		after_block = sys_container_of(after, struct block_header_t, node);
+
+		if (after->parent != NULL && after->parent != &block->node)
 		{
-			sys_assert(cur_block->header.header == header);
-			if (cur_block->header.header == header)
-			{
-				sys_delete_node(&mem_manager->root, &cur_block->node);
-			}
+			after_parent_block = sys_container_of(after->parent, struct block_header_t, node);
 		}
-		i += cur_block->header.size;
-		cur_block = (sys_mem_block_t *)((unsigned char *)cur_block + cur_block->header.size);
+	}
+
+	sys_delete_node_ex(&page->root, &block->node, on_block_rotate, NULL);
+
+	if (after_parent_block != NULL)
+	{
+		update_block_to_root(after_parent_block);
+	}
+	else if (after_block != NULL)
+	{
+		update_block_to_root(after_block);
+	}
+	else if (parent_block != NULL)
+	{
+		update_block_to_root(parent_block);
+	}
+}
+
+static struct block_header_t *split_block(struct page_header_t *page, struct block_header_t *block, size_t size)
+{
+	sys_trace();
+	delete_block(page, block);
+	if(block->size >= size + size_align(sizeof(struct block_header_t)))
+	{
+		struct block_header_t *new_block = (struct block_header_t *)((int8_t *)block + size);
+		new_block->size = block->size - size;
+		new_block->max_block_size = new_block->size;
+		insert_block(page, new_block);
+		block->size = size;
+	}
+	page->alloc_count++;
+	update_page(page);
+	return block;
+}
+
+static void *block_to_mem(struct page_header_t *page, struct block_header_t *block)
+{
+	sys_trace();
+	size_t size = block->size;
+	struct mem_header_t *header = (struct mem_header_t *)block;
+	header->header = page;
+	header->size = size | MEM_ALLOC;
+	return (int8_t *)header + size_align(sizeof(struct mem_header_t));
+}
+
+static int on_compare_page(void *key1, void *key2, void *arg)
+{
+	sys_trace();
+	struct page_header_t *page1 = sys_container_of(key1, struct page_header_t, node);
+	struct page_header_t *page2 = sys_container_of(key2, struct page_header_t, node);
+	if (page1->alloc_count < page2->alloc_count)
+	{
+		return -1;
+	}
+	else if (page1->alloc_count >= page2->alloc_count)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+static void insert_page(sys_mem_manager_t *mem_manager, struct page_header_t *page)
+{
+	sys_trace();
+	sys_insert_node_ex(&mem_manager->root, &page->node, on_compare_page, NULL, on_page_rotate, NULL);
+	update_page_to_root(page);
+}
+
+void *sys_mem_manager_alloc(sys_mem_manager_t *mem_manager, size_t size)
+{
+	sys_trace();
+	size_t new_size = alloc_size(size);
+	if (new_size == 0)
+	{
+		return NULL;
+	}
+	if (new_size > mem_manager->free_mem)
+	{
+		return NULL;
+	}
+	struct page_header_t *page = find_fit_page(sys_container_of(mem_manager->root, struct page_header_t, node), new_size);
+	if (NULL == page)
+	{
+		page = alloc_page(mem_manager, new_size);
+	}
+	else
+	{
+		delete_page(mem_manager, page);
+	}
+	if (NULL == page)
+	{
+		return NULL;
+	}
+	struct block_header_t *block = find_fit_block(sys_container_of(page->root, struct block_header_t, node), new_size);
+	block = split_block(page, block, new_size);
+	insert_page(mem_manager, page);
+	mem_manager->free_mem -= block->size;
+	return block_to_mem(page, block);
+}
+
+static struct mem_header_t *addr_to_mem(void *address)
+{
+	sys_trace();
+	struct mem_header_t *mem = (struct mem_header_t *)((int8_t *)address - size_align(sizeof(struct mem_header_t)));
+	sys_assert((mem->size & MEM_SIZE_MASK) == MEM_ALLOC && mem->header->magic == PAGE_MAGIC);
+	if ((mem->size & MEM_SIZE_MASK) == MEM_ALLOC && mem->header->magic == PAGE_MAGIC)
+	{
+		mem->size &= ~MEM_SIZE_MASK;
+		return mem;
+	}
+	return NULL;
+}
+
+static void *mem_to_addr(struct mem_header_t *mem)
+{
+	sys_trace();
+	sys_assert(mem->header->magic == PAGE_MAGIC);
+	if (mem->header->magic == PAGE_MAGIC)
+	{
+		mem->size |= MEM_ALLOC;
+		return (int8_t *)mem + size_align(sizeof(struct mem_header_t));
+	}
+	return NULL;
+}
+
+static void bind_block(struct page_header_t *page, struct block_header_t *block)
+{
+	struct block_header_t *prev =  sys_container_of(sys_get_right_most_node(block->node.left), struct block_header_t, node);
+	if (NULL == prev)
+	{
+		prev = sys_container_of(sys_get_prev_node(&block->node), struct block_header_t, node);
+	}
+	struct block_header_t *next =  sys_container_of(sys_get_left_most_node(block->node.right), struct block_header_t, node);
+	if (NULL == next)
+	{
+		next = sys_container_of(sys_get_next_node(&block->node), struct block_header_t, node);
 	}
 	
+	if (next != NULL && (int8_t *)block + block->size == (int8_t *)next)
+	{
+		delete_block(page, next);
+		block->size += next->size;
+		block->max_block_size = block->size;
+	}
+	if (prev != NULL && (int8_t *)prev + prev->size == (int8_t *)block)
+	{
+		delete_block(page, block);
+		prev->size += block->size;
+		prev->max_block_size = prev->size;
+		update_block_to_root(prev);
+	}
+	else
+	{
+		update_block_to_root(block);
+	}
+}
+
+static void *shrink_mem(sys_mem_manager_t *mem_manager, struct mem_header_t *mem, size_t new_block_size)
+{
+	sys_trace();
+	size_t old_block_size = mem->size;
+	sys_assert(new_block_size < old_block_size);
+	if (old_block_size - new_block_size < size_align(sizeof(struct block_header_t)))
+	{
+		return mem_to_addr(mem);
+	}
+
+	struct page_header_t *page = mem->header;
+	delete_page(mem_manager, page);
+
+	struct block_header_t *new_block = (struct block_header_t *)((int8_t *)mem + new_block_size);
+	new_block->size = old_block_size - new_block_size;
+	new_block->max_block_size = new_block->size;
+	insert_block(page, new_block);
+	bind_block(page, new_block);
+
+	mem->size = new_block_size;
+	mem_manager->free_mem += old_block_size - new_block_size;
+	update_page(page);
+	insert_page(mem_manager, page);
+	return mem_to_addr(mem);
 }
 
 void sys_mem_manager_free(sys_mem_manager_t *mem_manager, void *address)
 {
 	sys_trace();
-	if (address != NULL)
+	if (NULL == address)
 	{
-		sys_assert(address >= mem_manager->page_factory.start_address);
-		if (address >= mem_manager->page_factory.start_address)
+		return;
+	}
+	struct mem_header_t *mem = addr_to_mem(address);
+	if (NULL == mem)
+	{
+		return;
+	}
+	struct page_header_t *page = mem->header;
+	delete_page(mem_manager, page);
+	size_t size = mem->size;
+	struct block_header_t *block = (struct block_header_t *)mem;
+	block->size = size;
+	block->max_block_size = size;
+	insert_block(page, block);
+	bind_block(page, block);
+	page->alloc_count--;
+	if (page->alloc_count > 0)
+	{
+		update_page(page);
+		insert_page(mem_manager, page);
+	}
+	else
+	{
+		page->magic = 0;
+		sys_buddy_free_pages(&mem_manager->page_factory, page);
+		mem_manager->free_mem += size_align(sizeof(struct page_header_t));
+	}
+	mem_manager->free_mem += size;
+}
+
+void *sys_mem_manager_realloc(sys_mem_manager_t *mem_manager, void *address, size_t new_size)
+{
+	sys_trace();
+	if (NULL == address)
+	{
+		return sys_mem_manager_alloc(mem_manager, new_size);
+	}
+	else if (0 == new_size)
+	{
+		sys_mem_manager_free(mem_manager, address);
+		return NULL;
+	}
+	else
+	{
+		struct mem_header_t *mem = addr_to_mem(address);
+		if (NULL == mem)
 		{
-			sys_assert(((char *)address - (char *)mem_manager->page_factory.start_address) / (long)SYS_BUDDY_PAGE_SIZE < mem_manager->page_factory.total_page_num);
-			if (((char *)address - (char *)mem_manager->page_factory.start_address) / (long)SYS_BUDDY_PAGE_SIZE < mem_manager->page_factory.total_page_num)
-			{
-				sys_mem_block_header_t *header = (sys_mem_block_header_t *)address;
-				header -= 1;
-				long mark = (long)sizeof(long long) - 1;
-				sys_assert((header->size & mark) == 0x01);
-				if ((header->size & mark) == 0x01)
-				{
-					header->size &= ~(long)0x01;
-					sys_mem_block_t *mem_block = (sys_mem_block_t *)header;
-					mem_block->header.header = header->header;
-					mem_block->header.size = header->size;
-					mem_manager->free_mem += mem_block->header.size;
-					sys_page_header_t *page_header = (sys_page_header_t *)mem_block->header.header;
-					page_header->used_mem -= mem_block->header.size;
-					if (0 == page_header->used_mem)
-					{
-						free_all_nodes(mem_manager, page_header, mem_block);
-						sys_buddy_free_pages(&mem_manager->page_factory, mem_block->header.header);
-						mem_manager->free_mem += sizeof(sys_page_header_t);
-					}
-					else
-					{
-						sys_insert_node(&mem_manager->root, &mem_block->node, on_compare, NULL);
-					}
-				}
-			}
+			return NULL;
 		}
+		size_t new_block_size = alloc_size(new_size);
+		if (new_block_size == 0)
+		{
+			mem_to_addr(mem);
+			return NULL;
+		}
+		if (new_block_size < mem->size)
+		{
+			return shrink_mem(mem_manager, mem, new_block_size);
+		}
+		if (new_block_size == mem->size)
+		{
+			return mem_to_addr(mem);
+		}
+		void *new_alloc = sys_mem_manager_alloc(mem_manager, new_size);
+		if (NULL == new_alloc)
+		{
+			mem_to_addr(mem);
+			return NULL;
+		}
+		size_t old_size = mem->size - size_align(sizeof(struct mem_header_t));
+		sys_memcpy(new_alloc, address, old_size < new_size ? old_size : new_size);
+		sys_mem_manager_free(mem_manager, mem_to_addr(mem));
+		return new_alloc;
 	}
 }
 
-long sys_mem_manager_usable_size(sys_mem_manager_t *mem_manager, const void *address)
+size_t sys_mem_manager_usable_size(sys_mem_manager_t *mem_manager, void *address)
 {
 	sys_trace();
-	int ret = 0;
-	if (address != NULL)
+	if (NULL == address)
 	{
-		sys_assert(address >= mem_manager->page_factory.start_address);
-		if (address >= mem_manager->page_factory.start_address)
-		{
-			sys_assert(((char *)address - (char *)mem_manager->page_factory.start_address) / (long)SYS_BUDDY_PAGE_SIZE < mem_manager->page_factory.total_page_num);
-			if (((char *)address - (char *)mem_manager->page_factory.start_address) / (long)SYS_BUDDY_PAGE_SIZE < mem_manager->page_factory.total_page_num)
-			{
-				sys_mem_block_header_t *header = (sys_mem_block_header_t *)address;
-				header -= 1;
-				long mark = (long)sizeof(long long) - 1;
-				sys_assert((header->size & mark) == 0x01);
-				if ((header->size & mark) == 0x01)
-				{
-					ret = (header->size & ~(long)0x01) - sizeof(sys_mem_block_header_t);
-				}
-			}
-		}
+		return 0;
 	}
-	return ret;
+	struct mem_header_t *mem = addr_to_mem(address);
+	if (NULL == mem)
+	{
+		return 0;
+	}
+	size_t size = mem->size - size_align(sizeof(struct mem_header_t));
+	mem_to_addr(mem);
+	return size;
 }
 
-void *sys_mem_manager_alloc_pages(sys_mem_manager_t *mem_manager, long n)
+void *sys_mem_manager_alloc_pages(sys_mem_manager_t *mem_manager, size_t n)
 {
 	sys_trace();
-	return sys_buddy_alloc_pages(&mem_manager->page_factory, n);
+	size_t current_page_num = mem_manager->page_factory.free_page_num;
+	void *pages = sys_buddy_alloc_pages(&mem_manager->page_factory, n);
+	if (NULL == pages)
+	{
+		return NULL;
+	}
+	mem_manager->free_mem -= (current_page_num - mem_manager->page_factory.free_page_num) * SYS_BUDDY_PAGE_SIZE;
+	return pages;
 }
 
 void sys_mem_manager_free_pages(sys_mem_manager_t *mem_manager, void *pages)
 {
 	sys_trace();
+	size_t current_page_num = mem_manager->page_factory.free_page_num;
 	sys_buddy_free_pages(&mem_manager->page_factory, pages);
+	mem_manager->free_mem += (mem_manager->page_factory.free_page_num - current_page_num) * SYS_BUDDY_PAGE_SIZE;
 }
 
-long sys_mem_manager_total_mem(sys_mem_manager_t *mem_manager)
+size_t sys_mem_manager_total_mem(sys_mem_manager_t *mem_manager)
 {
 	sys_trace();
 	return mem_manager->total_mem;
 }
 
-long sys_mem_manager_free_mem(sys_mem_manager_t *mem_manager)
+size_t sys_mem_manager_free_mem(sys_mem_manager_t *mem_manager)
 {
 	sys_trace();
 	return mem_manager->free_mem;
 }
 
-long sys_mem_manager_total_page(sys_mem_manager_t *mem_manager)
+size_t sys_mem_manager_total_page(sys_mem_manager_t *mem_manager)
 {
 	sys_trace();
 	return mem_manager->page_factory.total_page_num;
 }
 
-long sys_mem_manager_free_page(sys_mem_manager_t *mem_manager)
+size_t sys_mem_manager_free_page(sys_mem_manager_t *mem_manager)
 {
 	sys_trace();
 	return mem_manager->page_factory.free_page_num;

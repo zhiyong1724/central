@@ -15,7 +15,7 @@ static void *monitor_task(void *arg)
             printf("cpu%d: %d%%\n", i, sys_task_get_cpu_usage(i));
         }
         
-        printf("mem used: %ld%%    task count: %d\n", (sys_total_mem() - sys_free_mem()) * 100 / sys_total_mem(), sys_task_get_task_count());
+        printf("mem used: %zu%%    task count: %d\n", (sys_total_mem() - sys_free_mem()) * 100 / sys_total_mem(), sys_task_get_task_count());
         sys_task_ptr ptr;
         sys_task_info_t task_info;
         int result = sys_task_find_first(&ptr, &task_info);

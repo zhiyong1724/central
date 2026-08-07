@@ -8,7 +8,7 @@
 static sys_task_scheduler_t s_task_scheduler;
 static struct vfs_t s_vfs;
 static struct devfs_t s_devfs;
-long sys_mem_init(void *start_address, long size);
+size_t sys_mem_init(void *start_address, size_t size);
 int sys_task_init(sys_task_scheduler_t *scheduler);
 int sys_vfs_init(struct vfs_t *vfs);
 int sys_devfs_init(struct devfs_t *devfs);
@@ -17,7 +17,7 @@ void unregister_devfs();
 int sys_init()
 {
     sys_trace();
-    if (sys_mem_init(SYS_HEAP_ADDRESS, SYS_HEAP_SIZE) <= 0)
+    if (sys_mem_init(SYS_HEAP_ADDRESS, SYS_HEAP_SIZE) == 0)
     {
         sys_error("Initialize mem manager fail.");
         return SYS_ERROR_NOMEM;
